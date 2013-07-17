@@ -1,0 +1,47 @@
+name: VarScript
+description: More more more in-game scripting!
+author: DPOH-VAR
+authors: [DPOH-VAR, MYXOMOPX]
+main: me.dpohvar.varscript.VarScript
+version: 0.5.1
+commands:
+    "vs":
+        description: manage varscript
+        usage: /vs <varscript>
+        permission: varscript.command.vs
+    "js":
+        description: manage javascript
+        usage: /js <varscript>
+        permission: varscript.command.js
+    "vs>":
+        description: run varscript code
+        usage: /vs> <varscript>
+        permission: varscript.command.vsrun
+        aliases: ">"
+    "vs>file":
+        description: run varscript file
+        usage: /vs <filename>
+        permission: varscript.command.vsfile
+        aliases: ">file"
+    "js>":
+        description: run javascript code
+        usage: /js <javascript>
+        permission: varscript.command.jsrun
+    "js>file":
+        description: run javascript file
+        usage: /js>file <filename>
+        permission: varscript.command.jsfile
+    "vsbin>file":
+        description: run varscript binary file
+        usage: /vsbin>file <filename>
+        permission: varscript.command.vsbinfile
+    "vs>tag":
+        description: list commands for tag or list all tags
+        usage: /vs>tag [tag]
+        permission: varscript.command.jsfile
+        aliases: ">t"
+    "vs>cmd":
+        description: view help about command
+        usage: /vs>cmd [command]
+        permission: varscript.command.jsfile
+        aliases: ">c"

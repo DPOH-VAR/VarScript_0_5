@@ -1,0 +1,42 @@
+@Function.prototype %%funProto ## берем прототип всех функций
+{THIS NEW} @funProto.%new ## с помощью прототипирования заменяем @fun NEW на @fun:new
+
+%Dog{ ## объявляем конструктор Dog
+    %%age ## замкнутая переменная age (private)
+    %%name ## замкнутая переменная name (private)
+    TRUE %%alive ## замкнутая переменная alive (private), по умолчанию TRUE
+    $getName{@name} ## метод getName, возвращает значение переменной name
+    $getAge{@age}  ## метод getAge, возвращает значение переменной age
+    $getInfo{  ## метод getInfo, возвращает строчку с информацией об объекте
+        THIS:getName " (" S+ THIS:isAlive IF "alive" ELSE "dead" THEN S+ ") Age:" S+ THIS:getAge S+
+    }
+    $isAlive{@alive} ## метод getAge, возвращает значение переменной alive
+    $kill{FALSE %alive} ## метод kill, устанавливает alive в FALSE
+}
+
+"Bobik" 4 @Dog:new %%myBobik ## создаем новый Dog с параметрами "Bobik" 4 и записываем в myBobik
+@myBobik:getInfo PRINT ## выводим информацию о myBobik
+@myBobik:kill ## убиваем бобика
+@myBobik:getInfo PRINT ## выводим информацию о myBobik
+{THIS NEW DUP:kill} @Dog.%newDeadDog ## трюк с полем функции.
+## теперь @Dog:newDeadDog аналогично записи @Dog NEW DUP:kill
+"Tuzik" 98 @Dog:newDeadDog %%myTuzik # создаем мертвого тузика
+@myTuzik:getInfo PRINT # выводим информацию о тузике
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

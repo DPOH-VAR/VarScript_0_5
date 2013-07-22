@@ -1,13 +1,13 @@
 package me.dpohvar.varscript.vs.init;
 
 import me.dpohvar.varscript.VarScript;
-import me.dpohvar.varscript.vs.VSContext;
-import me.dpohvar.varscript.vs.VSSimpleWorker;
-import me.dpohvar.varscript.vs.VSThread;
-import me.dpohvar.varscript.vs.VSThreadRunner;
+import me.dpohvar.varscript.vs.Context;
+import me.dpohvar.varscript.vs.SimpleWorker;
+import me.dpohvar.varscript.vs.Thread;
+import me.dpohvar.varscript.vs.ThreadRunner;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.vs.converter.ConvertException;
+import me.dpohvar.varscript.converter.ConvertException;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -21,6 +21,16 @@ import java.util.List;
  * Time: 1:28
  */
 public class InitString {
+
+    public static SimpleWorker wConcat = new SimpleWorker(new int[]{0x4E}){
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+            String s2 = v.pop(String.class);
+            String s = v.pop(String.class);
+            v.push(s.concat(s2));
+        }
+    };
+
+
     public static void load(){
         VSCompiler.addRule(new SimpleCompileRule(
                 "ENDSWITH",
@@ -29,8 +39,8 @@ public class InitString {
                 "Boolean",
                 "string",
                 "Returns true if string A ends with string B",
-                new VSSimpleWorker(new int[]{0x40}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x40}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
                         v.push(s.endsWith(s2));
@@ -44,8 +54,8 @@ public class InitString {
                 "Boolean",
                 "string",
                 "Check string A to regular expression B",
-                new VSSimpleWorker(new int[]{0x41}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x41}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
                         v.push(s.matches(s2));
@@ -59,8 +69,8 @@ public class InitString {
                 "String",
                 "string",
                 "Replace B to C in string A",
-                new VSSimpleWorker(new int[]{0x42}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x42}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s3 = v.pop(String.class);
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
@@ -75,8 +85,8 @@ public class InitString {
                 "String",
                 "string",
                 "Replace string to UpperCase",
-                new VSSimpleWorker(new int[]{0x43}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x43}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class);
                         v.push(s.toUpperCase());
                     }
@@ -89,8 +99,8 @@ public class InitString {
                 "String",
                 "string",
                 "Replace string to LowerCase",
-                new VSSimpleWorker(new int[]{0x44}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x44}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class);
                         v.push(s.toLowerCase());
                     }
@@ -103,8 +113,8 @@ public class InitString {
                 "Boolean",
                 "string",
                 "Returns true if String A starts with String B",
-                new VSSimpleWorker(new int[]{0x45}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x45}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
                         v.push(s.startsWith(s2));
@@ -118,8 +128,8 @@ public class InitString {
                 "Boolean",
                 "string",
                 "Returns true if String A contains B",
-                new VSSimpleWorker(new int[]{0x46}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x46}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
                         v.push(s.contains(s2));
@@ -133,8 +143,8 @@ public class InitString {
                 "Boolean",
                 "string",
                 "Returns true if A equals B (Ignore case)",
-                new VSSimpleWorker(new int[]{0x47}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x47}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
                         v.push(s.equalsIgnoreCase(s2));
@@ -148,8 +158,8 @@ public class InitString {
                 "Integer",
                 "string",
                 "Returns the index within this string of the first occurrence of the specified substring.",
-                new VSSimpleWorker(new int[]{0x48}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x48}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
                         v.push(s.indexOf(s2));
@@ -163,8 +173,8 @@ public class InitString {
                 "Integer",
                 "string",
                 "Returns the index within this string of the first occurrence of the specified substring.",
-                new VSSimpleWorker(new int[]{0x49}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x49}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer pos = v.pop(Integer.class);
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
@@ -179,8 +189,8 @@ public class InitString {
                 "Integer",
                 "string",
                 "Returns the index within this string of the rightmost occurrence of the specified substring.",
-                new VSSimpleWorker(new int[]{0x4A}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x4A}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
                         v.push(s.lastIndexOf(s2));
@@ -194,8 +204,8 @@ public class InitString {
                 "Integer",
                 "string",
                 "Returns the index within this string of the rightmost occurrence of the specified substring.",
-                new VSSimpleWorker(new int[]{0x4B}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x4B}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer pos = v.pop(Integer.class);
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
@@ -210,8 +220,8 @@ public class InitString {
                 "Integer",
                 "string",
                 "Returns string length.",
-                new VSSimpleWorker(new int[]{0x4C}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x4C}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class);
                         v.push(s.length());
                     }
@@ -224,8 +234,8 @@ public class InitString {
                 "String",
                 "string",
                 "Replace Regex to C in string A",
-                new VSSimpleWorker(new int[]{0x4D}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x4D}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s3 = v.pop(String.class);
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
@@ -240,13 +250,7 @@ public class InitString {
                 "String(AB)",
                 "string",
                 "Concatenates strings",
-                new VSSimpleWorker(new int[]{0x4E}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
-                        String s2 = v.pop(String.class);
-                        String s = v.pop(String.class);
-                        v.push(s.concat(s2));
-                    }
-                }
+                wConcat
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "REPLACEFIRST",
@@ -255,8 +259,8 @@ public class InitString {
                 "ArrayList",
                 "string",
                 "Replace first Regex to C in string A",
-                new VSSimpleWorker(new int[]{0x4F,0x00}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x4F,0x00}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s3 = v.pop(String.class);
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
@@ -271,8 +275,8 @@ public class InitString {
                 "String",
                 "string",
                 "Get substring of A",
-                new VSSimpleWorker(new int[]{0x4F,0x01}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x4F,0x01}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer end = v.pop(Integer.class);
                         Integer begin = v.pop(Integer.class);
                         String s = v.pop(String.class);
@@ -291,8 +295,8 @@ public class InitString {
                 "String",
                 "string",
                 "Trim string",
-                new VSSimpleWorker(new int[]{0x4F,0x02}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x4F,0x02}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class);
                         v.push(s.trim());
                     }
@@ -305,8 +309,8 @@ public class InitString {
                 "byte[]",
                 "string",
                 "Get bytes of string (UTF8)",
-                new VSSimpleWorker(new int[]{0x4F,0x03}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x4F,0x03}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class);
                         v.push(s.getBytes(VarScript.UTF8));
                     }
@@ -320,8 +324,8 @@ public class InitString {
                 "ArrayList",
                 "string",
                 "Split string A",
-                new VSSimpleWorker(new int[]{0x4F, 0x04}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x4F, 0x04}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s2 = v.pop(String.class);
                         String s = v.pop(String.class);
                         v.push(Arrays.asList(s.split(s2)));
@@ -336,8 +340,8 @@ public class InitString {
                 "String",
                 "string",
                 "joins the elements of an array into a string",
-                new VSSimpleWorker(new int[]{0x4F, 0x05}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x4F, 0x05}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String separator = v.pop(String.class);
                         List l = v.pop(List.class);
                         ArrayList<String> strings = new ArrayList<String>();
@@ -345,6 +349,34 @@ public class InitString {
                             strings.add(v.convert(String.class,t));
                         }
                         v.push(StringUtils.join(strings, separator));
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CHAR",
+                "CHAR",
+                "Object",
+                "Character",
+                "string char",
+                "get char by code or by string",
+                new SimpleWorker(new int[]{0x4F, 0x06}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(v.pop(Character.class));
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CHARCODE",
+                "CHARCODE CC",
+                "Character",
+                "Integer",
+                "char",
+                "get character code",
+                new SimpleWorker(new int[]{0x4F, 0x07}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push((int)v.pop(Character.class));
                     }
                 }
         ));

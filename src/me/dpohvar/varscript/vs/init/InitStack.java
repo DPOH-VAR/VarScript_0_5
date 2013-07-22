@@ -1,9 +1,11 @@
 package me.dpohvar.varscript.vs.init;
 
 import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.FieldableObject;
+import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.vs.converter.ConvertException;
+import me.dpohvar.varscript.converter.ConvertException;
 
 import java.util.Stack;
 
@@ -22,8 +24,8 @@ public class InitStack {
                 "",
                 "stack basic",
                 "drop last object from stack",
-                new VSSimpleWorker(new int[]{0x00}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) {
+                new SimpleWorker(new int[]{0x00}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) {
                         v.pop();
                     }
                 }
@@ -35,8 +37,8 @@ public class InitStack {
                 "Object(A) Object(A)",
                 "stack basic",
                 "duplicate last value",
-                new VSSimpleWorker(new int[]{0x01}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) {
+                new SimpleWorker(new int[]{0x01}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) {
                         v.push(v.peek());
                     }
                 }
@@ -48,10 +50,10 @@ public class InitStack {
                 "Object(B) Object(A)",
                 "stack basic",
                 "swap last values in stack",
-                new VSSimpleWorker(new int[]{0x02}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) {
-                        Object b = v.pop();
-                        Object a = v.pop();
+                new SimpleWorker(new int[]{0x02}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) {
+                        java.lang.Object b = v.pop();
+                        java.lang.Object a = v.pop();
                         v.push(b).push(a);
                     }
                 }
@@ -63,10 +65,10 @@ public class InitStack {
                 "Object(A) Object(B) Object(A) ",
                 "stack basic",
                 "copy the previous value to stack",
-                new VSSimpleWorker(new int[]{0x03}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) {
-                        Object b = v.pop();
-                        Object a = v.pop();
+                new SimpleWorker(new int[]{0x03}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) {
+                        java.lang.Object b = v.pop();
+                        java.lang.Object a = v.pop();
                         v.push(a).push(b).push(a);
                     }
                 }
@@ -79,11 +81,11 @@ public class InitStack {
                 "Object(B) Object(C) Object(A) ",
                 "stack basic",
                 "rotate 3 elements in stack",
-                new VSSimpleWorker(new int[]{0x04}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) {
-                        Object c = v.pop();
-                        Object b = v.pop();
-                        Object a = v.pop();
+                new SimpleWorker(new int[]{0x04}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) {
+                        java.lang.Object c = v.pop();
+                        java.lang.Object b = v.pop();
+                        java.lang.Object a = v.pop();
                         v.push(b).push(c).push(a);
                     }
                 }
@@ -96,10 +98,10 @@ public class InitStack {
                 "Objects... Object",
                 "stack",
                 "pick object from stack and put it on top",
-                new VSSimpleWorker(new int[]{0x05}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x05}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         int pos = v.pop(Integer.class);
-                        Stack<Object> stack = v.getStack();
+                        Stack<java.lang.Object> stack = v.getStack();
                         v.push(stack.get(stack.size()-1-pos));
                     }
                 }
@@ -112,11 +114,11 @@ public class InitStack {
                 "Objects(turned)...",
                 "stack",
                 "turn positions of objects in stack",
-                new VSSimpleWorker(new int[]{0x06}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x06}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         int pos = v.pop(Integer.class);
-                        Stack<Object> stack = v.getStack();
-                        Object a = stack.remove(stack.size()-1-pos);
+                        Stack<java.lang.Object> stack = v.getStack();
+                        java.lang.Object a = stack.remove(stack.size()-1-pos);
                         v.push(a);
                     }
                 }
@@ -129,8 +131,8 @@ public class InitStack {
                 "",
                 "stack string print",
                 "print object to caller",
-                new VSSimpleWorker(new int[]{0x0F}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x0F}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.getProgram().getCaller().send(v.pop());
                     }
                 }
@@ -144,8 +146,8 @@ public class InitStack {
                 "Fieldable",
                 "field",
                 "put applied object to stack",
-                new VSSimpleWorker(new int[]{0x07}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x07}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(f.getApply());
                     }
                 }
@@ -158,9 +160,9 @@ public class InitStack {
                 "Fieldable",
                 "object",
                 "create new object",
-                new VSSimpleWorker(new int[]{0x08}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
-                        v.push(new VSObject(f.getScope()));
+                new SimpleWorker(new int[]{0x08}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(new FieldableObject(f.getScope()));
                     }
                 }
         ));
@@ -172,8 +174,8 @@ public class InitStack {
                 "Caller",
                 "stack",
                 "get current caller",
-                new VSSimpleWorker(new int[]{0x09}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x09}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(v.getProgram().getCaller());
                     }
                 }
@@ -186,8 +188,8 @@ public class InitStack {
                 "Object",
                 "stack",
                 "get caller instance (who calling)",
-                new VSSimpleWorker(new int[]{0x0A}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x0A}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(v.getProgram().getCaller().getInstance());
                     }
                 }
@@ -200,8 +202,8 @@ public class InitStack {
                 "Location",
                 "stack location",
                 "get current caller's location",
-                new VSSimpleWorker(new int[]{0x0B}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x0B}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(v.getProgram().getCaller().getLocation());
                     }
                 }
@@ -214,8 +216,8 @@ public class InitStack {
                 "Program",
                 "stack",
                 "get current program",
-                new VSSimpleWorker(new int[]{0x0C}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x0C}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(v.getProgram());
                     }
                 }
@@ -229,8 +231,8 @@ public class InitStack {
                 "Runtime",
                 "stack",
                 "get current runtime",
-                new VSSimpleWorker(new int[]{0x0D}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x0D}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(v.getProgram().getRuntime());
                     }
                 }

@@ -1,6 +1,8 @@
 package me.dpohvar.varscript.utils;
 
 import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Runnable;
+import me.dpohvar.varscript.vs.Thread;
 
 import java.lang.reflect.Method;
 
@@ -10,18 +12,25 @@ import java.lang.reflect.Method;
  * Date: 12.07.13
  * Time: 7:15
  */
-public class ReflectRunnable implements VSRunnable{
+public class ReflectRunnable implements Runnable {
     private final Method method;
-    private final VSScope scope;
-    public ReflectRunnable(Method method,VSScope scope){
+    private final Scope scope;
+    private final String  fullName;
+    public ReflectRunnable(Method method,Scope scope,String fullName){
         this.method = method;
         this.scope = scope;
+        this.fullName = fullName;
     }
-    @Override public String toString(){return method.toString();}
+    public Method getMethod(){
+        return method;
+    }
+    @Override public String toString(){
+        return fullName+"{}";
+    }
     @Override public String getName() {
-        return method.getName();
+        return fullName;
     }
-    @Override public void runCommands(VSThreadRunner threadRunner, VSThread thread, VSContext vsContext) throws Exception {
+    @Override public void runCommands(ThreadRunner threadRunner, Thread thread, Context context) throws Exception {
         Class[] types = method.getParameterTypes();
         Object[] pops = new Object[types.length];
         Object[] params = new Object[types.length];
@@ -31,20 +40,21 @@ public class ReflectRunnable implements VSRunnable{
         for(int i=0;i<params.length;i++){
             params[i]=thread.convert(types[i], pops[i]);
         }
-        Object apply = vsContext.getApply();
-        if (apply instanceof ReflectObject) apply = ((ReflectObject) apply).getObject();
+        Object apply = context.getApply();
+        if(apply instanceof ReflectObject) apply = ((ReflectObject)apply).getObject();
+        apply = thread.convert(method.getDeclaringClass(),apply);
         Object result = method.invoke(apply,params);
         if(method.getReturnType() != void.class) thread.push(result);
     }
 
-    @Override public VSFieldable getPrototype() {
+    @Override public Fieldable getPrototype() {
         return null;
     }
 
-    @Override public void setPrototype(VSFieldable prototype) {
+    @Override public void setPrototype(Fieldable prototype) {
     }
 
-    @Override public VSScope getDelegatedScope() {
+    @Override public Scope getDelegatedScope() {
         return scope;
     }
 }

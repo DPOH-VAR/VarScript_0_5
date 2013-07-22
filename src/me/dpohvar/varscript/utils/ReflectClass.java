@@ -1,6 +1,9 @@
 package me.dpohvar.varscript.utils;
 
 import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.FieldableObject;
+import me.dpohvar.varscript.vs.Runnable;
+import me.dpohvar.varscript.vs.Thread;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -14,20 +17,23 @@ import java.util.*;
  * Date: 12.07.13
  * Time: 7:15
  */
-public class ReflectClass implements VSRunnable,VSFieldable{
+public class ReflectClass implements Runnable,Fieldable {
     private final Class clazz;
     private final Constructor constr;
-    private final VSScope scope;
-    private VSRunnable constructor;
-    private VSFieldable proto;
+    private final Scope scope;
+    private Runnable constructor;
+    private Fieldable proto;
     int diver = 0;
-    public ReflectClass(String key, VSScope scope) throws Exception{
+    public Class getInnerClass(){
+        return clazz;
+    }
+    public ReflectClass(String key, Scope scope) throws Exception{
         this.scope = scope;
         try{
-            this.constructor = (VSRunnable) scope.getVar("[[Class]]");
+            this.constructor = (Runnable) scope.getVar("[[Class]]");
             this.proto = constructor.getPrototype();
         } catch (Exception ignored){
-            proto = new VSObject(scope);
+            proto = new FieldableObject(scope);
         }
 
         if(key!=null) if (key.contains("/")) {
@@ -49,7 +55,11 @@ public class ReflectClass implements VSRunnable,VSFieldable{
         constr = temp;
     }
 
-    public ReflectClass(Constructor constr, VSScope scope) throws Exception{
+    public Constructor getConstr(){
+        return constr;
+    }
+
+    public ReflectClass(Constructor constr, Scope scope) throws Exception{
         this.scope = scope;
         this.clazz = constr.getDeclaringClass();
         this.constr = constr;
@@ -59,31 +69,31 @@ public class ReflectClass implements VSRunnable,VSFieldable{
     @Override public String getName() {
         return clazz.getSimpleName();
     }
-    @Override public void runCommands(VSThreadRunner threadRunner, VSThread thread, VSContext vsContext) throws Exception {
+    @Override public void runCommands(ThreadRunner threadRunner, Thread thread, Context context) throws Exception {
         Class[] types = constr.getParameterTypes();
-        Object[] pops = new Object[types.length];
-        Object[] params = new Object[types.length];
+        java.lang.Object[] pops = new java.lang.Object[types.length];
+        java.lang.Object[] params = new java.lang.Object[types.length];
         for(int i=params.length-1;i>=0;i--){
             pops[i]=thread.pop();
         }
         for(int i=0;i<params.length;i++){
             params[i]=thread.convert(types[i], pops[i]);
         }
-        Object result = constr.newInstance(params);
-        Stack<VSContext> runners = thread.getContextStack();
+        java.lang.Object result = constr.newInstance(params);
+        Stack<Context> runners = thread.getContextStack();
         if(runners.size()<2) return;
-        VSContext topContext = runners.get(runners.size()-2);
+        Context topContext = runners.get(runners.size()-2);
         topContext.setRegisterF(result);
     }
 
-    @Override public VSFieldable getPrototype() {
+    @Override public Fieldable getPrototype() {
         return null;
     }
 
-    @Override public void setPrototype(VSFieldable prototype) {
+    @Override public void setPrototype(Fieldable prototype) {
     }
 
-    @Override public VSScope getDelegatedScope() {
+    @Override public Scope getDelegatedScope() {
         return scope;
     }
 
@@ -99,7 +109,7 @@ public class ReflectClass implements VSRunnable,VSFieldable{
     }
 
 
-    HashMap<String,Object> additionalFields = new HashMap<String, Object>();
+    HashMap<String, java.lang.Object> additionalFields = new HashMap<String, java.lang.Object>();
     @Override public Set<String> getAllFields() {
         HashSet<String> names = new HashSet<String>();
         for(Method m:ReflectObject.methodsAll(clazz)){
@@ -122,7 +132,7 @@ public class ReflectClass implements VSRunnable,VSFieldable{
         return names;
     }
 
-    @Override public Object getField(String key) {
+    @Override public java.lang.Object getField(String key) {
         int diver = 0;
         if(key!=null) if (key.contains("/")) {
             String[] t = key.split("/");
@@ -145,13 +155,13 @@ public class ReflectClass implements VSRunnable,VSFieldable{
         try{
             Method m = methods.get(diver);
             m.setAccessible(true);
-            return new ReflectRunnable(methods.get(diver),scope);
+            return new ReflectRunnable(methods.get(diver),scope,key);
         } catch (Exception ignored){
             return null;
         }
     }
 
-    @Override public void setField(String key, Object value) {
+    @Override public void setField(String key, java.lang.Object value) {
         Field f = getStaticReflectField(key);
         if (f!=null) try {
             f.setAccessible(true);
@@ -177,17 +187,17 @@ public class ReflectClass implements VSRunnable,VSFieldable{
     }
 
     @Override
-    public VSRunnable getConstructor() {
+    public Runnable getConstructor() {
         return constructor;
     }
 
     @Override
-    public VSFieldable getProto() {
+    public Fieldable getProto() {
         return proto;
     }
 
     @Override
-    public void setProto(VSFieldable proto) {
+    public void setProto(Fieldable proto) {
         this.proto = proto;
     }
 

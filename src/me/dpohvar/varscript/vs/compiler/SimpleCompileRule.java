@@ -1,8 +1,8 @@
 package me.dpohvar.varscript.vs.compiler;
 
-import me.dpohvar.varscript.vs.VSCommandDebug;
-import me.dpohvar.varscript.vs.VSSimpleWorker;
-import me.dpohvar.varscript.vs.VSWorker;
+import me.dpohvar.varscript.vs.SimpleWorker;
+import me.dpohvar.varscript.vs.CommandDebug;
+import me.dpohvar.varscript.vs.Worker;
 import me.dpohvar.varscript.vs.exception.SourceException;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
@@ -20,7 +20,7 @@ public class SimpleCompileRule implements CompileRule {
     private final String output;
     private final String[] tags;
     private final String description;
-    private final VSSimpleWorker worker;
+    private final SimpleWorker worker;
 
     @Override public String toString(){
         return name;
@@ -33,7 +33,7 @@ public class SimpleCompileRule implements CompileRule {
             String output,
             String tags,
             String description,
-            VSSimpleWorker worker
+            SimpleWorker worker
     ){
         this.name = name;
         this.aliases = aliases.split(" ");
@@ -70,11 +70,11 @@ public class SimpleCompileRule implements CompileRule {
 
     @Override
     public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
-        functionSession.addCommand(new VSCommandDebug<Void>(worker,null, compileSession.getSource(),operand));
+        functionSession.addCommand(new CommandDebug<Void>(worker,null, compileSession.getSource(),operand));
     }
 
     @Override
-    public VSWorker[] getNewWorkersWithRules() {
-        return new VSWorker[]{worker};
+    public Worker[] getNewWorkersWithRules() {
+        return new Worker[]{worker};
     }
 }

@@ -1,6 +1,8 @@
 package me.dpohvar.varscript.utils;
 
 import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.FieldableObject;
+import me.dpohvar.varscript.vs.Runnable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -12,26 +14,26 @@ import java.util.*;
  * Date: 12.07.13
  * Time: 7:12
  */
-public class ReflectObject implements VSFieldable{
+public class ReflectObject implements Fieldable {
 
-    private final Object object;
+    private final java.lang.Object object;
     private final Class clazz;
-    private final VSScope scope;
-    private VSRunnable constructor;
-    private VSFieldable proto;
-    public ReflectObject(Object object,VSScope scope){
+    private final Scope scope;
+    private Runnable constructor;
+    private Fieldable proto;
+    public ReflectObject(java.lang.Object object,Scope scope){
         this.object = object;
         this.clazz = object.getClass();
         this.scope = scope;
         try{
-            this.constructor = (VSRunnable) scope.getVar("[[Reflect]]");
+            this.constructor = (Runnable) scope.getVar("[[Reflect]]");
             this.proto = constructor.getPrototype();
         } catch (Exception ignored){
-            proto = new VSObject(scope);
+            proto = new FieldableObject(scope);
         }
     }
 
-    public Object getObject(){
+    public java.lang.Object getObject(){
         return object;
     }
 
@@ -79,9 +81,11 @@ public class ReflectObject implements VSFieldable{
         return null;
     }
 
-    @Override public Object getField(String key) {
+    @Override public java.lang.Object getField(final String name) {
         int diver = 0;
-        if(key!=null) if (key.contains("/")) {
+        String key = name;
+        boolean noField =  key.contains("/");
+        if(key!=null) if (noField) {
             String[] t = key.split("/");
             if(t.length==2){
                 key=t[0];
@@ -91,18 +95,20 @@ public class ReflectObject implements VSFieldable{
                 }
             }
         }
-        Field f = getReflectField(key);
-        if (f!=null) try {
-            f.setAccessible(true);
-            return f.get(object);
-        } catch (Throwable ignored){
-            return null;
+        if(!noField){
+            Field f = getReflectField(key);
+            if (f!=null) try {
+                f.setAccessible(true);
+                return f.get(object);
+            } catch (Throwable ignored){
+                return null;
+            }
         }
         ArrayList<Method> methods = methodsByName(clazz,key);
         try{
             Method m = methods.get(diver);
             m.setAccessible(true);
-            return new ReflectRunnable(methods.get(diver),scope);
+            return new ReflectRunnable(methods.get(diver),scope,name);
         } catch (Exception ignored){
             return null;
         }
@@ -132,8 +138,8 @@ public class ReflectObject implements VSFieldable{
         return methods;
     }
 
-    HashMap<String,Object> additionalFields = new HashMap<String, Object>();
-    @Override public void setField(String key, Object value) {
+    HashMap<String, java.lang.Object> additionalFields = new HashMap<String, java.lang.Object>();
+    @Override public void setField(String key, java.lang.Object value) {
         Field f = getReflectField(key);
         if (f!=null) try {
             f.setAccessible(true);
@@ -157,15 +163,15 @@ public class ReflectObject implements VSFieldable{
         return false;
     }
 
-    @Override public VSRunnable getConstructor() {
+    @Override public Runnable getConstructor() {
         return constructor;
     }
 
-    @Override public VSFieldable getProto() {
+    @Override public Fieldable getProto() {
         return proto;
     }
 
-    @Override public void setProto(VSFieldable proto) {
+    @Override public void setProto(Fieldable proto) {
         this.proto = proto;
     }
 }

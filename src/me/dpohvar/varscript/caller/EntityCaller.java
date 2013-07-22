@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.caller;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 
@@ -26,4 +27,9 @@ public class EntityCaller extends Caller {
     public Location getLocation(){
         return entity.getLocation();
     }
+
+    public void send(Object message){
+        Bukkit.getLogger().info("["+entity+"] "+message);
+    }
+
 }

@@ -1,11 +1,6 @@
 package me.dpohvar.varscript.command;
 
-import me.dpohvar.varscript.VarScript;
 import me.dpohvar.varscript.caller.Caller;
-import me.dpohvar.varscript.vs.VSNamedCommandList;
-import me.dpohvar.varscript.vs.VSProgram;
-import me.dpohvar.varscript.vs.VSThread;
-import me.dpohvar.varscript.vs.VSThreadRunner;
 import me.dpohvar.varscript.vs.compiler.CompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import org.apache.commons.lang.StringUtils;
@@ -14,7 +9,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.

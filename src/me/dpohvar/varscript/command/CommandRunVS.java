@@ -1,11 +1,9 @@
 package me.dpohvar.varscript.command;
 
-import me.dpohvar.varscript.VarScript;
 import me.dpohvar.varscript.caller.Caller;
-import me.dpohvar.varscript.vs.VSNamedCommandList;
-import me.dpohvar.varscript.vs.VSProgram;
-import me.dpohvar.varscript.vs.VSThread;
-import me.dpohvar.varscript.vs.VSThreadRunner;
+import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Program;
+import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.Command;
@@ -19,16 +17,22 @@ import org.bukkit.command.CommandSender;
  * Time: 6:14
  */
 public class CommandRunVS implements CommandExecutor {
-    @Override
-    public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
+
+    private final me.dpohvar.varscript.Runtime runtime;
+
+    public CommandRunVS(me.dpohvar.varscript.Runtime runtime){
+        this.runtime = runtime;
+    }
+
+    @Override public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         Caller caller = Caller.getCallerFor(commandSender);
         try{
             String source = StringUtils.join(strings,' ');
-            VSNamedCommandList cmd = VSCompiler.compile(source);
-            VSProgram program = new VSProgram(VarScript.instance.runtime,caller);
-            VSThread thread = new VSThread(program);
-            thread.pushFunction(cmd.build(program.getScope()),null);
-            new VSThreadRunner(thread).runThreads();
+            NamedCommandList cmd = VSCompiler.compile(source);
+            Program program = new Program(runtime,caller);
+            Thread thread = new me.dpohvar.varscript.vs.Thread(program);
+            Context cc = thread.pushFunction(cmd.build(program.getScope()),program);
+            new ThreadRunner(thread).runThreads();
         } catch (Throwable e){
             caller.handleException(e);
         }

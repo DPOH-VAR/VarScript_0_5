@@ -1,6 +1,6 @@
 package me.dpohvar.varscript.vs.compiler;
 
-import me.dpohvar.varscript.vs.VSWorker;
+import me.dpohvar.varscript.vs.Worker;
 import me.dpohvar.varscript.vs.exception.SourceException;
 
 /**
@@ -16,6 +16,6 @@ public interface CompileRule {
     public String getDescription();
 
     public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException;
-    public VSWorker[] getNewWorkersWithRules();
+    public Worker[] getNewWorkersWithRules();
 
 }

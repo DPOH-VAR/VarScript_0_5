@@ -1,10 +1,11 @@
 package me.dpohvar.varscript.vs.compiler;
 
 import me.dpohvar.varscript.VarScript;
-import me.dpohvar.varscript.vs.VSCommand;
-import me.dpohvar.varscript.vs.VSCommandDebug;
-import me.dpohvar.varscript.vs.VSNamedCommandList;
-import me.dpohvar.varscript.vs.VSWorker;
+import me.dpohvar.varscript.converter.Converter;
+import me.dpohvar.varscript.vs.Command;
+import me.dpohvar.varscript.vs.CommandDebug;
+import me.dpohvar.varscript.vs.NamedCommandList;
+import me.dpohvar.varscript.vs.Worker;
 import me.dpohvar.varscript.vs.exception.*;
 import me.dpohvar.varscript.vs.init.*;
 
@@ -24,16 +25,31 @@ import java.util.zip.GZIPInputStream;
 public class VSCompiler {
 
     static Collection<CompileRule> compileRules = new LinkedList<CompileRule>();
-    static Object[] readRules = new Object[255];
+    static Object[] readRules = new Object[256];
     static HashMap<String,Set<CompileRule>> tags = new HashMap<String, Set<CompileRule>>();
+    static HashSet<String> validatorDescription = new HashSet<String>();
+    static HashSet<String> validatorName = new HashSet<String>();
 
     static{
-        InitStack.load();
-        InitMathematic.load();
+        InitCallback.load();
         InitDynamic.load();
+        InitEntity.load();
+        InitList.load();
+        InitLiving.load();
+        InitLocation.load();
         InitLogic.load();
-        InitString.load();
+        InitMathematic.load();
         InitMultiThread.load();
+        InitPlayer.load();
+        InitStack.load();
+        InitString.load();
+        InitVector.load();
+    }
+
+    private static Converter converter;
+
+    public static void init(Converter converter){
+        VSCompiler.converter = converter;
     }
 
     public static Set<CompileRule> getRules(String tag){
@@ -51,9 +67,13 @@ public class VSCompiler {
     }
 
     public static void addRule(CompileRule rule){
+        if (validatorDescription.contains(rule.getDescription())) throw new RuntimeException(rule.toString()+" DESC NOT VALID!!!!");
+        validatorDescription.add(rule.getDescription());
+        if (validatorName.contains(rule.toString())) throw new RuntimeException(rule.toString()+" NAME NOT VALID!!!!");
+        validatorName.add(rule.toString());
         compileRules.add(rule);
-        VSWorker[] workers = rule.getNewWorkersWithRules();
-        if(workers!=null) for(VSWorker worker:workers){
+        Worker[] workers = rule.getNewWorkersWithRules();
+        if(workers!=null) for(Worker worker:workers){
             addWorkerToRules(worker);
         }
         for(String s:rule.getTags()){
@@ -62,7 +82,7 @@ public class VSCompiler {
         }
     }
 
-    public static VSNamedCommandList read(InputStream input) throws IOException {
+    public static NamedCommandList read(InputStream input) throws IOException {
         int size = input.read();
         if(size==-1) throw new RuntimeException("can't read commands: EOS");
         if(size==255){ //read name length
@@ -89,18 +109,18 @@ public class VSCompiler {
         return readSession.commandList;
     }
 
-    private static void addWorkerToRules(VSWorker worker){
+    private static void addWorkerToRules(Worker worker){
         byte[] wBytes = worker.getBytes();
         byte id = wBytes[wBytes.length-1];
         byte[] sBytes = new byte[wBytes.length-1];
         System.arraycopy(wBytes, 0, sBytes, 0, sBytes.length);
         Object[] current = readRules;
         for(byte b:sBytes){
-            if(current[b&0xFF]==null) current[b&0xFF] = new Object[255];
+            if(current[b&0xFF]==null) current[b&0xFF] = new Object[256];
             if(current[b&0xFF] instanceof  Object[]) current = (Object[]) current[b&0xFF];
             else throw new RuntimeException("can not add worker to rules: rule already exists");
         }
-        if(current[id&0xFF]!=null) throw new RuntimeException("can not add worker to rules: worker already exists");
+        if(current[id&0xFF]!=null) throw new RuntimeException("can not add worker to rules: worker already exists "+current[id&0xFF]);
         current[id&0xFF]=worker;
 
     }
@@ -108,8 +128,8 @@ public class VSCompiler {
     private static void readCommandByBytes(Object[] readRules,InputStream input,ReadSession session) throws IOException {
         int pos = input.read();
         Object got = readRules[pos];
-        if(got instanceof VSWorker){
-            VSWorker w = (VSWorker) got;
+        if(got instanceof Worker){
+            Worker w = (Worker) got;
             Object data = w.readObject(input,session);
              session.addCommand(w, data);
         } else if (got instanceof  Object[]){
@@ -117,7 +137,7 @@ public class VSCompiler {
         } else throw new RuntimeException("bytecode error: "+pos+"="+got);
     }
 
-    public static VSNamedCommandList compile(String name,CompileSession compileSession, boolean first) throws SourceException {
+    public static NamedCommandList compile(String name,CompileSession compileSession, boolean first) throws SourceException {
         FunctionSession functionSession = compileSession.newFunctionSession(name);
         try{
             whileForOperands: while(functionSession.hasOperand()){
@@ -147,43 +167,43 @@ public class VSCompiler {
         }
         return functionSession.getCommandList();
     }
-    public static VSNamedCommandList compile(String source) throws SourceException {
+    public static NamedCommandList compile(String source) throws SourceException {
         return compile(source,"");
     }
 
-    public static VSNamedCommandList compile(String source,String name) throws SourceException {
+    public static NamedCommandList compile(String source,String name) throws SourceException {
         if (name==null) name="";
-        CompileSession compileSession = new CompileSession(source);
+        CompileSession compileSession = new CompileSession(source,converter);
         return compile(name, compileSession, true);
     }
 
     public static class ReadSession {
 
-        private final VSNamedCommandList commandList;
-        private final ArrayList<VSCommand> commands = new ArrayList<VSCommand>();
-        private final ArrayList<VSCommand> commandsAfter = new ArrayList<VSCommand>();
+        private final NamedCommandList commandList;
+        private final ArrayList<Command> commands = new ArrayList<Command>();
+        private final ArrayList<Command> commandsAfter = new ArrayList<Command>();
         public ReadSession(String funName){
-            commandList = new VSNamedCommandList(commands,funName);
+            commandList = new NamedCommandList(commands,funName);
         }
-        public <T> void addCommand(VSCommand<T> command){
+        public <T> void addCommand(Command<T> command){
             commands.add(command);
             commands.addAll(commandsAfter);
             commandsAfter.clear();
         }
-        public <T> void addCommand(VSWorker<T> worker, T data){
-            addCommand(new VSCommand<T>(worker,data));
+        public <T> void addCommand(Worker<T> worker, T data){
+            addCommand(new Command<T>(worker,data));
         }
-        public <T> void addCommandAfter(VSCommand<T> command){
+        public <T> void addCommandAfter(Command<T> command){
             commandsAfter.add(command);
         }
-        public <T> void addCommandAfter(VSWorker<T> worker, T data){
-            commandsAfter.add(new VSCommand<T>(worker,data));
+        public <T> void addCommandAfter(Worker<T> worker, T data){
+            commandsAfter.add(new Command<T>(worker,data));
         }
     }
 
     public static class FunctionSession {
-        private final ArrayList<VSCommand> commands = new ArrayList<VSCommand>();
-        private final VSNamedCommandList commandList;
+        private final ArrayList<Command> commands = new ArrayList<Command>();
+        private final NamedCommandList commandList;
         private final JumpStack jumpStack = new JumpStack();
         private final JumpStack metaJumpStack = new JumpStack();
         private final Queue<VSSmartParser.ParsedOperand> operands;
@@ -202,32 +222,32 @@ public class VSCompiler {
         }
 
         public FunctionSession(String name,Queue<VSSmartParser.ParsedOperand> operands,String source) throws ParseException {
-            this.commandList = new VSNamedCommandList(commands,name);
+            this.commandList = new NamedCommandList(commands,name);
             this.operands = operands;
             this.source = source;
         }
 
-        public void addCommand(VSCommand command){
+        public void addCommand(Command command){
             commands.add(command);
         }
 
-        public void setCommand(int position,VSCommand command){
+        public void setCommand(int position,Command command){
             commands.set(position,command);
         }
 
-        public <T> void addCommand(VSWorker<T> worker,T object,VSSmartParser.ParsedOperand operand){
-            commands.add(new VSCommandDebug<T>(worker,object,source,operand));
+        public <T> void addCommand(Worker<T> worker,T object,VSSmartParser.ParsedOperand operand){
+            commands.add(new CommandDebug<T>(worker,object,source,operand));
         }
 
-        public <T> void setCommand(int position,VSWorker<T> worker,T object,VSSmartParser.ParsedOperand operand){
-            commands.set(position,new VSCommandDebug<T>(worker,object,source,operand));
+        public <T> void setCommand(int position,Worker<T> worker,T object,VSSmartParser.ParsedOperand operand){
+            commands.set(position,new CommandDebug<T>(worker,object,source,operand));
         }
 
         public int getCurrentPos(){
             return commands.size();
         }
 
-        public VSNamedCommandList getCommandList(){
+        public NamedCommandList getCommandList(){
             return commandList;
         }
 
@@ -284,13 +304,15 @@ public class VSCompiler {
     }
 
     public static class CompileSession {
+        public final Converter converter;
         private final HashSet<String> varNames = new HashSet<String>();
         private final String source;
         private final Queue<VSSmartParser.ParsedOperand> operands;
 
-        public CompileSession(String source) throws ParseException {
+        public CompileSession(String source,Converter converter) throws ParseException {
             this.source = source;
             this.operands = VSSmartParser.parse(source);
+            this.converter = converter;
         }
 
         public FunctionSession newFunctionSession(String name) throws ParseException {

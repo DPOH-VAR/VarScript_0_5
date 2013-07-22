@@ -18,6 +18,13 @@ public abstract class SourceException extends Exception {
         this.col = col;
     }
 
+    public SourceException(String source,int row,int col,String reason) {
+        super(reason);
+        this.source = source;
+        this.row = row;
+        this.col = col;
+    }
+
     public String getErrorString(){
         if(source==null) return ChatColor.translateAlternateColorCodes('&',"&c[no source]&r");
         String[] lines = source.split("\n");

@@ -1,14 +1,14 @@
 package me.dpohvar.varscript.vs.init;
 
 import me.dpohvar.varscript.caller.Caller;
-import me.dpohvar.varscript.vs.VSContext;
-import me.dpohvar.varscript.vs.VSSimpleWorker;
-import me.dpohvar.varscript.vs.VSThread;
-import me.dpohvar.varscript.vs.VSThreadRunner;
+import me.dpohvar.varscript.vs.Context;
+import me.dpohvar.varscript.vs.SimpleWorker;
+import me.dpohvar.varscript.vs.Thread;
+import me.dpohvar.varscript.vs.ThreadRunner;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.vs.converter.ConvertException;
-import me.dpohvar.varscript.vs.converter.Converter;
+import me.dpohvar.varscript.converter.ConvertException;
+import me.dpohvar.varscript.converter.Converter;
 
 
 /**
@@ -26,8 +26,8 @@ public class InitMathematic {
                 "Integer(C)",
                 "math",
                 "put to stack (A+B)",
-                new VSSimpleWorker(new int[]{0x30}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x30}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         int b = v.pop(Integer.class);
                         int a = v.pop(Integer.class);
                         v.push(a+b);
@@ -41,8 +41,8 @@ public class InitMathematic {
                 "Integer(C)",
                 "math",
                 "put to stack (A-B)",
-                new VSSimpleWorker(new int[]{0x31}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x31}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         int b = v.pop(Integer.class);
                         int a = v.pop(Integer.class);
                         v.push(a-b);
@@ -56,8 +56,8 @@ public class InitMathematic {
                 "Integer(C)",
                 "math",
                 "put to stack (A*B)",
-                new VSSimpleWorker(new int[]{0x32}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x32}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         int b = v.pop(Integer.class);
                         int a = v.pop(Integer.class);
                         v.push(a*b);
@@ -71,8 +71,8 @@ public class InitMathematic {
                 "Integer(C)",
                 "math",
                 "put to stack (A/B)",
-                new VSSimpleWorker(new int[]{0x33}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x33}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         int b = v.pop(Integer.class);
                         int a = v.pop(Integer.class);
                         v.push(a/b);
@@ -86,8 +86,8 @@ public class InitMathematic {
                 "Double(C)",
                 "math",
                 "put to stack (A+B)",
-                new VSSimpleWorker(new int[]{0x34}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x34}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double b = v.pop(Double.class);
                         double a = v.pop(Double.class);
                         v.push(a+b);
@@ -101,8 +101,8 @@ public class InitMathematic {
                 "Double(C)",
                 "math",
                 "put to stack (A-B)",
-                new VSSimpleWorker(new int[]{0x35}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x35}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double b = v.pop(Double.class);
                         double a = v.pop(Double.class);
                         v.push(a-b);
@@ -116,8 +116,8 @@ public class InitMathematic {
                 "Double(C)",
                 "math",
                 "put to stack (A*B)",
-                new VSSimpleWorker(new int[]{0x36}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x36}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double b = v.pop(Double.class);
                         double a = v.pop(Double.class);
                         v.push(a*b);
@@ -131,8 +131,8 @@ public class InitMathematic {
                 "Double(C)",
                 "math",
                 "put to stack (A/B)",
-                new VSSimpleWorker(new int[]{0x37}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x37}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double b = v.pop(Double.class);
                         double a = v.pop(Double.class);
                         v.push(a/b);
@@ -146,8 +146,8 @@ public class InitMathematic {
                 "Long(C)",
                 "math",
                 "put to stack (A+B)",
-                new VSSimpleWorker(new int[]{0x38}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x38}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         long b = v.pop(Long.class);
                         long a = v.pop(Long.class);
                         v.push(a+b);
@@ -161,8 +161,8 @@ public class InitMathematic {
                 "Long(C)",
                 "math",
                 "put to stack (A-B)",
-                new VSSimpleWorker(new int[]{0x39}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x39}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         long b = v.pop(Long.class);
                         long a = v.pop(Long.class);
                         v.push(a-b);
@@ -176,8 +176,8 @@ public class InitMathematic {
                 "Long(C)",
                 "math",
                 "put to stack (A*B)",
-                new VSSimpleWorker(new int[]{0x3A}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3A}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         long b = v.pop(Long.class);
                         long a = v.pop(Long.class);
                         v.push(a*b);
@@ -191,8 +191,8 @@ public class InitMathematic {
                 "Long(C)",
                 "math",
                 "put to stack (A/B)",
-                new VSSimpleWorker(new int[]{0x3B}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3B}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         long b = v.pop(Long.class);
                         long a = v.pop(Long.class);
                         v.push(a/b);
@@ -207,8 +207,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the absolute value of A",
-                new VSSimpleWorker(new int[]{0x3F,0x00}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x00}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.abs(a));
                     }
@@ -221,8 +221,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the arc cosine of A",
-                new VSSimpleWorker(new int[]{0x3F,0x01}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x01}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.acos(a));
                     }
@@ -235,8 +235,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the arc tangent of A",
-                new VSSimpleWorker(new int[]{0x3F,0x02}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x02}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.atan(a));
                     }
@@ -249,8 +249,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the arc sine of A",
-                new VSSimpleWorker(new int[]{0x3F,0x03}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x03}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.asin(a));
                     }
@@ -263,8 +263,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the cube root of A",
-                new VSSimpleWorker(new int[]{0x3F,0x04}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x04}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.cbrt(a));
                     }
@@ -277,8 +277,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the smallest",
-                new VSSimpleWorker(new int[]{0x3F,0x05}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x05}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.ceil(a));
                     }
@@ -291,8 +291,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the trigonometric cosine of an angle",
-                new VSSimpleWorker(new int[]{0x3F,0x06}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x06}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.cos(a));
                     }
@@ -305,8 +305,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the hyperbolic cosine of A",
-                new VSSimpleWorker(new int[]{0x3F,0x07}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x07}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.cosh(a));
                     }
@@ -319,8 +319,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the hyperbolic sine of A",
-                new VSSimpleWorker(new int[]{0x3F,0x08}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x08}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.sinh(a));
                     }
@@ -333,22 +333,23 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns Euler's number",
-                new VSSimpleWorker(new int[]{0x3F,0x09}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x09}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.exp(a));
                     }
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "EXP",
-                "EXP",
+                "FLOOR",
+                "FLOOR",
                 "Double(A)",
                 "Double(B)",
                 "math",
-                "Returns the largest",
-                new VSSimpleWorker(new int[]{0x3F,0x0A}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                "Returns the largest double value that is less than or equal to the " +
+                "argument and is equal to a mathematical integer",
+                new SimpleWorker(new int[]{0x3F,0x0A}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.floor(a));
                     }
@@ -361,8 +362,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the natural logarithm of A",
-                new VSSimpleWorker(new int[]{0x3F,0x0B}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x0B}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.log(a));
                     }
@@ -375,8 +376,8 @@ public class InitMathematic {
                 "PI",
                 "math",
                 "Put to stack PI",
-                new VSSimpleWorker(new int[]{0x3F,0x0C}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x0C}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(Math.PI);
                     }
                 }
@@ -388,8 +389,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the hyperbolic tangent of A",
-                new VSSimpleWorker(new int[]{0x3F,0x0D}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x0D}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.tanh(a));
                     }
@@ -402,8 +403,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Returns the correctly rounded positive square root of A",
-                new VSSimpleWorker(new int[]{0x3F,0x0E}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x0E}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         double a = v.pop(Double.class);
                         v.push(Math.sqrt(a));
                     }
@@ -416,8 +417,8 @@ public class InitMathematic {
                 "Double(B)",
                 "math",
                 "Put to stack a random number (0 <= B < 1)",
-                new VSSimpleWorker(new int[]{0x3F,0x0F}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3F,0x0F}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(Math.random());
                     }
                 }
@@ -429,8 +430,8 @@ public class InitMathematic {
                 "Double",
                 "math",
                 "Put to stack a min number of A and B",
-                new VSSimpleWorker(new int[]{0x3C}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3C}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Object a = v.pop();
                         Object b = v.pop();
                         Converter c = v.getProgram().getRuntime().converter;
@@ -445,8 +446,8 @@ public class InitMathematic {
                 "Double",
                 "math",
                 "Put to stack a max number of A and B",
-                new VSSimpleWorker(new int[]{0x3D}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x3D}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Object a = v.pop();
                         Object b = v.pop();
                         Converter c = v.getProgram().getRuntime().converter;

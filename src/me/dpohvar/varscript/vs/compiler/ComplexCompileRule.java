@@ -1,6 +1,6 @@
 package me.dpohvar.varscript.vs.compiler;
 
-import me.dpohvar.varscript.vs.VSWorker;
+import me.dpohvar.varscript.vs.Worker;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 
@@ -52,7 +52,7 @@ public abstract class ComplexCompileRule implements CompileRule {
         return builder.toString();
     }
 
-    @Override public VSWorker[] getNewWorkersWithRules() {
+    @Override public Worker[] getNewWorkersWithRules() {
         return null;
     }
 }

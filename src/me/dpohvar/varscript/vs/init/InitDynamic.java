@@ -1,11 +1,15 @@
 package me.dpohvar.varscript.vs.init;
 
 import me.dpohvar.varscript.VarScript;
+import me.dpohvar.varscript.caller.Caller;
+import me.dpohvar.varscript.converter.Converter;
 import me.dpohvar.varscript.utils.ReflectClass;
 import me.dpohvar.varscript.utils.ScriptManager;
 import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Runnable;
+import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.*;
-import me.dpohvar.varscript.vs.converter.ConvertException;
+import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.vs.exception.CloseFunction;
 import me.dpohvar.varscript.vs.exception.CommandException;
 import me.dpohvar.varscript.vs.exception.SourceException;
@@ -26,8 +30,8 @@ import java.util.*;
  * Time: 18:05
  */
 public class InitDynamic {
-    public static VSWorker<String> wGetVariable = new VSWorker<String>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, String d) throws Exception {
+    public static Worker<String> wGetVariable = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
             v.push(f.getScope().getVar(d));
         }
         @Override public void save(OutputStream out, String data) throws IOException {
@@ -47,8 +51,8 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<String> wSetVariable = new VSWorker<String>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, String d) throws Exception {
+    public static Worker<String> wSetVariable = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
             f.getScope().setVar(d,v.pop());
         }
         @Override public void save(OutputStream out, String data) throws IOException {
@@ -68,8 +72,8 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<String> wDefineVariable = new VSWorker<String>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, String d) throws Exception {
+    public static Worker<String> wDefineVariable = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
             f.getScope().defineVar(d, v.pop());
         }
         @Override public void save(OutputStream out, String data) throws IOException {
@@ -89,8 +93,8 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<Object> wPutObject = new VSWorker<Object>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Object d) throws Exception {
+    public static Worker<Object> wPutObject = new Worker<Object>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Object d) throws Exception {
             v.push(d);
         }
         @Override public void save(OutputStream out, Object data) throws IOException {
@@ -105,42 +109,42 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<VSNamedCommandList> wPutFunction = new VSWorker<VSNamedCommandList>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, VSNamedCommandList d) throws Exception {
+    public static Worker<NamedCommandList> wPutFunction = new Worker<NamedCommandList>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, NamedCommandList d) throws Exception {
             v.push(d.build(f.getScope()));
         }
-        @Override public void save(OutputStream out, VSNamedCommandList data) throws IOException {
+        @Override public void save(OutputStream out, NamedCommandList data) throws IOException {
             out.write(0x14);
             data.save(out);
         }
         @Override public byte[] getBytes() {
             return new byte[]{0x14};
         }
-        @Override public VSNamedCommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
+        @Override public NamedCommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
             return VSCompiler.read(input);
         }
     };
 
-    public static VSWorker<VSNamedCommandList> wDefineFunction = new VSWorker<VSNamedCommandList>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, VSNamedCommandList d) throws Exception {
+    public static Worker<NamedCommandList> wDefineFunction = new Worker<NamedCommandList>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, NamedCommandList d) throws Exception {
             f.getScope().defineVar(d.getName(), d.build(f.getScope()));
         }
-        @Override public void save(OutputStream out, VSNamedCommandList data) throws IOException {
+        @Override public void save(OutputStream out, NamedCommandList data) throws IOException {
             out.write(0x15);
             data.save(out);
         }
         @Override public byte[] getBytes() {
             return new byte[]{0x15};
         }
-        @Override public VSNamedCommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
+        @Override public NamedCommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
             return VSCompiler.read(input);
         }
     };
 
-    public static VSWorker<Void> wRunNew = new VSWorker<Void>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws Exception {
+    public static Worker<Void> wRunNew = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
             Object some = v.pop();
-            VSRunnable runnable = null;
+            Runnable runnable = null;
             if(some instanceof String){
                 try{
                     runnable = new ReflectClass((String)some,f.getScope());
@@ -149,12 +153,12 @@ public class InitDynamic {
             }
             if (runnable==null) {
                 try{
-                    runnable = v.convert(VSRunnable.class,some);
+                    runnable = v.convert(Runnable.class,some);
                 } catch (ConvertException ignored){
-                    runnable = v.convert(VSNamedCommandList.class,some).build(f.getScope());
+                    runnable = v.convert(NamedCommandList.class,some).build(f.getScope());
                 }
             }
-            VSFieldable o = new VSContext(runnable,null);
+            Fieldable o = new Context(runnable,null);
             f.setRegisterF(o);
             v.pushFunction(runnable,o);
             throw interruptFunction;
@@ -171,8 +175,8 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<Void> wReadRegisterF = new VSWorker<Void>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws Exception {
+    public static Worker<Void> wReadRegisterF = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
             v.push(f.getRegisterF());
         }
         @Override public void save(OutputStream out, Void data) throws IOException {
@@ -185,9 +189,9 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<String> wGetField = new VSWorker<String>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, String d) throws Exception {
-            v.push(v.pop(VSFieldable.class).getField(d));
+    public static Worker<String> wGetField = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
+            v.push(v.pop(Fieldable.class).getField(d));
         }
         @Override public void save(OutputStream out, String data) throws IOException {
             out.write(0x17);
@@ -206,9 +210,9 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<String> wSetField = new VSWorker<String>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, String d) throws Exception {
-            v.pop(VSFieldable.class).setField(d,v.pop());
+    public static Worker<String> wSetField = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
+            v.pop(Fieldable.class).setField(d,v.pop());
         }
         @Override public void save(OutputStream out, String data) throws IOException {
             out.write(0x18);
@@ -227,10 +231,10 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<String> wRunField = new VSWorker<String>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, String d) throws Exception {
-            VSFieldable obj = v.pop(VSFieldable.class);
-            VSRunnable runnable = (VSRunnable) obj.getField(d);
+    public static Worker<String> wRunField = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
+            Fieldable obj = v.pop(Fieldable.class);
+            Runnable runnable = (Runnable) obj.getField(d);
             v.pushFunction(runnable,obj);
             throw interruptFunction;
         }
@@ -252,23 +256,23 @@ public class InitDynamic {
         }
     };
 
-    public static VSSimpleWorker wRun = new VSSimpleWorker(new int[]{0x1A}) {
+    public static SimpleWorker wRun = new SimpleWorker(new int[]{0x1A}) {
         @Override
-        public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws Exception {
+        public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
             Object t = v.pop();
-            VSRunnable runnable;
+            Runnable runnable;
             try{
-                runnable = v.convert(VSRunnable.class,t);
+                runnable = v.convert(Runnable.class,t);
             } catch (ConvertException ignored){
-                runnable = v.convert(VSNamedCommandList.class,t).build(f.getScope());
+                runnable = v.convert(NamedCommandList.class,t).build(f.getScope());
             }
             v.pushFunction(runnable, f);
             throw interruptFunction;
         }
     };
 
-    public static VSWorker<Integer> wJump = new VSWorker<Integer>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Integer d) throws Exception {
+    public static Worker<Integer> wJump = new Worker<Integer>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Integer d) throws Exception {
             f.jumpPointer(d);
 
         }
@@ -293,8 +297,8 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<Integer> wJumpFalse = new VSWorker<Integer>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Integer d) throws Exception {
+    public static Worker<Integer> wJumpFalse = new Worker<Integer>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Integer d) throws Exception {
             if(!v.pop(Boolean.class)) f.jumpPointer(d);
         }
         @Override public void save(OutputStream out, Integer data) throws IOException {
@@ -318,8 +322,8 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<Integer> wJumpTrue = new VSWorker<Integer>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Integer d) throws Exception {
+    public static Worker<Integer> wJumpTrue = new Worker<Integer>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Integer d) throws Exception {
             if(v.pop(Boolean.class)) f.jumpPointer(d);
         }
         @Override public void save(OutputStream out, Integer data) throws IOException {
@@ -343,8 +347,8 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<Integer> wJumpInt = new VSWorker<Integer>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Integer d) throws Exception {
+    public static Worker<Integer> wJumpInt = new Worker<Integer>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Integer d) throws Exception {
             f.jumpPointer(v.pop(Integer.class));
         }
         @Override public void save(OutputStream out, Integer data) throws IOException {
@@ -368,11 +372,11 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<VSNamedCommandList> wSetFunctionForThis = new VSWorker<VSNamedCommandList>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, VSNamedCommandList d) throws Exception {
-            v.convert(VSFieldable.class,f.getApply()).setField(d.getName(),d.build(f.getScope()));
+    public static Worker<NamedCommandList> wSetFunctionForThis = new Worker<NamedCommandList>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, NamedCommandList d) throws Exception {
+            v.convert(Fieldable.class,f.getApply()).setField(d.getName(),d.build(f.getScope()));
         }
-        @Override public void save(OutputStream out, VSNamedCommandList data) throws IOException {
+        @Override public void save(OutputStream out, NamedCommandList data) throws IOException {
             out.write(0x1F);
             out.write(0x10);
             data.save(out);
@@ -380,14 +384,14 @@ public class InitDynamic {
         @Override public byte[] getBytes() {
             return new byte[]{0x1F,0x10};
         }
-        @Override public VSNamedCommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
+        @Override public NamedCommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
             return VSCompiler.read(input);
         }
     };
 
-    public static VSWorker<String> wSetFieldForThis = new VSWorker<String>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, String d) throws Exception {
-            v.convert(VSFieldable.class,f.getApply()).setField(d,v.pop());
+    public static Worker<String> wSetFieldForThis = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
+            v.convert(Fieldable.class,f.getApply()).setField(d,v.pop());
         }
         @Override public void save(OutputStream out, String data) throws IOException {
             out.write(0x1F);
@@ -407,14 +411,14 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<Void> wApply = new VSWorker<Void>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws Exception {
-            VSFieldable obj = v.pop(VSFieldable.class);
-            VSRunnable runnable;
+    public static Worker<Void> wApply = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+            Fieldable obj = v.pop(Fieldable.class);
+            Runnable runnable;
             try{
-                runnable = v.peek(VSRunnable.class);
+                runnable = v.peek(Runnable.class);
             } catch (ConvertException ignored){
-                runnable = v.peek(VSNamedCommandList.class).build(f.getScope());
+                runnable = v.peek(NamedCommandList.class).build(f.getScope());
             }
             v.pushFunction(runnable,obj);
             throw interruptFunction;
@@ -431,8 +435,8 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<String> wFunctionFromFile = new VSWorker<String>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, String d) throws Exception {
+    public static Worker<String> wFunctionFromFile = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
             ScriptManager manager = v.getProgram().getRuntime().scriptManager;
             InputStream input = manager.openScriptFile("vsbin",d);
             if(input!=null) {
@@ -465,8 +469,8 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<String> wDelVariable = new VSWorker<String>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, String d) throws Exception {
+    public static Worker<String> wDelVariable = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
             f.getScope().delVar(d);
         }
         @Override public void save(OutputStream out, String data) throws IOException {
@@ -487,9 +491,9 @@ public class InitDynamic {
         }
     };
 
-    public static VSWorker<String> wRemoveField = new VSWorker<String>() {
-        @Override public void run(VSThreadRunner r, VSThread v, VSContext f, String d) throws Exception {
-            v.pop(VSFieldable.class).removeField(d);
+    public static Worker<String> wRemoveField = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
+            v.pop(Fieldable.class).removeField(d);
         }
         @Override public void save(OutputStream out, String data) throws IOException {
             out.write(0x1F);
@@ -509,7 +513,32 @@ public class InitDynamic {
         }
     };
 
-
+    public static Worker<Class> wConvert = new Worker<Class>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Class d) throws Exception {
+            v.push(v.pop(d));
+        }
+        @Override public void save(OutputStream out, Class data) throws IOException {
+            out.write(0x1F);
+            out.write(0x16);
+            byte[] bytes = data.getName().getBytes(VarScript.UTF8);
+            out.write(bytes.length);
+            out.write(bytes);
+        }
+        @Override public byte[] getBytes() {
+            return new byte[]{0x1F,0x16};
+        }
+        @Override public Class readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
+            int len = input.read();
+            byte[] bytes = new byte[len];
+            input.read(bytes);
+            String name = new String(bytes, VarScript.UTF8);
+            try{
+                return Class.forName(name);
+            } catch (ClassNotFoundException e){
+                throw new IOException("can't read class "+name,e);
+            }
+        }
+    };
 
 
 
@@ -674,8 +703,7 @@ public class InitDynamic {
                 out.write(bytes.length);
                 out.write(bytes);
             }
-            out.write(ByteBuffer.allocate(8).putFloat((Float)object).array());
-        } else if(object instanceof Character){
+         } else if(object instanceof Character){
             out.write(0xF8);
             out.write(ByteBuffer.allocate(2).putChar((Character)object).array());
         }
@@ -744,8 +772,8 @@ public class InitDynamic {
                 functionSession.addCommand(wGetVariable,object,operand);
                 compileSession.addVarName(object);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wGetVariable};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wGetVariable};
             }
         });
 
@@ -758,8 +786,8 @@ public class InitDynamic {
                 functionSession.addCommand(wSetVariable,object,operand);
                 compileSession.addVarName(object);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wSetVariable};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wSetVariable};
             }
         });
 
@@ -771,8 +799,8 @@ public class InitDynamic {
                 String object = operand.builder.toString().substring(1);
                 functionSession.addCommand(wDelVariable,object,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wDelVariable};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wDelVariable};
             }
         });
 
@@ -786,8 +814,8 @@ public class InitDynamic {
                 functionSession.addCommand(wDefineVariable,object,operand);
                 compileSession.addVarName(object);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wDefineVariable};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wDefineVariable};
             }
         });
 
@@ -800,8 +828,23 @@ public class InitDynamic {
                 String str = op.substring(1,op.length()-1);
                 functionSession.addCommand(wPutObject,str,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wPutObject};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wPutObject};
+            }
+        });
+
+        VSCompiler.addRule(new ComplexCompileRule("+\"string\"","stack string","String","String","append string. Example: \"Hello \" +\" World\""){ //0x13
+            @Override public boolean checkCondition(String string) {
+                return string.startsWith("+\"") && string.endsWith("\"") && string.length()>1;
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) {
+                String op = operand.toString();
+                String str = op.substring(2,op.length()-1);
+                functionSession.addCommand(wPutObject,str,operand);
+                functionSession.addCommand(InitString.wConcat,null,operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
+                return null;
             }
         });
 
@@ -812,7 +855,7 @@ public class InitDynamic {
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) {
                 functionSession.addCommand(wPutObject,Integer.parseInt(operand.toString()),operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -826,7 +869,7 @@ public class InitDynamic {
                 String val = op.substring(0,op.length()-1);
                 functionSession.addCommand(wPutObject,Long.parseLong(val),operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -840,7 +883,7 @@ public class InitDynamic {
                 String val = op.substring(0,op.length()-1);
                 functionSession.addCommand(wPutObject,Long.parseLong(val),operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -853,7 +896,7 @@ public class InitDynamic {
                 String op = operand.toString();
                 functionSession.addCommand(wPutObject,Double.parseDouble(op),operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -865,7 +908,7 @@ public class InitDynamic {
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) {
                 functionSession.addCommand(wPutObject,null,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -879,19 +922,19 @@ public class InitDynamic {
                 String name = op.substring(0,op.length()-1);
                 functionSession.addCommand(wPutFunction,VSCompiler.compile(name,compileSession,false),operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wPutFunction};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wPutFunction};
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("Function{...}","stack function","","Function","put new function to stack"){ //0x14
+        VSCompiler.addRule(new ComplexCompileRule("Function{...} ","stack function","","Function","put new function to stack "){ //0x14
             @Override public boolean checkCondition(String string) {
                 return string.equals("}");
             }
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
                 throw new CloseFunction(compileSession.getSource(),operand.row,operand.col);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -906,8 +949,8 @@ public class InitDynamic {
                 functionSession.addCommand(wDefineFunction,VSCompiler.compile(name,compileSession,false),operand);
                 compileSession.addVarName(name);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wDefineFunction};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wDefineFunction};
             }
         });
 
@@ -918,8 +961,8 @@ public class InitDynamic {
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
                 functionSession.addCommand(wRun,null,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wRun};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wRun};
             }
         });
 
@@ -931,8 +974,8 @@ public class InitDynamic {
                 functionSession.addCommand(wRunNew,null,operand);
                 functionSession.addCommand(wReadRegisterF,null,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wRunNew};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wRunNew};
             }
         });
 
@@ -946,7 +989,7 @@ public class InitDynamic {
                 functionSession.addCommand(wRunNew,null,operand);
                 functionSession.addCommand(wReadRegisterF,null,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -959,8 +1002,8 @@ public class InitDynamic {
                 String name = operand.builder.toString().substring(1);
                 functionSession.addCommand(wGetField,name,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wGetField};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wGetField};
             }
         });
 
@@ -972,8 +1015,8 @@ public class InitDynamic {
                 String name = operand.builder.toString().substring(2);
                 functionSession.addCommand(wSetField,name,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wSetField};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wSetField};
             }
         });
 
@@ -985,8 +1028,8 @@ public class InitDynamic {
                 String name = operand.builder.toString().substring(2);
                 functionSession.addCommand(wRemoveField,name,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wRemoveField};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wRemoveField};
             }
         });
 
@@ -999,8 +1042,8 @@ public class InitDynamic {
                 String name = operand.builder.toString().substring(1);
                 functionSession.addCommand(wRunField,name,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wRunField};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wRunField};
             }
         });
 
@@ -1027,7 +1070,7 @@ public class InitDynamic {
                 functionSession.addJump(operand,"IF");
                 functionSession.addCommand(null);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -1064,8 +1107,8 @@ public class InitDynamic {
                 }
                 functionSession.popJump();
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wJumpFalse,wJump};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wJumpFalse,wJump};
             }
         });
 
@@ -1101,7 +1144,7 @@ public class InitDynamic {
                 functionSession.addJump(operand,"ELSE");
                 functionSession.addCommand(null);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -1129,7 +1172,7 @@ public class InitDynamic {
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
                 functionSession.addJump(operand,"BEGIN");
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -1157,7 +1200,7 @@ public class InitDynamic {
                 functionSession.addMetaJump(operand,"WHILE");
                 functionSession.addCommand(null);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -1185,7 +1228,7 @@ public class InitDynamic {
                 functionSession.addMetaJump(operand,"CONTINUE");
                 functionSession.addCommand(null);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -1213,7 +1256,7 @@ public class InitDynamic {
                 functionSession.addMetaJump(operand,"IFCONTINUE");
                 functionSession.addCommand(null);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -1241,7 +1284,7 @@ public class InitDynamic {
                 functionSession.addMetaJump(operand,"BREAK");
                 functionSession.addCommand(null);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -1297,7 +1340,7 @@ public class InitDynamic {
                     functionSession.popMetaJump();
                 }
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -1354,8 +1397,8 @@ public class InitDynamic {
                     functionSession.popMetaJump();
                 }
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wJumpTrue};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wJumpTrue};
             }
         });
 
@@ -1394,7 +1437,7 @@ public class InitDynamic {
                 }
                 for(Integer p:posToRemove) functionSession.labelJumps.remove(p);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -1429,7 +1472,7 @@ public class InitDynamic {
                     functionSession.addCommand(wJump,labelPos-pos-1,operand);
                 }
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });
@@ -1441,14 +1484,14 @@ public class InitDynamic {
                 "Function",
                 "function object",
                 "set prototype of constructor",
-                new VSSimpleWorker(new int[]{0x1F, 0x00}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
-                        VSFieldable fieldable = v.pop(VSFieldable.class);
-                        VSRunnable runnable;
+                new SimpleWorker(new int[]{0x1F, 0x00}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Fieldable fieldable = v.pop(Fieldable.class);
+                        Runnable runnable;
                         try{
-                            runnable = v.peek(VSRunnable.class);
+                            runnable = v.peek(Runnable.class);
                         } catch (ConvertException ignored){
-                            runnable = v.peek(VSNamedCommandList.class).build(f.getScope());
+                            runnable = v.peek(NamedCommandList.class).build(f.getScope());
                         }
                         runnable.setPrototype(fieldable);
                     }
@@ -1462,14 +1505,14 @@ public class InitDynamic {
                 "Fieldable(prototype)",
                 "function object",
                 "get prototype of constructor",
-                new VSSimpleWorker(new int[]{0x1F, 0x01}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x1F, 0x01}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Object t = v.pop();
-                        VSRunnable runnable;
+                        Runnable runnable;
                         try{
-                            runnable = v.convert(VSRunnable.class,t);
+                            runnable = v.convert(Runnable.class,t);
                         } catch (ConvertException ignored){
-                            runnable = v.convert(VSNamedCommandList.class,t).build(f.getScope());
+                            runnable = v.convert(NamedCommandList.class,t).build(f.getScope());
                         }
                         v.push(runnable.getPrototype());
                     }
@@ -1483,9 +1526,9 @@ public class InitDynamic {
                 "Function(constructor)",
                 "function object",
                 "get constructor of object",
-                new VSSimpleWorker(new int[]{0x1F, 0x02}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
-                        VSFieldable fieldable = v.pop(VSFieldable.class);
+                new SimpleWorker(new int[]{0x1F, 0x02}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Fieldable fieldable = v.pop(Fieldable.class);
                         v.push(fieldable.getConstructor());
                     }
                 }
@@ -1498,8 +1541,8 @@ public class InitDynamic {
                 "Fieldable",
                 "object reflection",
                 "get reflection object",
-                new VSSimpleWorker(new int[]{0x1F, 0x03}){
-                    @Override public void run(final VSThreadRunner r,final VSThread v,final VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x1F, 0x03}){
+                    @Override public void run(final ThreadRunner r,final Thread v,final Context f, Void d) throws ConvertException {
                         v.push( new ReflectObject(v.pop(),f.getScope()) );
                     }
                 }
@@ -1512,8 +1555,8 @@ public class InitDynamic {
                 "Function",
                 "function file",
                 "load function from file",
-                new VSSimpleWorker(new int[]{0x1F, 0x04}){
-                    @Override public void run(final VSThreadRunner r,final VSThread v,final VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0x1F, 0x04}){
+                    @Override public void run(final ThreadRunner r,final Thread v,final Context f, Void d) throws Exception {
                         String name = v.pop(String.class);
                         ScriptManager manager = v.getProgram().getRuntime().scriptManager;
                         InputStream input = manager.openScriptFile("vsbin",name);
@@ -1536,10 +1579,30 @@ public class InitDynamic {
                 "Runnable(constructor)",
                 "object reflection function",
                 "get constructor of class",
-                new VSSimpleWorker(new int[]{0x1F, 0x05}){
-                    @Override public void run(final VSThreadRunner r,final VSThread v,final VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0x1F, 0x05}){
+                    @Override public void run(final ThreadRunner r,final Thread v,final Context f, Void d) throws Exception {
                         String className = v.pop(String.class);
                         v.push( new ReflectClass(className,f.getScope()) );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CALL",
+                "CALL",
+                "Runnable Caller",
+                "Program",
+                "runtime",
+                "call function from other caller",
+                new SimpleWorker(new int[]{0x1F, 0x06}){
+                    @Override public void run(final ThreadRunner r,final Thread v,final Context f, Void d) throws Exception {
+                        Caller caller = v.pop(Caller.class);
+                        Runnable runnable = v.pop(f.getScope());
+                        Program program = new Program(v.getProgram().getRuntime(),caller);
+                        Thread thread = new Thread(program);
+                        thread.pushFunction(runnable,null);
+                        new ThreadRunner(thread).runThreads();
+                        v.push(program);
                     }
                 }
         ));
@@ -1553,8 +1616,8 @@ public class InitDynamic {
                 String name = op.substring(1,op.length()-1);
                 functionSession.addCommand(wSetFunctionForThis,VSCompiler.compile(name,compileSession,false),operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wSetFunctionForThis};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wSetFunctionForThis};
             }
         });
 
@@ -1566,8 +1629,8 @@ public class InitDynamic {
                 String name = operand.builder.toString().substring(1);
                 functionSession.addCommand(wSetFieldForThis,name,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wSetFieldForThis};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wSetFieldForThis};
             }
         });
 
@@ -1578,8 +1641,8 @@ public class InitDynamic {
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
                 functionSession.addCommand(wApply,null,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wApply};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wApply};
             }
         });
 
@@ -1593,8 +1656,8 @@ public class InitDynamic {
                 functionSession.addCommand(wFunctionFromFile,name,operand);
                 functionSession.addCommand(wRun,null,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
-                return new VSWorker[]{wFunctionFromFile};
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wFunctionFromFile};
             }
         });
 
@@ -1607,7 +1670,25 @@ public class InitDynamic {
                 String name = op.substring(2);
                 functionSession.addCommand(wFunctionFromFile,name,operand);
             }
-            @Override public VSWorker[] getNewWorkersWithRules() {
+            @Override public Worker[] getNewWorkersWithRules() {
+                return null;
+            }
+        });
+
+        VSCompiler.addRule(new ComplexCompileRule("<Class>","convert","Object","Object(converted)","convert object to specific class"){
+            @Override public boolean checkCondition(String string) {
+                return string.startsWith("<") && string.length()>2 && string.endsWith(">");
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
+                String op = operand.toString();
+                String name = op.substring(1,op.length()-1);
+                Class clazz = compileSession.converter.getClassForName(name);
+                if(clazz==null) {
+                    throw new CommandException(operand,compileSession.getSource(),"class "+name+" not found");
+                }
+                functionSession.addCommand(wConvert,clazz,operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
                 return null;
             }
         });

@@ -1,12 +1,10 @@
 package me.dpohvar.varscript.vs.init;
 
-import me.dpohvar.varscript.vs.VSContext;
-import me.dpohvar.varscript.vs.VSSimpleWorker;
-import me.dpohvar.varscript.vs.VSThread;
-import me.dpohvar.varscript.vs.VSThreadRunner;
+import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.vs.converter.ConvertException;
+import me.dpohvar.varscript.converter.ConvertException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,8 +22,8 @@ public class InitLogic {
                 "Boolean(A&&B)",
                 "boolean",
                 "boolean 'AND'",
-                new VSSimpleWorker(new int[]{0x20}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x20}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean b = v.pop(Boolean.class);
                         Boolean a = v.pop(Boolean.class);
                         v.push(a&&b);
@@ -40,8 +38,8 @@ public class InitLogic {
                 "Boolean(A||B)",
                 "boolean",
                 "boolean 'OR'",
-                new VSSimpleWorker(new int[]{0x21}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x21}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean b = v.pop(Boolean.class);
                         Boolean a = v.pop(Boolean.class);
                         v.push(a||b);
@@ -56,8 +54,8 @@ public class InitLogic {
                 "Boolean(A!=B)",
                 "boolean",
                 "boolean 'XOR'",
-                new VSSimpleWorker(new int[]{0x22}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x22}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean b = v.pop(Boolean.class);
                         Boolean a = v.pop(Boolean.class);
                         v.push(a!=b);
@@ -72,8 +70,8 @@ public class InitLogic {
                 "Boolean(A==B)",
                 "boolean",
                 "boolean 'XNOR'",
-                new VSSimpleWorker(new int[]{0x23}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x23}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean b = v.pop(Boolean.class);
                         Boolean a = v.pop(Boolean.class);
                         v.push(a==b);
@@ -88,8 +86,8 @@ public class InitLogic {
                 "Boolean(not_A)",
                 "boolean",
                 "boolean 'NOT'",
-                new VSSimpleWorker(new int[]{0x24}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x24}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean a = v.pop(Boolean.class);
                         v.push(!a);
                     }
@@ -104,8 +102,8 @@ public class InitLogic {
                 "Boolean(true)",
                 "boolean",
                 "put to stack boolean true",
-                new VSSimpleWorker(new int[]{0x25}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x25}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(true);
                     }
                 }
@@ -118,8 +116,8 @@ public class InitLogic {
                 "Boolean(false)",
                 "boolean",
                 "put to stack boolean false",
-                new VSSimpleWorker(new int[]{0x26}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x26}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(false);
                     }
                 }
@@ -132,8 +130,8 @@ public class InitLogic {
                 "Boolean(A_equals_B)",
                 "boolean",
                 "compare objects",
-                new VSSimpleWorker(new int[]{0x27}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x27}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Object b = v.pop();
                         Object a = v.pop();
                         if(a==null&&b==null) {
@@ -179,8 +177,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a==b",
-                new VSSimpleWorker(new int[]{0x28}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x28}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer b = v.pop(Integer.class);
                         Integer a = v.pop(Integer.class);
                         if(a==null) v.push(b==null);
@@ -196,8 +194,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a>b",
-                new VSSimpleWorker(new int[]{0x29}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x29}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer b = v.pop(Integer.class);
                         Integer a = v.pop(Integer.class);
                         if(a==null) v.push(false);
@@ -213,8 +211,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a>=b",
-                new VSSimpleWorker(new int[]{0x2A}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2A}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer b = v.pop(Integer.class);
                         Integer a = v.pop(Integer.class);
                         if(a==null) v.push(b==null);
@@ -230,8 +228,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a<b",
-                new VSSimpleWorker(new int[]{0x2B}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2B}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer b = v.pop(Integer.class);
                         Integer a = v.pop(Integer.class);
                         if(a==null) v.push(false);
@@ -246,8 +244,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a<=b",
-                new VSSimpleWorker(new int[]{0x2C}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2C}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer b = v.pop(Integer.class);
                         Integer a = v.pop(Integer.class);
                         if(a==null) v.push(b==null);
@@ -264,8 +262,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a==b",
-                new VSSimpleWorker(new int[]{0x2F,0x00}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2F,0x00}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Double b = v.pop(Double.class);
                         Double a = v.pop(Double.class);
                         if(a==null) v.push(b==null);
@@ -281,8 +279,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a>b",
-                new VSSimpleWorker(new int[]{0x2F,0x01}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2F,0x01}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Double b = v.pop(Double.class);
                         Double a = v.pop(Double.class);
                         if(a==null) v.push(false);
@@ -298,8 +296,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a>=b",
-                new VSSimpleWorker(new int[]{0x2F,0x02}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2F,0x02}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Double b = v.pop(Double.class);
                         Double a = v.pop(Double.class);
                         if(a==null) v.push(b==null);
@@ -315,8 +313,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a<b",
-                new VSSimpleWorker(new int[]{0x2F,0x03}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2F,0x03}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Double b = v.pop(Double.class);
                         Double a = v.pop(Double.class);
                         if(a==null) v.push(false);
@@ -331,8 +329,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a<=b",
-                new VSSimpleWorker(new int[]{0x2F,0x04}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2F,0x04}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Double b = v.pop(Double.class);
                         Double a = v.pop(Double.class);
                         if(a==null) v.push(b==null);
@@ -342,14 +340,14 @@ public class InitLogic {
         ));
 
         VSCompiler.addRule(new SimpleCompileRule(
-                "D=",
-                "D=",
+                "L=",
+                "L=",
                 "Long(a) Long(b)",
                 "Boolean",
                 "boolean",
                 "put to stack true if a==b",
-                new VSSimpleWorker(new int[]{0x2F,0x05}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2F,0x05}){
+                    @Override public void run(ThreadRunner r, me.dpohvar.varscript.vs.Thread v, Context f, Void d) throws ConvertException {
                         Long b = v.pop(Long.class);
                         Long a = v.pop(Long.class);
                         if(a==null) v.push(b==null);
@@ -365,8 +363,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a>b",
-                new VSSimpleWorker(new int[]{0x2F,0x06}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2F,0x06}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Long b = v.pop(Long.class);
                         Long a = v.pop(Long.class);
                         if(a==null) v.push(false);
@@ -382,8 +380,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a>=b",
-                new VSSimpleWorker(new int[]{0x2F,0x07}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2F,0x07}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Long b = v.pop(Long.class);
                         Long a = v.pop(Long.class);
                         if(a==null) v.push(b==null);
@@ -399,8 +397,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a<b",
-                new VSSimpleWorker(new int[]{0x2F,0x08}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2F,0x08}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Long b = v.pop(Long.class);
                         Long a = v.pop(Long.class);
                         if(a==null) v.push(false);
@@ -415,8 +413,8 @@ public class InitLogic {
                 "Boolean",
                 "boolean",
                 "put to stack true if a<=b",
-                new VSSimpleWorker(new int[]{0x2F,0x09}){
-                    @Override public void run(VSThreadRunner r, VSThread v, VSContext f, Void d) throws ConvertException {
+                new SimpleWorker(new int[]{0x2F,0x09}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Long b = v.pop(Long.class);
                         Long a = v.pop(Long.class);
                         if(a==null) v.push(b==null);

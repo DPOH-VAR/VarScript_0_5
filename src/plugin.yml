@@ -3,11 +3,15 @@ description: More more more in-game scripting!
 author: DPOH-VAR
 authors: [DPOH-VAR, MYXOMOPX]
 main: me.dpohvar.varscript.VarScript
-version: 0.5.1
+version: 0.5.2
 commands:
     "vs":
         description: manage varscript
         usage: /vs <varscript>
+        permission: varscript.command.vs
+    "task":
+        description: manage tasks
+        usage: /task [name [operation [...]]]
         permission: varscript.command.vs
     "js":
         description: manage javascript

@@ -1,10 +1,13 @@
 package me.dpohvar.varscript.vs.init;
 
+import me.dpohvar.varscript.event.CustomEvent;
+import me.dpohvar.varscript.trigger.*;
 import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Runnable;
+import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.scheduler.*;
-import me.dpohvar.varscript.vs.converter.ConvertException;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 
@@ -16,19 +19,7 @@ import org.bukkit.event.EventPriority;
  */
 public class InitMultiThread {
 
-    private static final String[] classPrefix = new String[]{
-            "org.bukkit.event.",
-            "org.bukkit.event.enchantment.",
-            "org.bukkit.event.entity.",
-            "org.bukkit.event.hanging.",
-            "org.bukkit.event.inventory.",
-            "org.bukkit.event.painting.",
-            "org.bukkit.event.player.",
-            "org.bukkit.event.server.",
-            "org.bukkit.event.vehicle.",
-            "org.bukkit.event.weather.",
-            "org.bukkit.event.world.",
-    };
+
 
 
     public static void load(){
@@ -39,18 +30,18 @@ public class InitMultiThread {
                 "",
                 "runtime",
                 "wait for (delay) ticks",
-                new VSSimpleWorker(new int[]{0xF0}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0xF0}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
                         final Long delay = v.pop(Long.class);
-                        TriggerRunner<VSTrigger> runner = new TriggerRunner<VSTrigger>() {
-                            @Override public void run(VSTrigger trigger) {
-                                VSThreadRunner r = new VSThreadRunner();
+                        TriggerRunner<Trigger> runner = new TriggerRunner<Trigger>() {
+                            @Override public void run(Trigger trigger) {
+                                ThreadRunner r = new ThreadRunner();
                                 r.pushThread(v);
                                 v.removeTrigger(trigger);
                                 r.runThreads();
                             }
                         };
-                        v.addTrigger(new TriggerTicks(delay,runner));
+                        v.addTrigger(new TriggerDelay(delay,runner));
                         throw stopThread;
                     }
                 }
@@ -63,42 +54,24 @@ public class InitMultiThread {
                 "Trigger",
                 "event listener trigger",
                 "register new event listener",
-                new VSSimpleWorker(new int[]{0xF1}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, final VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0xF1}){
+                    @Override public void run(ThreadRunner r,final Thread v, final Context f, Void d) throws Exception {
                         String eventName = v.pop(String.class);
 
-                        VSFieldable obj = v.pop(VSFieldable.class);
-                        VSRunnable runnable;
-                        try{
-                            runnable = v.peek(VSRunnable.class);
-                        } catch (ConvertException ignored){
-                            runnable = v.peek(VSNamedCommandList.class).build(f.getScope());
-                        }
-                        final VSRunnable function = runnable;
-
-                        Class<? extends Event> eventClass = null;
-                        try {
-                            eventClass = (Class<? extends Event>) Class.forName(eventName);
-                        } catch (Exception ignored){}
-                        if (eventClass==null) for(String prefix:classPrefix) try {
-                            try{
-                                eventClass = (Class<? extends Event>) Class.forName(prefix+eventName);
-                            } catch (Exception ignored){
-                                eventClass = (Class<? extends Event>) Class.forName(prefix+eventName+"Event");
-                            }
-                        } catch (Exception ignored){}
+                        final Runnable function = v.pop(f.getScope());
+                        Class<? extends Event> eventClass = TriggerBukkitEvent.getEventClass(eventName);
 
                         TriggerRunner<Event> runner = new TriggerRunner<Event>() {
                             @Override public void run(Event event) {
-                                VSThreadRunner r =new VSThreadRunner();
-                                VSThread thread = new VSThread(v.getProgram());
+                                ThreadRunner r =new ThreadRunner();
+                                Thread thread = new Thread(v.getProgram());
                                 r.pushThread(thread);
-                                VSContext context = thread.pushFunction(function, f.getApply());
+                                Context context = thread.pushFunction(function, f.getApply());
                                 context.getScope().setVar("Event", event);
                                 r.runThreads();
                             }
                         };
-                        VSTrigger trigger = new TriggerEvent(eventClass, EventPriority.NORMAL,runner);
+                        Trigger trigger = new TriggerBukkitEvent(eventClass, EventPriority.NORMAL,runner);
                         v.push(trigger);
                         v.addTrigger(trigger);
                     }
@@ -112,18 +85,18 @@ public class InitMultiThread {
                 "",
                 "runtime",
                 "wait for N seconds",
-                new VSSimpleWorker(new int[]{0xF2}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0xF2}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
                         final Double delay = v.pop(Double.class);
-                        TriggerRunner<VSTrigger> runner = new TriggerRunner<VSTrigger>() {
-                            @Override public void run(VSTrigger trigger) {
-                                VSThreadRunner r = new VSThreadRunner();
+                        TriggerRunner<Trigger> runner = new TriggerRunner<Trigger>() {
+                            @Override public void run(Trigger trigger) {
+                                ThreadRunner r = new ThreadRunner();
                                 r.pushThread(v);
                                 v.removeTrigger(trigger);
                                 r.runThreads();
                             }
                         };
-                        v.addTrigger(new TriggerWait((long)(delay.doubleValue()*1000.0),runner));
+                        v.addTrigger(new TriggerWait((long)(delay*1000.0),runner));
                         throw stopThread;
                     }
                 }
@@ -136,43 +109,25 @@ public class InitMultiThread {
                 "Trigger",
                 "event listener trigger",
                 "register new event listener with custom priority",
-                new VSSimpleWorker(new int[]{0xF3}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, final VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0xF3}){
+                    @Override public void run(ThreadRunner r,final Thread v, final Context f, Void d) throws Exception {
                         EventPriority priority = v.pop(EventPriority.values());
                         String eventName = v.pop(String.class);
 
-                        VSFieldable obj = v.pop(VSFieldable.class);
-                        VSRunnable runnable;
-                        try{
-                            runnable = v.peek(VSRunnable.class);
-                        } catch (ConvertException ignored){
-                            runnable = v.peek(VSNamedCommandList.class).build(f.getScope());
-                        }
-                        final VSRunnable function = runnable;
-
-                        Class<? extends Event> eventClass = null;
-                        try {
-                            eventClass = (Class<? extends Event>) Class.forName(eventName);
-                        } catch (Exception ignored){}
-                        if (eventClass==null) for(String prefix:classPrefix) try {
-                            try{
-                                eventClass = (Class<? extends Event>) Class.forName(prefix+eventName);
-                            } catch (Exception ignored){
-                                eventClass = (Class<? extends Event>) Class.forName(prefix+eventName+"Event");
-                            }
-                        } catch (Exception ignored){}
+                        final Runnable function = v.pop(f.getScope());
+                        Class<? extends Event> eventClass = TriggerBukkitEvent.getEventClass(eventName);
 
                         TriggerRunner<Event> runner = new TriggerRunner<Event>() {
                             @Override public void run(Event event) {
-                                VSThreadRunner r =new VSThreadRunner();
-                                VSThread thread = new VSThread(v.getProgram());
+                                ThreadRunner r =new ThreadRunner();
+                                Thread thread = new Thread(v.getProgram());
                                 r.pushThread(thread);
-                                VSContext context = thread.pushFunction(function, f.getApply());
+                                Context context = thread.pushFunction(function, f.getApply());
                                 context.getScope().setVar("Event", event);
                                 r.runThreads();
                             }
                         };
-                        VSTrigger trigger = new TriggerEvent(eventClass, priority,runner);
+                        Trigger trigger = new TriggerBukkitEvent(eventClass, priority,runner);
                         v.push(trigger);
                         v.addTrigger(trigger);
                     }
@@ -187,16 +142,10 @@ public class InitMultiThread {
                 "Thread",
                 "thread runtime function",
                 "run function in new thread",
-                new VSSimpleWorker(new int[]{0xF4}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, VSContext f, Void d) throws Exception {
-                        VSFieldable obj = v.pop(VSFieldable.class);
-                        VSRunnable runnable;
-                        try{
-                            runnable = v.peek(VSRunnable.class);
-                        } catch (ConvertException ignored){
-                            runnable = v.peek(VSNamedCommandList.class).build(f.getScope());
-                        }
-                        VSThread newThread = new VSThread(v.getProgram());
+                new SimpleWorker(new int[]{0xF4}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
+                        Runnable runnable = v.pop(f.getScope());
+                        Thread newThread = new Thread(v.getProgram());
                         newThread.pushFunction(runnable, f.getApply());
                         r.pushThread(newThread);
                         v.push(newThread);
@@ -212,9 +161,9 @@ public class InitMultiThread {
                 "",
                 "thread runtime",
                 "stop thread",
-                new VSSimpleWorker(new int[]{0xF5}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, VSContext f, Void d) throws Exception {
-                        VSThread thread = v.pop(VSThread.class);
+                new SimpleWorker(new int[]{0xF5}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
+                        Thread thread = v.pop(Thread.class);
                         thread.setFinished();
                     }
                 }
@@ -227,32 +176,22 @@ public class InitMultiThread {
                 "Event",
                 "event trigger runtime",
                 "wait for event",
-                new VSSimpleWorker(new int[]{0xF6}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, final VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0xF6}){
+                    @Override public void run(ThreadRunner r,final Thread v, final Context f, Void d) throws Exception {
                         String eventName = v.pop(String.class);
 
-                        Class<? extends Event> eventClass = null;
-                        try {
-                            eventClass = (Class<? extends Event>) Class.forName(eventName);
-                        } catch (Exception ignored){}
-                        if (eventClass==null) for(String prefix:classPrefix) try {
-                            try{
-                                eventClass = (Class<? extends Event>) Class.forName(prefix+eventName);
-                            } catch (Exception ignored){
-                                eventClass = (Class<? extends Event>) Class.forName(prefix+eventName+"Event");
-                            }
-                        } catch (Exception ignored){}
+                        Class<? extends Event> eventClass = TriggerBukkitEvent.getEventClass(eventName);
 
                         TriggerRunner<TriggerWaitFor.Container> runner = new TriggerRunner<TriggerWaitFor.Container>() {
                             @Override public void run(TriggerWaitFor.Container container) {
                                 container.trigger.unregister();
-                                VSThreadRunner r =new VSThreadRunner();
+                                ThreadRunner r =new ThreadRunner();
                                 r.pushThread(v);
                                 v.push(container.event);
                                 r.runThreads();
                             }
                         };
-                        VSTrigger trigger = new TriggerWaitFor(eventClass, EventPriority.NORMAL, runner);
+                        Trigger trigger = new TriggerWaitFor(eventClass, EventPriority.NORMAL, runner);
                         v.addTrigger(trigger);
                         throw stopThread;
                     }
@@ -266,8 +205,8 @@ public class InitMultiThread {
                 "Thread",
                 "thread",
                 "put to stack this thread",
-                new VSSimpleWorker(new int[]{0xF7}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0xF7}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
                         v.push(v);
                     }
                 }
@@ -280,8 +219,8 @@ public class InitMultiThread {
                 "",
                 "function",
                 "stop current function",
-                new VSSimpleWorker(new int[]{0xF8}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0xF8}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
                         throw stopFunction;
                     }
                 }
@@ -294,8 +233,8 @@ public class InitMultiThread {
                 "",
                 "thread runtime",
                 "wait for WAKEUP from other thread",
-                new VSSimpleWorker(new int[]{0xF9}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0xF9}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
                         v.setSleep();
                         throw stopThread;
                     }
@@ -309,9 +248,9 @@ public class InitMultiThread {
                 "",
                 "thread runtime",
                 "wake up other sleeping thread",
-                new VSSimpleWorker(new int[]{0xFA}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, VSContext f, Void d) throws Exception {
-                        VSThread thread = v.pop(VSThread.class);
+                new SimpleWorker(new int[]{0xFA}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
+                        Thread thread = v.pop(Thread.class);
                         if (thread.isSleeping() && !thread.isFinished()){
                             r.pushThread(thread);
                             throw interruptThread;
@@ -327,8 +266,8 @@ public class InitMultiThread {
                 "",
                 "thread runtime",
                 "finish this thread",
-                new VSSimpleWorker(new int[]{0xFB}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0xFB}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
                         v.setFinished();
                         throw interruptThread;
                     }
@@ -342,10 +281,69 @@ public class InitMultiThread {
                 "",
                 "runtime",
                 "stop this program",
-                new VSSimpleWorker(new int[]{0xFC}){
-                    @Override public void run(VSThreadRunner r,final VSThread v, VSContext f, Void d) throws Exception {
+                new SimpleWorker(new int[]{0xFC}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
                         v.getProgram().setFinished();
                         throw interruptRunner;
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CUSTOMEVENT",
+                "CUSTOMEVENT",
+                "String(name)",
+                "CustomEvent",
+                "runtime",
+                "create custom event",
+                new SimpleWorker(new int[]{0xFD}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
+                        v.push(new CustomEvent(v.pop(String.class)));
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CALLEVENT",
+                "CALLEVENT",
+                "Event",
+                "Event",
+                "runtime",
+                "call event",
+                new SimpleWorker(new int[]{0xFE}){
+                    @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
+                        Bukkit.getServer().getPluginManager().callEvent(v.pop(Event.class));
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "REGISTERCUSTOM",
+                "REGISTERCUSTOM REGC",
+                "Runnable String(name)",
+                "Trigger",
+                "event listener trigger",
+                "register new custom event listener",
+                new SimpleWorker(new int[]{0xFF,0x00}){
+                    @Override public void run(ThreadRunner r,final Thread v, final Context f, Void d) throws Exception {
+                        final String name = v.pop(String.class);
+
+                        final Runnable function = v.pop(f.getScope());
+
+                        TriggerRunner<CustomEvent> runner = new TriggerRunner<CustomEvent>() {
+                            @Override public void run(CustomEvent event) {
+                                if(!name.equals(event.getName())) return;
+                                ThreadRunner r =new ThreadRunner();
+                                Thread thread = new Thread(v.getProgram());
+                                r.pushThread(thread);
+                                Context context = thread.pushFunction(function, f.getApply());
+                                context.getScope().setVar("Event", event);
+                                r.runThreads();
+                            }
+                        };
+                        Trigger trigger = new TriggerBukkitEvent<CustomEvent>(CustomEvent.class, EventPriority.NORMAL,runner);
+                        v.push(trigger);
+                        v.addTrigger(trigger);
                     }
                 }
         ));

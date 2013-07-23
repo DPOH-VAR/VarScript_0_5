@@ -1,11 +1,15 @@
 package me.dpohvar.varscript.vs.init;
 
 
+import me.dpohvar.varscript.utils.reflect.ReflectBukkitUtils;
+import me.dpohvar.varscript.utils.reflect.ReflectUtils;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import me.dpohvar.varscript.converter.ConvertException;
+import net.minecraft.server.v1_6_R2.EntityPlayer;
+import net.minecraft.server.v1_6_R2.Packet205ClientCommand;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -406,7 +410,7 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "FLYSPEED",
-                "FLYSPEED",
+                "FLYSPEED FSPD",
                 "Player",
                 "Float",
                 "player",
@@ -879,7 +883,7 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETFLYSPEED",
-                "SETFLYSPEED",
+                "SETFLYSPEED >FLYSPEED FSPD",
                 "Player Float",
                 "Player",
                 "player",
@@ -1103,7 +1107,7 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETWALKSPEED",
-                "SETWALKSPEED >WALSPEED",
+                "SETWALKSPEED >WALKSPEED >WSPD",
                 "Player Float",
                 "Player",
                 "player",
@@ -1127,6 +1131,29 @@ public class InitPlayer {
                 new SimpleWorker(new int[]{0x5F,0x72}){
                     @Override public void run(ThreadRunner r, me.dpohvar.varscript.vs.Thread v, Context f, Void d) throws ConvertException {
                         v.push(v.pop(LivingEntity.class).getEquipment());
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "RESPAWN",
+                "RESPAWN RSP",
+                "Player",
+                "Player",
+                "player",
+                "Respawn player. Works only with died players",
+                new SimpleWorker(new int[]{0x5F,0x73}){
+                    @Override public void run(ThreadRunner r, me.dpohvar.varscript.vs.Thread v, Context f, Void d) throws ConvertException {
+                        Player p = v.peek(Player.class);
+                        try{
+                            Object ph = ReflectUtils.callMethod(p,"getHandle",null);
+                            Class classPacket = ReflectBukkitUtils.getMinecraftClass("Packet205ClientCommand");
+                            Object packet = ReflectUtils.callConstructor(classPacket,null);
+                            ReflectUtils.setField(packet,"a",1);
+                            Object connection = ReflectUtils.getField(ph,"playerConnection");
+                            ReflectUtils.callMethod(connection,"a",new Class[]{classPacket},packet);
+                        } catch (Exception ignored){
+                        }
                     }
                 }
         ));

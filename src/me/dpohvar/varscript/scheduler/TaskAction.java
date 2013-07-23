@@ -33,7 +33,7 @@ public abstract class TaskAction extends TaskEntry {
             type = s.substring(0,ind);
             argument = s.substring(ind+1,s.length());
         }
-        if("VARSCRIPT".equals(type)||"VARSCRIPT".equals(type)){
+        if("VARSCRIPT".equals(type)||"VS".equals(type)){
             return new VSRunAction(task,argument);
         }
         if("LOG".equals(type)){

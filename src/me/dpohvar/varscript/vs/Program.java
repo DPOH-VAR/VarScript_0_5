@@ -29,7 +29,7 @@ public class Program implements me.dpohvar.varscript.Program, Iterable<Thread>, 
     }
 
     @Override public String toString(){
-        return caller.toString();
+        return "Program{"+caller.getInstance().toString()+"}";
     }
 
     public Program(Runtime runtime, final Caller caller) {

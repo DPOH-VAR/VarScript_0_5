@@ -41,8 +41,12 @@ public class ReflectRunnable implements Runnable {
             params[i]=thread.convert(types[i], pops[i]);
         }
         Object apply = context.getApply();
-        if(apply instanceof ReflectObject) apply = ((ReflectObject)apply).getObject();
-        apply = thread.convert(method.getDeclaringClass(),apply);
+        if (apply instanceof ReflectClass){
+            apply=null;
+        } else {
+            if(apply instanceof ReflectObject) apply = ((ReflectObject)apply).getObject();
+            apply = thread.convert(method.getDeclaringClass(),apply);
+        }
         Object result = method.invoke(apply,params);
         if(method.getReturnType() != void.class) thread.push(result);
     }

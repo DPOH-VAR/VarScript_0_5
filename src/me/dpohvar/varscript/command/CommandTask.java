@@ -117,7 +117,7 @@ public class CommandTask implements CommandExecutor {
                 }
             } else { // name is single string
                 Task task = scheduler.getTask(taskname);
-                if (op!=null && checkNoCase(op,"create","c")){
+                if (op!=null && checkNoCase(op,"create","cr","new","n")){
                     if(task!=null){
                         caller.send("task "+task.getStatus()+task+RESET+" already exists");
                         return true;
@@ -250,18 +250,23 @@ public class CommandTask implements CommandExecutor {
                 } else if (checkNoCase(op,"description","desc","d")){
                     StringBuilder buffer = new StringBuilder();
                     if(words.isEmpty()) {
-                        buffer.append(task.getStatus()).append(task).append(RESET)
-                                .append(" description:\n").append(task.getDescription());
+                        String desc = task.getDescription();
+                        if(desc==null){
+                            buffer.append(task.getStatus()).append(task).append(RESET).append(" description:\n");
+                            buffer.append(INFO).append(task.getDescription());
+                        } else {
+                            buffer.append(task.getStatus()).append(task).append(RESET).append(" has no description");
+                        }
                     } else {
                         String desc = StringUtils.join(words,' ');
                         if(desc.isEmpty()){
                             task.setDescription(null);
-                            buffer.append("description for ").append(task.getStatus()).append(task).append(RESET)
-                                    .append(" is removed");
+                            buffer.append("description for ").append(task.getStatus()).append(task).append(RESET);
+                            buffer.append(" is removed");
                         } else {
                             task.setDescription(desc);
-                            buffer.append("New description for task ").append(task.getStatus()).append(task)
-                                    .append(RESET).append(" is set:\n").append(task.getDescription());
+                            buffer.append("New description for task ").append(task.getStatus()).append(task);
+                            buffer.append(RESET).append(" is set:\n").append(INFO).append(task.getDescription());
                         }
                         task.save();
                     }
@@ -283,7 +288,7 @@ public class CommandTask implements CommandExecutor {
                     caller.send(buffer);
                     task.save();
                     return true;
-                } else if (checkNoCase(op,"copy","c")){
+                } else if (checkNoCase(op,"copy")){
                     String name = words.poll();
                     if(name==null) {
                         caller.send("enter a name of new task");

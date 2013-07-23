@@ -493,6 +493,22 @@ public class InitEntity {
                     }
                 }
         ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "THROWTO",
+                "THROWTO THTO",
+                "Entity location",
+                "Entity",
+                "entity",
+                "Throw entity to location",
+                new SimpleWorker(new int[]{0x5F,0x16}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Location l = v.pop(Location.class);
+                        Entity e = v.peek(Entity.class);
+                        Vector w = e.getLocation().toVector().add(l.toVector().multiply(-1)).multiply(0.3);
+                        e.setVelocity(w);
+                    }
+                }
+        ));
 
     }
 

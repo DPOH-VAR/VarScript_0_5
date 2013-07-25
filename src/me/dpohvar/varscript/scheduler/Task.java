@@ -1,6 +1,5 @@
 package me.dpohvar.varscript.scheduler;
 
-import org.apache.commons.io.FileUtils;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
@@ -320,6 +319,11 @@ public class Task {
             writer.close();
         } catch (IOException e) {
             throw new RuntimeException("can't save task to yml",e);
+        } finally {
+            if(writer!=null) try {
+                writer.close();
+            } catch (IOException ignored) {
+            }
         }
 
     }

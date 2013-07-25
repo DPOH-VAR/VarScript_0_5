@@ -1,7 +1,7 @@
 package me.dpohvar.varscript;
 
 import me.dpohvar.varscript.scheduler.Scheduler;
-import me.dpohvar.varscript.utils.ReflectClass;
+import me.dpohvar.varscript.utils.reflect.ReflectClass;
 import me.dpohvar.varscript.utils.ScriptManager;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
@@ -53,6 +53,8 @@ public class Runtime implements Fieldable,Scope {
         converter.addRule(new RuleList());
         converter.addRule(new RuleLocation());
         converter.addRule(new RuleLong());
+        converter.addRule(new RuleNBTContainer());
+        converter.addRule(new RuleNBTTag());
         converter.addRule(new RuleShort());
         converter.addRule(new RuleString());
 

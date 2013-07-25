@@ -3,7 +3,8 @@ description: More more more in-game scripting!
 author: DPOH-VAR
 authors: [DPOH-VAR, MYXOMOPX]
 main: me.dpohvar.varscript.VarScript
-version: 0.5.2
+version: 0.5.3
+softdepend: [PowerNBT]
 commands:
     "vs":
         description: manage varscript

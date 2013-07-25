@@ -68,7 +68,7 @@ public class Runtime implements Fieldable,Scope {
         defineConst("PluginManager", pm);
         defineConst("Scheduler", scheduler);
         for(Plugin p:pm.getPlugins()){
-            defineConst(p.getName(), plugin);
+            defineConst(p.getName(), p);
         }
 
         VSCompiler.init(converter);

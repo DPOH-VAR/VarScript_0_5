@@ -238,5 +238,21 @@ public class InitStack {
                 }
         ));
 
+        VSCompiler.addRule(new SimpleCompileRule(
+                "DUP2",
+                "DUP2",
+                "Object(A) Object(B)",
+                "Object(A) Object(B) Object(A) Object(B)",
+                "stack basic",
+                "duplicate last 2 values",
+                new SimpleWorker(new int[]{0x0E}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) {
+                        Object b = v.pop();
+                        Object a = v.pop();
+                        v.push(a).push(b).push(a).push(b);
+                    }
+                }
+        ));
+
     }
 }

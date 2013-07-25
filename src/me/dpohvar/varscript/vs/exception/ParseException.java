@@ -8,11 +8,20 @@ package me.dpohvar.varscript.vs.exception;
  */
 public class ParseException extends SourceException{
 
-    public ParseException(String string,int row,int col,Throwable exception){
-        super(string,row,col,exception);
+    public ParseException(String string,int row,int col,String reason){
+        super(string,row,col,reason);
     }
 
     @Override public String getMessage(){
-        return getCause().getMessage()+" at ["+row+':'+col+"]\n"+getErrorString();
+        String msg,reason;
+        if(getCause()==null) {
+            msg = super.getMessage();
+            reason = "";
+        } else {
+            msg = getCause().getMessage();
+            reason = getCause().getClass().getSimpleName();
+
+        }
+        return reason+" at ["+(row+1)+':'+(col+1)+"]\n"+getErrorString()+(msg==null?"":'\n'+msg);
     }
 }

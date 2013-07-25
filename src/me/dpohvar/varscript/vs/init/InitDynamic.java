@@ -2,8 +2,7 @@ package me.dpohvar.varscript.vs.init;
 
 import me.dpohvar.varscript.VarScript;
 import me.dpohvar.varscript.caller.Caller;
-import me.dpohvar.varscript.converter.Converter;
-import me.dpohvar.varscript.utils.ReflectClass;
+import me.dpohvar.varscript.utils.reflect.ReflectClass;
 import me.dpohvar.varscript.utils.ScriptManager;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Runnable;
@@ -12,10 +11,16 @@ import me.dpohvar.varscript.vs.compiler.*;
 import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.vs.exception.CloseFunction;
 import me.dpohvar.varscript.vs.exception.CommandException;
+import me.dpohvar.varscript.vs.exception.ParseException;
 import me.dpohvar.varscript.vs.exception.SourceException;
-import me.dpohvar.varscript.utils.ReflectObject;
+import me.dpohvar.varscript.utils.reflect.ReflectObject;
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
+
+import static me.dpohvar.varscript.utils.IOStreamPackUtils.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -540,6 +545,29 @@ public class InitDynamic {
         }
     };
 
+    public static Worker<String> wStoreField = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
+            Object val = v.pop();
+            v.peek(Fieldable.class).setField(d,val);
+        }
+        @Override public void save(OutputStream out, String data) throws IOException {
+            out.write(0x1F);
+            out.write(0x17);
+            byte[] bytes = data.getBytes(VarScript.UTF8);
+            out.write(bytes.length);
+            out.write(bytes);
+        }
+        @Override public byte[] getBytes() {
+            return new byte[]{0x1F,0x17};
+        }
+        @Override public String readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
+            int len = input.read();
+            byte[] bytes = new byte[len];
+            input.read(bytes);
+            return new String(bytes, VarScript.UTF8);
+        }
+    };
+
 
 
 
@@ -647,6 +675,26 @@ public class InitDynamic {
                 if(input.read(buffer)<size) throw endOfThread;
                 return buffer;
             }
+            case 0xFC: /* vector */ {
+                double x = getDouble(input);
+                double y = getDouble(input);
+                double z = getDouble(input);
+                return new org.bukkit.util.Vector(x,y,z);
+            }
+            case 0xFD: /* location */ {
+                double x = getDouble(input);
+                double y = getDouble(input);
+                double z = getDouble(input);
+                String w = getString(input);
+                return new Location(Bukkit.getWorld(w),x,y,z);
+            }
+            case 0xFE: /* block */ {
+                int x = getInt(input);
+                int y = getInt(input);
+                int z = getInt(input);
+                String w = getString(input);
+                return Bukkit.getWorld(w).getBlockAt(x,y,z);
+            }
             // TODO: load item stack
             default: throw new IOException("unknown object type: "+first);
         }
@@ -703,9 +751,29 @@ public class InitDynamic {
                 out.write(bytes.length);
                 out.write(bytes);
             }
-         } else if(object instanceof Character){
+        } else if(object instanceof Character){
             out.write(0xF8);
             out.write(ByteBuffer.allocate(2).putChar((Character)object).array());
+        } else if(object instanceof org.bukkit.util.Vector){
+            org.bukkit.util.Vector v = (org.bukkit.util.Vector) object;
+            out.write(0xFC);
+            put(out, v.getX());
+            put(out,v.getY());
+            put(out, v.getZ());
+        } else if(object instanceof Location){
+            Location l = (Location) object;
+            out.write(0xFD);
+            put(out, l.getX());
+            put(out, l.getY());
+            put(out, l.getZ());
+            put(out, l.getWorld().getName());
+        } else if(object instanceof Block){
+            Block b = (Block) object;
+            out.write(0xFE);
+            put(out, b.getX());
+            put(out, b.getY());
+            put(out, b.getZ());
+            put(out, b.getWorld().getName());
         }
         else throw new IOException("unknown object type: "+object.getClass().getName());
     }
@@ -823,10 +891,10 @@ public class InitDynamic {
             @Override public boolean checkCondition(String string) {
                 return string.startsWith("\"") && string.endsWith("\"") && string.length()>1;
             }
-            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) {
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws ParseException {
                 String op = operand.toString();
                 String str = op.substring(1,op.length()-1);
-                functionSession.addCommand(wPutObject,str,operand);
+                functionSession.addCommand(wPutObject,VSStringParser.parse(str),operand);
             }
             @Override public Worker[] getNewWorkersWithRules() {
                 return new Worker[]{wPutObject};
@@ -837,10 +905,10 @@ public class InitDynamic {
             @Override public boolean checkCondition(String string) {
                 return string.startsWith("+\"") && string.endsWith("\"") && string.length()>1;
             }
-            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) {
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws ParseException {
                 String op = operand.toString();
                 String str = op.substring(2,op.length()-1);
-                functionSession.addCommand(wPutObject,str,operand);
+                functionSession.addCommand(wPutObject,VSStringParser.parse(str),operand);
                 functionSession.addCommand(InitString.wConcat,null,operand);
             }
             @Override public Worker[] getNewWorkersWithRules() {
@@ -907,6 +975,20 @@ public class InitDynamic {
             }
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) {
                 functionSession.addCommand(wPutObject,null,operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
+                return null;
+            }
+        });
+
+        VSCompiler.addRule(new ComplexCompileRule("x:y:z","stack vector","","Vector","put to stack new vector.\nExample: 0:1.5:0"){ //0x13
+            @Override public boolean checkCondition(String string) {
+                return string.matches("-?\\d+(?:\\.\\d+)?:-?\\d+(?:\\.\\d+)?:-?\\d+(?:\\.\\d+)?");
+                //todo: parse vector (loc,block)
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) {
+                String op = operand.toString();
+                functionSession.addCommand(wPutObject,Double.parseDouble(op),operand);
             }
             @Override public Worker[] getNewWorkersWithRules() {
                 return null;
@@ -994,7 +1076,7 @@ public class InitDynamic {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule(".field","object field","Fieldable","Object","get field of object"){
+        VSCompiler.addRule(new ComplexCompileRule(".field","field","Fieldable","Object","get field of object"){
             @Override public boolean checkCondition(String string) {
                 return string.matches("\\.[A-Za-z0-9_\\-/]+");
             }
@@ -1007,9 +1089,9 @@ public class InitDynamic {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule(".%field","object field","Object(value) Fieldable","","set field of object"){
+        VSCompiler.addRule(new ComplexCompileRule(".%field","field","Object(value) Fieldable","","set field of object"){
             @Override public boolean checkCondition(String string) {
-                return string.matches("\\.%[A-Za-z0-9_\\-/]+");
+                return string.matches("\\.(?:%|>)[A-Za-z0-9_\\-/]+");
             }
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
                 String name = operand.builder.toString().substring(2);
@@ -1020,7 +1102,7 @@ public class InitDynamic {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule(".!field","object field","Fieldable","","delete field of object"){
+        VSCompiler.addRule(new ComplexCompileRule(".!field","field","Fieldable","","delete field of object"){
             @Override public boolean checkCondition(String string) {
                 return string.matches("\\.![A-Za-z0-9_\\-/]+");
             }
@@ -1034,7 +1116,7 @@ public class InitDynamic {
         });
 
 
-        VSCompiler.addRule(new ComplexCompileRule(":field","object field function","Fieldable","...","apply method for object"){
+        VSCompiler.addRule(new ComplexCompileRule(":field","field function","Fieldable","...","apply method for object"){
             @Override public boolean checkCondition(String string) {
                 return string.matches(":[A-Za-z0-9_\\-/]+");
             }
@@ -1539,7 +1621,7 @@ public class InitDynamic {
                 "REFLECT",
                 "Object",
                 "Fieldable",
-                "object reflection",
+                "field reflection",
                 "get reflection object",
                 new SimpleWorker(new int[]{0x1F, 0x03}){
                     @Override public void run(final ThreadRunner r,final Thread v,final Context f, Void d) throws ConvertException {
@@ -1577,7 +1659,7 @@ public class InitDynamic {
                 "CLASS",
                 "String(className/constructor)",
                 "Runnable(constructor)",
-                "object reflection function",
+                "field reflection function",
                 "get constructor of class",
                 new SimpleWorker(new int[]{0x1F, 0x05}){
                     @Override public void run(final ThreadRunner r,final Thread v,final Context f, Void d) throws Exception {
@@ -1621,7 +1703,7 @@ public class InitDynamic {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("$field","object field","Object(value)","","set field for this or apply object"){
+        VSCompiler.addRule(new ComplexCompileRule("$field","field","Object(value)","","set field for this or apply object"){
             @Override public boolean checkCondition(String string) {
                 return string.matches("\\$[A-Za-z0-9_\\-/]+");
             }
@@ -1634,7 +1716,7 @@ public class InitDynamic {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("APPLY","object function","Runnable(function) Fieldable(object)","...","apply function for object"){
+        VSCompiler.addRule(new ComplexCompileRule("APPLY","field function","Runnable(function) Fieldable(object)","...","apply function for object"){
             @Override public boolean checkCondition(String string) {
                 return string.equals("APPLY");
             }
@@ -1690,6 +1772,19 @@ public class InitDynamic {
             }
             @Override public Worker[] getNewWorkersWithRules() {
                 return null;
+            }
+        });
+
+        VSCompiler.addRule(new ComplexCompileRule(">>field","field","Fieldable(A) Object(value)","Fieldable(A)","set field of object A"){
+            @Override public boolean checkCondition(String string) {
+                return string.matches(">>[A-Za-z0-9_\\-/]+");
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
+                String name = operand.builder.toString().substring(2);
+                functionSession.addCommand(wStoreField,name,operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wStoreField};
             }
         });
 

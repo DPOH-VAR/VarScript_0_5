@@ -457,6 +457,54 @@ public class InitMathematic {
                 }
         ));
 
+        VSCompiler.addRule(new SimpleCompileRule(
+                "DMOD",
+                "DMOD",
+                "Double(A) Double(B)",
+                "Double",
+                "math",
+                "Put to stack A % B",
+                new SimpleWorker(new int[]{0x3F,0x10}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Double b = v.pop(Double.class);
+                        Double a = v.pop(Double.class);
+                        v.push(a%b);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "MOD",
+                "MOD %",
+                "Integer(A) Integer(B)",
+                "Integer",
+                "math",
+                "Put to stack A % B ",
+                new SimpleWorker(new int[]{0x3F,0x11}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Integer b = v.pop(Integer.class);
+                        Integer a = v.pop(Integer.class);
+                        v.push(a%b);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "LMOD",
+                "LMOD",
+                "Long(A) Long(B)",
+                "Long",
+                "math",
+                "Put to stack A % B  ",
+                new SimpleWorker(new int[]{0x3F,0x12}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Long b = v.pop(Long.class);
+                        Long a = v.pop(Long.class);
+                        v.push(a%b);
+                    }
+                }
+        ));
+
 
     }
 }

@@ -1,4 +1,4 @@
-package me.dpohvar.varscript.utils;
+package me.dpohvar.varscript.utils.reflect;
 
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Runnable;

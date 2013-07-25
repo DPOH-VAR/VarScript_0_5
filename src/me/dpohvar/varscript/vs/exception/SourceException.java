@@ -41,7 +41,7 @@ public abstract class SourceException extends Exception {
             right=line.length();
         } else{
             if(left<0) left=0;
-            right = left+30;
+            right = left+40;
             if(right>line.length()) right=line.length();
         }
         StringBuilder builder = new StringBuilder();

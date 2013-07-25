@@ -1,4 +1,4 @@
-package me.dpohvar.varscript.utils;
+package me.dpohvar.varscript.utils.reflect;
 
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.FieldableObject;
@@ -16,11 +16,11 @@ import java.util.*;
  */
 public class ReflectObject implements Fieldable {
 
-    private final java.lang.Object object;
-    private final Class clazz;
-    private final Scope scope;
-    private Runnable constructor;
-    private Fieldable proto;
+    protected final java.lang.Object object;
+    protected final Class clazz;
+    protected final Scope scope;
+    protected Runnable constructor;
+    protected Fieldable proto;
     public ReflectObject(java.lang.Object object,Scope scope){
         this.object = object;
         this.clazz = object.getClass();

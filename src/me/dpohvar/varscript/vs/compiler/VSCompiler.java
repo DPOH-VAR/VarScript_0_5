@@ -36,14 +36,14 @@ public class VSCompiler {
         InitEntity.load();
         InitList.load();
         InitLiving.load();
-        InitLocation.load();
+        InitLocVec.load();
         InitLogic.load();
         InitMathematic.load();
         InitMultiThread.load();
         InitPlayer.load();
+        InitPowerNBTAPI.load();
         InitStack.load();
         InitString.load();
-        InitVector.load();
     }
 
     private static Converter converter;

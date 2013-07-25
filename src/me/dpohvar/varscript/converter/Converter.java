@@ -1,6 +1,7 @@
 package me.dpohvar.varscript.converter;
 
-import me.dpohvar.varscript.utils.ReflectObject;
+import me.dpohvar.varscript.utils.reflect.NBTTagWrapper;
+import me.dpohvar.varscript.utils.reflect.ReflectObject;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.rule.ConvertRule;
 
@@ -86,6 +87,9 @@ public class Converter {
         }
         if (object instanceof ReflectObject) {
             return convert(classTo, ((ReflectObject)object).getObject(), thread, scope);
+        }
+        if (object instanceof NBTTagWrapper) {
+            return convert(classTo, ((NBTTagWrapper)object).getTag(), thread, scope);
         }
         try {
             Method m_values = classTo.getMethod("values");

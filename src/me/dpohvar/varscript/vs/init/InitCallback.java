@@ -313,7 +313,7 @@ public class InitCallback {
         @Override public void save(OutputStream out, Void data) throws IOException {
         }
         @Override public byte[] getBytes() {
-            return null;
+            return new byte[]{(byte)0xE6};
         }
         @Override public Void readObject(InputStream input, VSCompiler.ReadSession readSession) throws IOException {
             return null;
@@ -332,7 +332,7 @@ public class InitCallback {
         @Override public void save(OutputStream out, Void data) throws IOException {
         }
         @Override public byte[] getBytes() {
-            return null;
+            return new byte[]{(byte)0xE7};
         }
         @Override public Void readObject(InputStream input, VSCompiler.ReadSession readSession) throws IOException {
             return null;
@@ -354,7 +354,7 @@ public class InitCallback {
 
     public static void load(){
 
-        VSCompiler.addRule(new ComplexCompileRule(":MAP{...}","callback function while collection list collection","Collection(old)","ArrayList(new)","map all elements in collection by function. Example: [1,2,3]:MAP{100 +} ## [101,102,103]"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule(":MAP{...}","function while collection list collection","Collection(old)","ArrayList(new)","map all elements in collection by function. Example: [1,2,3]:MAP{100 +} ## [101,102,103]"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.matches(":(MAP)?\\{");
             }
@@ -371,7 +371,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("MAP","callback function while collection","Collection(old) Runnable(F)","ArrayList(new)","map all elements in collection with function F\nExample: [1,2,3] {100 +} MAP ## [101,102,103]"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule("MAP","function while collection","Collection(old) Runnable(F)","ArrayList(new)","map all elements in collection with function F\nExample: [1,2,3] {100 +} MAP ## [101,102,103]"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.equals("MAP");
             }
@@ -385,7 +385,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule(":SELECT{...}","callback function while list collection","Collection(old)","ArrayList(new)","choose from old collection only that satisfy the condition\nExample: [1,12,3,15]:SELECT{10 >} ## [12, 15]"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule(":SELECT{...}","function while list collection","Collection(old)","ArrayList(new)","choose from old collection only that satisfy the condition\nExample: [1,12,3,15]:SELECT{10 >} ## [12, 15]"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.matches(":(SELECT|\\?)\\{");
             }
@@ -402,7 +402,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("SELECT","callback function while list collection","Collection(old) Runnable(F)","ArrayList(new)","choose from old collection only that satisfy the condition F\nExample: [1,12,3,15] {10 >} SELECT ## [12, 15]"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule("SELECT","function while list collection","Collection(old) Runnable(F)","ArrayList(new)","choose from old collection only that satisfy the condition F\nExample: [1,12,3,15] {10 >} SELECT ## [12, 15]"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.equals("SELECT");
             }
@@ -432,7 +432,7 @@ public class InitCallback {
         });
 
 
-        VSCompiler.addRule(new ComplexCompileRule(":EACH{...}","callback function while list collection","Collection(old)","","apply function for each entry\nExample: [1,12,3,15]:EACH{PRINT}"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule(":EACH{...}","function while list collection","Collection(old)","","apply function for each entry\nExample: [1,12,3,15]:EACH{PRINT}"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.matches(":EACH\\{");
             }
@@ -449,7 +449,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("EACH","callback function while list collection","Collection(old) Runnable(F)","","apply function for each entry\nExample: [1,12,3,15] {PRINT} EACH"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule("EACH","function while list collection","Collection(old) Runnable(F)","","apply function for each entry\nExample: [1,12,3,15] {PRINT} EACH"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.equals("EACH");
             }
@@ -463,7 +463,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule(":FOLD{...}","callback function while list collection","Collection(old)","Object(result)","fold collection to left\nExample: [1,5,100]:FOLD{+} ## returns 106"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule(":FOLD{...}","function while list collection","Collection(old)","Object(result)","fold collection to left\nExample: [1,5,100]:FOLD{+} ## returns 106"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.matches(":FOLD\\{");
             }
@@ -480,7 +480,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("FOLD","callback function while list collection","Collection(old)","Object(result)","fold collection to left\nExample: [1,5,100] {+} FOLD ## returns 106"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule("FOLD","function while list collection","Collection(old)","Object(result)","fold collection to left\nExample: [1,5,100] {+} FOLD ## returns 106"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.equals("FOLD");
             }
@@ -516,10 +516,22 @@ public class InitCallback {
                 return string.equals("I");
             }
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
-               functionSession.addCommand(wDoI,null,operand);
-             }
+                functionSession.addCommand(wDoI,null,operand);
+            }
             @Override public Worker[] getNewWorkersWithRules() {
                 return new Worker[]{wDoI};
+            }
+        });
+
+        VSCompiler.addRule(new ComplexCompileRule("ENDLOOP","loop","","Integer(iterator)","break loop with inside function\n"){
+            @Override public boolean checkCondition(String string) {
+                return string.equals("ENDLOOP")||string.equals("ENDLOOP");
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
+                functionSession.addCommand(wEndLoop,null,operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wEndLoop};
             }
         });
 

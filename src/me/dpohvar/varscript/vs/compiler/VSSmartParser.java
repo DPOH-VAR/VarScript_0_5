@@ -1,7 +1,6 @@
 package me.dpohvar.varscript.vs.compiler;
 
 import me.dpohvar.varscript.vs.exception.ParseException;
-import org.bukkit.ChatColor;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -16,22 +15,41 @@ import static me.dpohvar.varscript.vs.compiler.VSSmartParser.ParseMode.*;
  */
 public class VSSmartParser {
 
+    static enum ParseMode{
+        OPER,
+        TRYCOMMENT,
+        LINECOMMENT,
+        NEEDSPACE,
+        STRINGQUOTE,
+        DOUBLE,
+        ESCAPING,
+        SPACER,
+        NUMBER,
+        NUMBER0,
+        NUMBERHEX,
+        OPENSQ,
+        STILLSPACES,
+        UNICODE1,
+        UNICODE2,
+        UNICODE3,
+        UNICODE4,
+        COLONVALUES,
+
+    }
+
     public static final class ParsedOperand{
         public StringBuilder builder = new StringBuilder();
         public final int row;
+
         public final int col;
 
         public ParsedOperand(int row, int col) {
             this.row = row;
             this.col = col;
         }
-
         @Override public String toString(){return builder.toString();}
+
     }
-
-    static enum ParseMode{OPER,COMMENT,NEEDSPACE,STRINGQUOTE,DOUBLE,ESCAPING,SPACER,NUMBER,NUMBER0,NUMBERHEX,OPENSQ,STILLSPACES,UNICODE1,UNICODE2,UNICODE3,UNICODE4}
-
-    private String source;
 
     public static Queue<ParsedOperand> parse(String input) throws ParseException {
         Queue<ParsedOperand> operands = new LinkedList<ParsedOperand>();
@@ -39,7 +57,6 @@ public class VSSmartParser {
         ParsedOperand currentOperand = null;
         int row=0;
         int col=0;
-        char[] unicodebuffer = new char[4];
         for(char b:input.toCharArray()){
             switch (parseMode){
 
@@ -52,6 +69,12 @@ public class VSSmartParser {
                             currentOperand = new ParsedOperand(row, col);
                             currentOperand.builder.append('"');
                             parseMode = STRINGQUOTE;
+                            break;
+                        }
+                        case '<':{
+                            currentOperand = new ParsedOperand(row, col);
+                            currentOperand.builder.append(b);
+                            parseMode = COLONVALUES;
                             break;
                         }
                         case '0':{
@@ -79,7 +102,7 @@ public class VSSmartParser {
                             break;
                         }
                         case '#':{
-                            parseMode = COMMENT;
+                            parseMode = TRYCOMMENT;
                             break;
                         }
                         case '!':case ',':{
@@ -99,7 +122,7 @@ public class VSSmartParser {
                     break;
                 }
 
-                case COMMENT:{
+                case LINECOMMENT:{
                     switch (b){
                         case '\n':{
                             parseMode = SPACER;
@@ -107,6 +130,19 @@ public class VSSmartParser {
                         }
                         default:{
                             break;
+                        }
+                    }
+                    break;
+                }
+
+                case TRYCOMMENT:{
+                    switch (b){
+                        case '#':{
+                            parseMode = LINECOMMENT;
+                            break;
+                        }
+                        default:{
+                            throw new ParseException(input,row,col,"unexpected comment");
                         }
                     }
                     break;
@@ -201,7 +237,7 @@ public class VSSmartParser {
                             break;
                         }
                         case '#':{
-                            parseMode = COMMENT;
+                            parseMode = TRYCOMMENT;
                             break;
                         }
                         case '!':case ',':{
@@ -238,7 +274,7 @@ public class VSSmartParser {
                             break;
                         }
                         default:{
-                            throw new ParseException(input,row,col,new RuntimeException("Unexpected "+b));
+                            throw new ParseException(input,row,col,"Unexpected "+b);
                         }
                     }
                     break;
@@ -266,6 +302,11 @@ public class VSSmartParser {
                             parseMode = DOUBLE;
                             break;
                         }
+                        case ':':{
+                            currentOperand.builder.append(b);
+                            parseMode = COLONVALUES;
+                            break;
+                        }
                         case '}':case ',':case ']':{
                             operands.add(currentOperand);
                             currentOperand = new ParsedOperand(row, col);
@@ -275,7 +316,7 @@ public class VSSmartParser {
                             break;
                         }
                         default:{
-                            throw new ParseException(input,row,col,new RuntimeException("can not parse number"));
+                            throw new ParseException(input,row,col,"can not parse number");
                         }
                     }
                     break;
@@ -309,6 +350,11 @@ public class VSSmartParser {
                             parseMode = NUMBERHEX;
                             break;
                         }
+                        case ':':{
+                            currentOperand.builder.append(b);
+                            parseMode = COLONVALUES;
+                            break;
+                        }
                         case '}':case ']':{
                             operands.add(currentOperand);
                             currentOperand = new ParsedOperand(row, col);
@@ -318,7 +364,7 @@ public class VSSmartParser {
                             break;
                         }
                         default:{
-                            throw new ParseException(input,row,col,new RuntimeException("can not parse number"));
+                            throw new ParseException(input,row,col,"can not parse number");
                         }
                     }
                     break;
@@ -355,7 +401,7 @@ public class VSSmartParser {
                             break;
                         }
                         default:{
-                            throw new ParseException(input,row,col,new RuntimeException("can not parse number"));
+                            throw new ParseException(input,row,col,"can not parse number");
                         }
                     }
                     break;
@@ -373,6 +419,11 @@ public class VSSmartParser {
                             currentOperand.builder.append(b);
                             break;
                         }
+                        case ':':{
+                            currentOperand.builder.append(b);
+                            parseMode = COLONVALUES;
+                            break;
+                        }
                         case '}':case ',':case ']':{
                             operands.add(currentOperand);
                             currentOperand = new ParsedOperand(row, col);
@@ -382,7 +433,7 @@ public class VSSmartParser {
                             break;
                         }
                         default:{
-                            throw new ParseException(input,row,col,new RuntimeException("can not parse .number"));
+                            throw new ParseException(input,row,col,"can not parse .number");
                         }
                     }
                     break;
@@ -392,16 +443,13 @@ public class VSSmartParser {
                 case STRINGQUOTE:{
                     switch (b){
                         case '\\':{
+                            currentOperand.builder.append('\\');
                             parseMode = ESCAPING;
                             break;
                         }
                         case '\"':{
                             currentOperand.builder.append('\"');
                             parseMode = OPER;
-                            break;
-                        }
-                        case '&':{
-                            currentOperand.builder.append(ChatColor.COLOR_CHAR);
                             break;
                         }
                         default:{
@@ -414,111 +462,42 @@ public class VSSmartParser {
 
                 case ESCAPING:{
                     switch (b){
-                        case '\\':{
-                            currentOperand.builder.append('\\');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case '\"':{
-                            currentOperand.builder.append('\"');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case '0':{
-                            currentOperand.builder.append('\0');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case '1':{
-                            currentOperand.builder.append('\1');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case '2':{
-                            currentOperand.builder.append('\2');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case '3':{
-                            currentOperand.builder.append('\3');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case '4':{
-                            currentOperand.builder.append('\4');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case '5':{
-                            currentOperand.builder.append('\5');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case '6':{
-                            currentOperand.builder.append('\6');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case '7':{
-                            currentOperand.builder.append('\7');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case 'r':{
-                            currentOperand.builder.append('\r');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case 't':{
-                            currentOperand.builder.append('\t');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case 'f':{
-                            currentOperand.builder.append('\f');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case '\'':{
-                            currentOperand.builder.append('\'');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case 'b':{
-                            currentOperand.builder.append('\b');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
-                        case 'n':{
-                            currentOperand.builder.append('\n');
-                            parseMode = STRINGQUOTE;
-                            break;
-                        }
+                        case '\\':
+                        case '\"':
+                        case '0':
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        case 'r':
+                        case 't':
+                        case 'f':
+                        case '\'':
+                        case 'b':
+                        case 'n':
                         case '&':{
-                            currentOperand.builder.append('&');
+                            currentOperand.builder.append(b);
                             parseMode = STRINGQUOTE;
                             break;
                         }
-                        case ' ':case '\t':{
-                            parseMode = STILLSPACES;
-                            break;
-                        }
-                        case '\r':{
-                            currentOperand.builder.append('\r');
-                            parseMode = STILLSPACES;
-                            break;
-                        }
+                        case ' ':
+                        case '\t':
+                        case '\r':
                         case '\n':{
-                            currentOperand.builder.append('\n');
+                            currentOperand.builder.append(b);
                             parseMode = STILLSPACES;
                             break;
                         }
                         case 'u':{
+                            currentOperand.builder.append(b);
                             parseMode = UNICODE1;
                             break;
                         }
                         default:{
-                            throw new ParseException(input,row,col,new RuntimeException("Can't escape symbol '\\"+b+"'"));
+                            throw new ParseException(input,row,col,"Can't escape symbol '\\"+b+"'");
                         }
                     }
                     break;
@@ -527,22 +506,21 @@ public class VSSmartParser {
                 case STILLSPACES:{
                     switch (b){
                         case ' ':case '\t':{
+                            currentOperand.builder.append(b);
                             break;
                         }
-                        case '\r':{
-                            currentOperand.builder.append('\r');
-                            break;
-                        }
+                        case '\r':
                         case '\n':{
-                            currentOperand.builder.append('\n');
+                            currentOperand.builder.append(b);
                             break;
                         }
                         case '\\':{
+                            currentOperand.builder.append(b);
                             parseMode = ESCAPING;
                             break;
                         }
                         case '\"':{
-                            currentOperand.builder.append('\"');
+                            currentOperand.builder.append(b);
                             parseMode = OPER;
                             break;
                         }
@@ -563,12 +541,12 @@ public class VSSmartParser {
                         case 'C': case 'D': case 'E': case 'F':
                         case 'a': case 'b': case 'c': case 'd':
                         case 'e': case 'f':{
-                            unicodebuffer[0]=b;
+                            currentOperand.builder.append(b);
                             parseMode = UNICODE2;
                             break;
                         }
                         default:{
-                            throw new ParseException(input,row,col,new RuntimeException("Can't escape unicode hex symbol '"+b+"'"));
+                            throw new ParseException(input,row,col,"Can't escape unicode hex symbol '"+b+"'");
                         }
                     }
                     break;
@@ -581,12 +559,12 @@ public class VSSmartParser {
                         case 'C': case 'D': case 'E': case 'F':
                         case 'a': case 'b': case 'c': case 'd':
                         case 'e': case 'f':{
-                            unicodebuffer[1]=b;
+                            currentOperand.builder.append(b);
                             parseMode = UNICODE3;
                             break;
                         }
                         default:{
-                            throw new ParseException(input,row,col,new RuntimeException("Can't escape unicode hex symbol: '"+b+"'"));
+                            throw new ParseException(input,row,col,"Can't escape unicode hex symbol: '"+b+"'");
                         }
                     }
                     break;
@@ -599,12 +577,12 @@ public class VSSmartParser {
                         case 'C': case 'D': case 'E': case 'F':
                         case 'a': case 'b': case 'c': case 'd':
                         case 'e': case 'f':{
-                            unicodebuffer[2]=b;
+                            currentOperand.builder.append(b);
                             parseMode = UNICODE4;
                             break;
                         }
                         default:{
-                            throw new ParseException(input,row,col,new RuntimeException("Can't escape unicode hex symbol: '"+b+"'"));
+                            throw new ParseException(input,row,col,"Can't escape unicode hex symbol: '"+b+"'");
                         }
                     }
                     break;
@@ -617,19 +595,51 @@ public class VSSmartParser {
                         case 'C': case 'D': case 'E': case 'F':
                         case 'a': case 'b': case 'c': case 'd':
                         case 'e': case 'f':{
-                            unicodebuffer[3]=b;
-                            char character = (char) Integer.parseInt(new String(unicodebuffer),16);
-                            currentOperand.builder.append(character);
+                            currentOperand.builder.append(b);
                             parseMode = STRINGQUOTE;
                             break;
                         }
                         default:{
-                            throw new ParseException(input,row,col,new RuntimeException("Can't escape unicode hex symbol: '"+b+"'"));
+                            throw new ParseException(input,row,col,"Can't escape unicode hex symbol: '"+b+"'");
                         }
                     }
                     break;
                 }
                 default:{
+                    break;
+                }
+
+                case COLONVALUES:{
+                    switch (b){
+                        case ' ':case '\n':case '\t':case '\r':{
+                            operands.add(currentOperand);
+                            parseMode = SPACER;
+                            break;
+                        }
+                        case '\"':{
+                            currentOperand.builder.append(b);
+                            parseMode = STRINGQUOTE;
+                            break;
+                        }
+                        case ',':case '}':case ']':{
+                            operands.add(currentOperand);
+                            currentOperand = new ParsedOperand(row, col);
+                            currentOperand.builder.append(b);
+                            operands.add(currentOperand);
+                            parseMode = SPACER;
+                            break;
+                        }
+                        case '{':{
+                            currentOperand.builder.append(b);
+                            operands.add(currentOperand);
+                            parseMode = SPACER;
+                            break;
+                        }
+                        default:{
+                            currentOperand.builder.append(b);
+                            break;
+                        }
+                    }
                     break;
                 }
             }
@@ -643,14 +653,27 @@ public class VSSmartParser {
         }
 
         switch (parseMode){
-            case OPER:case NEEDSPACE:case NUMBER:case NUMBER0:case DOUBLE:case NUMBERHEX:{
+            case OPER:
+            case NEEDSPACE:
+            case NUMBER:
+            case NUMBER0:
+            case DOUBLE:
+            case NUMBERHEX:{
                 operands.add(currentOperand);
                 break;
             }
-            case STRINGQUOTE:case ESCAPING:case OPENSQ:case STILLSPACES:case UNICODE1:case UNICODE2:case UNICODE3:case UNICODE4:{
-                throw new ParseException(input,row,col,new RuntimeException("Unexpected end of source"));
+            case LINECOMMENT:
+            case STRINGQUOTE:
+            case ESCAPING:
+            case OPENSQ:
+            case STILLSPACES:
+            case UNICODE1:
+            case UNICODE2:
+            case UNICODE3:
+            case UNICODE4:{
+                throw new ParseException(input,row,col,"Unexpected end of source");
             }
-            case COMMENT:default:{
+            case TRYCOMMENT:default:{
                 break;
             }
         }

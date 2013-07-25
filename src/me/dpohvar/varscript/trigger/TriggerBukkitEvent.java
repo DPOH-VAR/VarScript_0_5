@@ -36,8 +36,7 @@ public class TriggerBukkitEvent<T extends Event> implements Trigger<T> {
     public TriggerBukkitEvent(final Class<T> clazz, EventPriority priority, TriggerRunner<T> runner){
         this.runner = runner;
         EventExecutor executor = new EventExecutor() {
-            public void execute(Listener listener, Event event) throws EventException {
-                if(clazz.isInstance(event)) handle((T)event);
+            public void execute(Listener listener, Event event) throws EventException {if(clazz.isInstance(event)) handle((T)event);
             }
         };
         registeredListener = new RegisteredListener(null,executor,priority, VarScript.instance,false);

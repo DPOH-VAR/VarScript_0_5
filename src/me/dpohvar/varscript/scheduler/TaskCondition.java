@@ -1,12 +1,10 @@
 package me.dpohvar.varscript.scheduler;
 
-import me.dpohvar.varscript.scheduler.action.VSRunAction;
 import me.dpohvar.varscript.scheduler.condition.ChanceCondition;
 import me.dpohvar.varscript.scheduler.condition.EventStatusCondition;
+import me.dpohvar.varscript.scheduler.condition.VSRunCondition;
 
 import java.util.Map;
-
-import static me.dpohvar.varscript.scheduler.Status.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,6 +36,8 @@ public abstract class TaskCondition extends TaskEntry{
             return new ChanceCondition(task,argument);
         } else if("EVENT".equals(type)){
             return new EventStatusCondition(task,argument);
+        } else if("VARSCRIPT".equals(type)||"VS".equals(type)){
+            return new VSRunCondition(task,argument);
         }
         return new TaskConditionError(task,s);
     }

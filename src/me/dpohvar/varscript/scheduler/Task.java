@@ -18,7 +18,7 @@ import static me.dpohvar.varscript.scheduler.Status.*;
 public class Task {
 
     boolean enabled = false;
-    String description = null;
+    String description = "";
     ArrayList<TaskEvent> events = new ArrayList<TaskEvent>();
     ArrayList<TaskCondition> conditions = new ArrayList<TaskCondition>();
     ArrayList<TaskAction> actions = new ArrayList<TaskAction>();
@@ -36,7 +36,8 @@ public class Task {
     }
 
     public void setDescription(String description){
-        this.description=description;
+        if(description==null) this.description="";
+        else this.description=description;
     }
 
     public boolean isRemoved(){

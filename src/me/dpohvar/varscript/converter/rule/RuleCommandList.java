@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
@@ -35,6 +36,17 @@ public class RuleCommandList extends ConvertRule<NamedCommandList>{
             } catch (Exception ignored) {
             }
         }
+        if (object instanceof int[]) {
+            try {
+                int[] integers = (int[]) object;
+                byte[] bytes = new byte[integers.length];
+                int i=0;for(int t:integers)bytes[i++]=(byte)t;
+                ByteArrayInputStream is = new ByteArrayInputStream(bytes);
+                return VSCompiler.read(is);
+            } catch (Exception ignored) {
+            }
+        }
+        if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
         throw nextRule;
    }
 

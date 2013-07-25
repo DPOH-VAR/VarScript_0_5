@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.VarScript;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
@@ -56,17 +57,13 @@ public class RuleString extends ConvertRule<String>{
         if (object instanceof Region) return object.toString();
         if (object instanceof World) return ((World) object).getName();
         if (object instanceof PotionEffect) return ((PotionEffect)object).getType().getName();
+        if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
         if (object instanceof byte[]) {
             byte[] bytes = (byte[])object;
             return new String(bytes, VarScript.UTF8);
         }
         return object.toString();
-		
-		// класс Number объединяет в себе все числовые типы: Byte,Short,Int,Long,Float,Double и другие (хз есть ли там Character)
-		// делаем конвертер для каждого из них
-		// а также для Vector,Entity,Player,Inventory,Collection,List,Map,Region и других.
-		// в List мы конвертим инвентарь, коллекцию, Inventory, Строку и т.д.
-    }
+	}
 
     @Override
     public Class<String> getClassTo() {

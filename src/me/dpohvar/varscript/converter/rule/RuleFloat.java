@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.region.Region;
@@ -49,19 +50,14 @@ public class RuleFloat extends ConvertRule<Float>{
         if (object instanceof Region) return (float)((Region)object).getBlocks().size();
         if (object instanceof World) return (float)Bukkit.getWorlds().indexOf(object);
         if (object instanceof PotionEffect) return (float)((PotionEffect)object).getType().getId();
+        if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
         if (object instanceof byte[]) {
             byte[] bytes = (byte[])object;
             if (bytes.length==0) return 0f;
             return ByteBuffer.wrap(bytes).getFloat();
         }
         throw nextRule;
-		// в идеале написать в конце Throw nextRule вместо return true
-		
-		// класс Number объединяет в себе все числовые типы: Byte,Short,Int,Long,Float,Double и другие (хз есть ли там Character)
-		// делаем конвертер для каждого из них
-		// а также для Vector,Entity,Player,Inventory,Collection,List,Map,Region и других.
-		// в List мы конвертим инвентарь, коллекцию, Inventory, Строку и т.д.
-    }
+	}
 
     @Override
     public Class<Float> getClassTo() {

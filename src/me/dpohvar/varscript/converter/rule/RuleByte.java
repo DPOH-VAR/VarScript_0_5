@@ -1,5 +1,8 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagCompound;
+import me.dpohvar.powernbt.nbt.NBTTagDatable;
+import me.dpohvar.powernbt.nbt.NBTTagList;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.region.Region;
@@ -43,11 +46,14 @@ public class RuleByte extends ConvertRule<Byte>{
         if (object instanceof Inventory) return (byte)((Inventory)object).getSize();
         if (object instanceof ItemStack) return (byte)((ItemStack)object).getTypeId();
         if (object instanceof Collection) return (byte)((Collection)object).size();
+        if (object instanceof NBTTagList) return (byte)((NBTTagList)object).size();
+        if (object instanceof NBTTagCompound) return (byte)((NBTTagCompound)object).size();
         if (object instanceof Map) return (byte)((Map)object).size();
         if (object instanceof Boolean) return ((Boolean)object)?(byte)1:(byte)0;
         if (object instanceof Region) return (byte)((Region)object).getBlocks().size();
         if (object instanceof World) return (byte)Bukkit.getWorlds().indexOf(object);
         if (object instanceof PotionEffect) return (byte)((PotionEffect)object).getType().getId();
+        if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
         if (object instanceof byte[]) {
             byte[] bytes = (byte[])object;
             if (bytes.length==0) return 0;

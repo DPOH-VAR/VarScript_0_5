@@ -1,5 +1,8 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagCompound;
+import me.dpohvar.powernbt.nbt.NBTTagDatable;
+import me.dpohvar.powernbt.nbt.NBTTagList;
 import me.dpohvar.varscript.Program;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
@@ -45,16 +48,13 @@ public class RuleBoolean extends ConvertRule<Boolean>{
         if (object instanceof OfflinePlayer) return ((OfflinePlayer)object).isOnline();
         if (object instanceof Program) return ((Program)object).isFinished();
         if (object instanceof Map) return !((Map)object).isEmpty();
-        if (object instanceof byte[]) {
-            return ((byte[])object).length!=0;
-        }
+        if (object instanceof NBTTagList) return ((NBTTagList)object).size()>0;
+        if (object instanceof NBTTagCompound) return ((NBTTagCompound)object).size()>0;
+        if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
+        if (object instanceof byte[]) return ((byte[])object).length!=0;
+        if (object instanceof int[]) return ((int[])object).length!=0;
+        if (object instanceof Object[])return ((Object[])object).length!=0;
         return true;
-		// в идеале написать в конце Throw nextRule вместо return true
-		
-		// класс Number объединяет в себе все числовые типы: Byte,Short,Int,Long,Float,Double и другие (хз есть ли там Character)
-		// делаем конвертер для каждого из них
-		// а также для Vector,Entity,Player,Inventory,Collection,List,Map,Region и других.
-		// в List мы конвертим инвентарь, коллекцию, Inventory, Строку и т.д.
     }
 
     @Override

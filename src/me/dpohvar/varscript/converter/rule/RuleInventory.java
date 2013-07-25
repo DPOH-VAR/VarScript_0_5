@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
 import org.bukkit.Bukkit;
@@ -25,6 +26,7 @@ public class RuleInventory extends ConvertRule<Inventory>{
         if (object instanceof InventoryHolder) return ((InventoryHolder)object).getInventory();
         if (object instanceof String) return Bukkit.getPlayer((String)object).getInventory();
         if (object instanceof Block) return ((InventoryHolder)((Block)object).getState()).getInventory();
+        if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
         throw nextRule;
     }
 

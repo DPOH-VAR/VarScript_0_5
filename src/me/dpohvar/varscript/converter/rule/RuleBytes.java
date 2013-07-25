@@ -71,6 +71,12 @@ public class RuleBytes extends ConvertRule<byte[]>{
             }
             return out.toByteArray();
         }
+        if(object instanceof int[]){
+            int[] integers = (int[]) object;
+            byte[] bytes = new byte[integers.length];
+            int i=0;for(int t:integers) bytes[i++]=(byte)t;
+            return bytes;
+        }
         throw nextRule;
 		// в идеале написать в конце Throw nextRule вместо return true
 		

@@ -1,5 +1,7 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagCompound;
+import me.dpohvar.powernbt.nbt.NBTTagList;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.region.Region;
@@ -62,19 +64,21 @@ public class RuleList extends ConvertRule<List>{
         if (object instanceof Map) return new ArrayList(((Map)object).keySet());
         if (object instanceof Region) return new ArrayList(((Region)object).getBlocks());
         if (object instanceof World) return ((World)object).getEntities();
+        if (object instanceof NBTTagList) return convert(((NBTTagList)object).asList(),thread,scope);
+        if (object instanceof NBTTagCompound) return convert(((NBTTagCompound)object).asList(),thread,scope);
         if (object instanceof byte[]) {
             byte[] bytes = (byte[])object;
             ArrayList<Byte> a = new ArrayList<Byte>();
             for(byte b:bytes)a.add(b);
             return a;
         }
+        if (object instanceof int[]) {
+            int[] ints = (int[])object;
+            ArrayList<Integer> a = new ArrayList<Integer>();
+            for(int b:ints)a.add(b);
+            return a;
+        }
         throw nextRule;
-		// в идеале написать в конце Throw nextRule вместо return true
-		
-		// класс Number объединяет в себе все числовые типы: Byte,Short,Int,Long,Float,Double и другие (хз есть ли там Character)
-		// делаем конвертер для каждого из них
-		// а также для Vector,Entity,Player,Inventory,Collection,List,Map,Region и других.
-		// в List мы конвертим инвентарь, коллекцию, Inventory, Строку и т.д.
     }
 
     @Override

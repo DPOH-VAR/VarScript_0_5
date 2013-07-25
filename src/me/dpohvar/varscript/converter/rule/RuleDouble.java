@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.region.Region;
@@ -49,6 +50,7 @@ public class RuleDouble extends ConvertRule<Double>{
         if (object instanceof Region) return (double)((Region)object).getBlocks().size();
         if (object instanceof World) return (double)Bukkit.getWorlds().indexOf(object);
         if (object instanceof PotionEffect) return (double)((PotionEffect)object).getType().getId();
+        if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
         if (object instanceof byte[]) {
             byte[] bytes = (byte[])object;
             if (bytes.length==0) return 0.0;

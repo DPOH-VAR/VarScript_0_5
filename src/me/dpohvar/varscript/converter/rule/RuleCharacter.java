@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
 
@@ -28,6 +29,7 @@ public class RuleCharacter extends ConvertRule<Character>{
             if (bytes.length==0) return 0;
             return ByteBuffer.wrap(bytes).getChar();
         }
+        if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
         throw nextRule;
     }
 

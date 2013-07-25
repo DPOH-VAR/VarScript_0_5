@@ -1,8 +1,11 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagCompound;
+import me.dpohvar.powernbt.nbt.NBTTagList;
+import me.dpohvar.varscript.utils.reflect.NBTTagWrapper;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
-import me.dpohvar.varscript.utils.ReflectObject;
+import me.dpohvar.varscript.utils.reflect.ReflectObject;
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,6 +22,8 @@ public class RuleFieldable extends ConvertRule<Fieldable>{
     @Override
     public <V> Fieldable convert(V object, me.dpohvar.varscript.vs.Thread thread,Scope scope) throws NextRule {
         if (object==null) return null;
+        if (object instanceof NBTTagCompound) return (Fieldable)NBTTagWrapper.tryWrap(object);
+        if (object instanceof NBTTagList) return (Fieldable)NBTTagWrapper.tryWrap(object);
         return new ReflectObject(object,scope);
 	}
 

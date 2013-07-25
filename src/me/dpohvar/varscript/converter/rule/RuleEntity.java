@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.Program;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
@@ -33,6 +34,7 @@ public class RuleEntity extends ConvertRule<Entity>{
             }
         }
         if (object instanceof String) return Bukkit.getPlayer((String)object);
+        if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
         if (object instanceof Inventory) return convert(((Inventory)object).getHolder(),thread,scope);
         if (object instanceof OfflinePlayer) return ((OfflinePlayer)object).getPlayer();
         if (object instanceof Program) return convert(((Program)object).getCaller().getInstance(),thread,scope);

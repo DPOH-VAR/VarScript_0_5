@@ -1,5 +1,7 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagCompound;
+import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.region.Region;
@@ -40,13 +42,8 @@ public class RuleLocation extends ConvertRule<Location>{
         }
         if (object instanceof Region) return ((Region)object).getCenter();
         if (object instanceof World) return ((World)object).getSpawnLocation();
+        if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
         throw nextRule;
-		// в идеале написать в конце Throw nextRule вместо return true
-		
-		// класс Number объединяет в себе все числовые типы: Byte,Short,Int,Long,Float,Double и другие (хз есть ли там Character)
-		// делаем конвертер для каждого из них
-		// а также для Vector,Entity,Player,Inventory,Collection,List,Map,Region и других.
-		// в List мы конвертим инвентарь, коллекцию, Inventory, Строку и т.д.
     }
 
     @Override

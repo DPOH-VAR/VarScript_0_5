@@ -1,11 +1,9 @@
 package me.dpohvar.varscript.scheduler;
 
-import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
 import me.dpohvar.varscript.scheduler.event.BukkitEvent;
-import me.dpohvar.varscript.scheduler.event.LoadEvent;
+import me.dpohvar.varscript.scheduler.event.PluginLoadEvent;
 import me.dpohvar.varscript.scheduler.event.RepeatEvent;
-
-import static me.dpohvar.varscript.scheduler.Status.*;
+import me.dpohvar.varscript.scheduler.event.TaskLoadEvent;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,8 +33,10 @@ public abstract class TaskEvent extends TaskEntry {
             return new BukkitEvent(task,argument);
         } else if ("REPEAT".equals(type)){
             return new RepeatEvent(task,argument);
-        } else if ("LOAD".equals(type)){
-            return new LoadEvent(task,argument);
+        } else if ("LOAD".equals(type)||"TASKLOAD".equals(type)){
+            return new TaskLoadEvent(task,argument);
+        } else if ("PLUGINLOAD".equals(type)){
+            return new PluginLoadEvent(task,argument);
         }
         return new TaskEventError(task,s);
     }

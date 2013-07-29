@@ -1,8 +1,5 @@
 package me.dpohvar.varscript.caller;
 
-import me.dpohvar.varscript.VarScript;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 

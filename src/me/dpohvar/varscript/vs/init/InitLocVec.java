@@ -1,11 +1,16 @@
 package me.dpohvar.varscript.vs.init;
 
-import me.dpohvar.varscript.utils.region.*;
-import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.converter.ConvertException;
+import me.dpohvar.varscript.utils.region.CubeArea;
+import me.dpohvar.varscript.utils.region.CubeRegion;
+import me.dpohvar.varscript.utils.region.Region;
+import me.dpohvar.varscript.utils.region.SphereRegion;
+import me.dpohvar.varscript.vs.Context;
+import me.dpohvar.varscript.vs.SimpleWorker;
 import me.dpohvar.varscript.vs.Thread;
+import me.dpohvar.varscript.vs.ThreadRunner;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.converter.ConvertException;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
@@ -607,7 +612,7 @@ public class InitLocVec {
 
         VSCompiler.addRule(new SimpleCompileRule(
                 "SPHERE",
-                "SHPERE SPH",
+                "SPHERE SPH",
                 "Location Double(radius)",
                 "Region",
                 "region",

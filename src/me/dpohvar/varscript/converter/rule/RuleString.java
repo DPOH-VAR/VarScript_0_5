@@ -2,13 +2,11 @@ package me.dpohvar.varscript.converter.rule;
 
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.VarScript;
-import me.dpohvar.varscript.converter.ConvertException;
-import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.region.Region;
+import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Runnable;
 import me.dpohvar.varscript.vs.Thread;
-import me.dpohvar.varscript.vs.exception.InterruptThread;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -69,10 +67,11 @@ public class RuleString extends ConvertRule<String>{
         if (object instanceof Fieldable) {
             try{
                 Fieldable f = (Fieldable)object;
-                Runnable run = (Runnable) f.getField("toString");
+                Runnable run = (Runnable) f.getField("ToString");
                 Thread t = new Thread(thread.getProgram());
                 ThreadRunner r = new ThreadRunner(t);
                 t.pushFunction(run,f);
+
                 r.runThreads();
                 Object ob = t.pop();
                 if(ob instanceof Fieldable) return ob.toString();

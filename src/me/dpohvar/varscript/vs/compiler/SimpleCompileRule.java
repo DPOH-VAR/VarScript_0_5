@@ -1,7 +1,7 @@
 package me.dpohvar.varscript.vs.compiler;
 
-import me.dpohvar.varscript.vs.SimpleWorker;
 import me.dpohvar.varscript.vs.CommandDebug;
+import me.dpohvar.varscript.vs.SimpleWorker;
 import me.dpohvar.varscript.vs.Worker;
 import me.dpohvar.varscript.vs.exception.SourceException;
 import org.apache.commons.lang.StringUtils;

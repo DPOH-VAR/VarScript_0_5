@@ -16,7 +16,6 @@ import org.bukkit.event.world.WorldEvent;
 import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.plugin.RegisteredListener;
-import org.bukkit.event.Event;
 
 import java.lang.reflect.Method;
 import java.util.Map;

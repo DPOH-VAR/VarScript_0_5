@@ -1,10 +1,9 @@
 package me.dpohvar.varscript.converter.rule;
 
-import me.dpohvar.powernbt.nbt.NBTTagCompound;
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
-import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.region.Region;
+import me.dpohvar.varscript.vs.Scope;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;

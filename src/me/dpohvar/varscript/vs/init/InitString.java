@@ -1,13 +1,13 @@
 package me.dpohvar.varscript.vs.init;
 
 import me.dpohvar.varscript.VarScript;
+import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.vs.Context;
 import me.dpohvar.varscript.vs.SimpleWorker;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.ThreadRunner;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.converter.ConvertException;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;

@@ -1,9 +1,11 @@
 package me.dpohvar.varscript.scheduler.event;
 
+import me.dpohvar.varscript.converter.Converter;
 import me.dpohvar.varscript.scheduler.Task;
 import me.dpohvar.varscript.scheduler.TaskEvent;
-import me.dpohvar.varscript.trigger.*;
-import me.dpohvar.varscript.converter.Converter;
+import me.dpohvar.varscript.trigger.Trigger;
+import me.dpohvar.varscript.trigger.TriggerBukkitEvent;
+import me.dpohvar.varscript.trigger.TriggerRunner;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 

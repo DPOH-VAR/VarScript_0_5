@@ -4,14 +4,13 @@ import me.dpohvar.varscript.config.ConfigKey;
 import me.dpohvar.varscript.config.ConfigManager;
 import org.apache.commons.io.FileExistsException;
 
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static me.dpohvar.varscript.config.ConfigKey.SCHEDULER_ENABLED;
 import static me.dpohvar.varscript.scheduler.Status.*;
-import static me.dpohvar.varscript.config.ConfigKey.*;
 
 /**
  * Created with IntelliJ IDEA.

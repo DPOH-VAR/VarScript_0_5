@@ -67,6 +67,7 @@ public class InitMultiThread {
                                 Thread thread = new Thread(v.getProgram());
                                 r.pushThread(thread);
                                 Context context = thread.pushFunction(function, f.getApply());
+                                context.setRegisterE(f);
                                 context.getScope().setVar("Event", event);
                                 r.runThreads();
                             }
@@ -123,6 +124,7 @@ public class InitMultiThread {
                                 Thread thread = new Thread(v.getProgram());
                                 r.pushThread(thread);
                                 Context context = thread.pushFunction(function, f.getApply());
+                                context.setRegisterE(f);
                                 context.getScope().setVar("Event", event);
                                 r.runThreads();
                             }
@@ -146,7 +148,7 @@ public class InitMultiThread {
                     @Override public void run(ThreadRunner r,final Thread v, Context f, Void d) throws Exception {
                         Runnable runnable = v.pop(f.getScope());
                         Thread newThread = new Thread(v.getProgram());
-                        newThread.pushFunction(runnable, f.getApply());
+                        newThread.pushFunction(runnable, f.getApply()).setRegisterE(f);
                         r.pushThread(newThread);
                         v.push(newThread);
                         throw interruptThread;
@@ -337,6 +339,7 @@ public class InitMultiThread {
                                 Thread thread = new Thread(v.getProgram());
                                 r.pushThread(thread);
                                 Context context = thread.pushFunction(function, f.getApply());
+                                context.setRegisterE(f);
                                 context.getScope().setVar("Event", event);
                                 r.runThreads();
                             }

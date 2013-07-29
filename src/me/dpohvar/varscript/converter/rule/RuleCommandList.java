@@ -1,10 +1,13 @@
 package me.dpohvar.varscript.converter.rule;
 
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
-import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.converter.ConvertException;
+import me.dpohvar.varscript.converter.NextRule;
+import me.dpohvar.varscript.vs.CommandList;
+import me.dpohvar.varscript.vs.Function;
+import me.dpohvar.varscript.vs.Scope;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.converter.NextRule;
 
 import java.io.ByteArrayInputStream;
 
@@ -21,7 +24,7 @@ public class RuleCommandList extends ConvertRule<CommandList>{
     }
 
     @Override
-    public <V> CommandList convert(V object, Thread thread,Scope scope) throws NextRule {
+    public <V> CommandList convert(V object, Thread thread,Scope scope) throws NextRule, ConvertException {
         if (object==null) return new Function(null,"",scope);
         if (object instanceof String) {
             try {
@@ -33,7 +36,8 @@ public class RuleCommandList extends ConvertRule<CommandList>{
             try {
                 ByteArrayInputStream is = new ByteArrayInputStream((byte[])object);
                 return VSCompiler.read(is);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                throw new ConvertException(object,CommandList.class,"can't compile bytecode");
             }
         }
         if (object instanceof int[]) {

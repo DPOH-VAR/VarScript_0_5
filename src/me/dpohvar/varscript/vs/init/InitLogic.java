@@ -1,10 +1,12 @@
 package me.dpohvar.varscript.vs.init;
 
-import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.converter.ConvertException;
+import me.dpohvar.varscript.vs.Context;
+import me.dpohvar.varscript.vs.SimpleWorker;
 import me.dpohvar.varscript.vs.Thread;
+import me.dpohvar.varscript.vs.ThreadRunner;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.converter.ConvertException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -141,11 +143,11 @@ public class InitLogic {
                         } else if (a instanceof Number && b instanceof Number){
                             if (a instanceof Float || a instanceof Double || b instanceof Float || b instanceof Double){
                                 double val_a = ((Number)a).doubleValue();
-                                double val_b = ((Number)a).doubleValue();
+                                double val_b = ((Number)b).doubleValue();
                                 v.push(val_a==val_b);
                             } else {
                                 long val_a = ((Number)a).longValue();
-                                long val_b = ((Number)a).longValue();
+                                long val_b = ((Number)b).longValue();
                                 v.push(val_a==val_b);
                             }
                         } else if (a instanceof Enum || b instanceof Enum){

@@ -6,7 +6,7 @@ import me.dpohvar.varscript.config.ConfigManager;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.*;
+import java.io.File;
 import java.nio.charset.Charset;
 
 /**

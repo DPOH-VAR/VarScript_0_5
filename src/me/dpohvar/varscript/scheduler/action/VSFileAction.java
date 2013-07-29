@@ -8,7 +8,7 @@ import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 
-import java.io.*;
+import java.io.InputStream;
 import java.util.Map;
 
 /**

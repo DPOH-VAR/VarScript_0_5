@@ -4,7 +4,6 @@ import me.dpohvar.varscript.VarScript;
 import org.bukkit.event.*;
 import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.RegisteredListener;
-import  org.bukkit.event.Event;
 
 /**
  * Created with IntelliJ IDEA.

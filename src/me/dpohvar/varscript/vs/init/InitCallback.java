@@ -10,7 +10,6 @@ import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import me.dpohvar.varscript.vs.compiler.VSSmartParser;
 import me.dpohvar.varscript.vs.exception.SourceException;
 import org.bukkit.Bukkit;
-import org.bukkit.block.Block;
 import org.bukkit.command.ConsoleCommandSender;
 
 import java.io.*;
@@ -82,7 +81,7 @@ public class InitCallback {
             if(iterator!=null && iterator.hasNext()){
                 Object apply = iterator.next();
                 v.push(apply);
-                v.pushFunction((Runnable)f.getRegisterA(),apply);
+                v.pushFunction((Runnable)f.getRegisterA(),apply).setRegisterE(f);
                 throw interruptFunction;
             } else {
                 v.push(f.getRegisterC());
@@ -141,7 +140,7 @@ public class InitCallback {
                 Object apply = iterator.next();
                 f.setRegisterF(apply);
                 v.push(apply);
-                v.pushFunction((Runnable)f.getRegisterA(),apply);
+                v.pushFunction((Runnable)f.getRegisterA(),apply).setRegisterE(f);
                 throw interruptFunction;
             } else {
                 v.push(f.getRegisterC());
@@ -180,7 +179,7 @@ public class InitCallback {
         @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
             Runnable fun = v.pop(f.getScope());
             if (fun instanceof Function) ((Function)fun).ignoreExceptions = true;
-            v.pushFunction(fun,f.getApply());
+            v.pushFunction(fun,f.getApply()).setRegisterE(f);
             throw interruptThread;
         }
         @Override public void save(OutputStream out, Void data) throws IOException {
@@ -221,7 +220,7 @@ public class InitCallback {
                 Object apply = iterator.next();
                 f.setRegisterF(apply);
                 v.push(apply);
-                v.pushFunction((Runnable)f.getRegisterA(),apply);
+                v.pushFunction((Runnable)f.getRegisterA(),apply).setRegisterE(f);
                 throw interruptFunction;
             } else {
                 f.jumpPointer(1);
@@ -280,9 +279,9 @@ public class InitCallback {
 
     public static Worker<Void> wDoStart = new Worker<Void>() {
         @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+            Runnable run = v.pop(f.getScope());
             int iterate = v.pop(Integer.class);
             int limit = v.pop(Integer.class);
-            Runnable run = v.pop(f.getScope());
             f.setRegisterA(run);
             f.setRegisterB(limit);
             f.setRegisterC(limit>iterate);
@@ -308,7 +307,7 @@ public class InitCallback {
             boolean cond = (Boolean)f.getRegisterC();
             Integer iterate = (Integer)f.getRegisterD();
             if((iterate!=null)&&(limit!=null)&&(iterate<limit == cond)){
-                v.pushFunction(run,f.getApply());
+                v.pushFunction(run,f.getApply()).setRegisterE(f);
                 throw interruptFunction;
             } else {
                 f.jumpPointer(1);
@@ -341,7 +340,10 @@ public class InitCallback {
 
     public static Worker<Void> wDoI = new Worker<Void>() {
         @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
-            v.push(f.getRegisterD());
+            Object i = null;
+            Context top = (Context)f.getRegisterE();
+            if(top!=null) i=top.getRegisterD();
+            v.push(i);
         }
         @Override public void save(OutputStream out, Void data) throws IOException {
         }
@@ -355,10 +357,9 @@ public class InitCallback {
 
     public static Worker<Void> wEndLoop = new Worker<Void>() {
         @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
-            Stack<Context> stack = v.getContextStack();
-            if(stack.size()>1) {
-                Context c = stack.get(stack.size()-2);
-                c.setRegisterB(null);
+            Context top = (Context) f.getRegisterE();
+            if(top!=null) {
+                top.setRegisterB(null);
             }
             throw stopFunction;
         }

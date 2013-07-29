@@ -1,11 +1,9 @@
 package me.dpohvar.varscript.converter;
 
+import me.dpohvar.varscript.converter.rule.ConvertRule;
 import me.dpohvar.varscript.utils.reflect.NBTTagWrapper;
 import me.dpohvar.varscript.utils.reflect.ReflectObject;
-import me.dpohvar.varscript.vs.*;
-import me.dpohvar.varscript.converter.rule.ConvertRule;
-import me.dpohvar.varscript.vs.exception.InterruptThread;
-import me.dpohvar.varscript.vs.exception.RuntimeControl;
+import me.dpohvar.varscript.vs.Scope;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -18,6 +16,35 @@ import java.util.*;
  */
 public class Converter {
 
+    public static Map<String,Class> classes = new HashMap<String, Class>();
+    static {
+        classes.put("int",int.class);
+        classes.put("byte",byte.class);
+        classes.put("short",short.class);
+        classes.put("long",long.class);
+        classes.put("double",double.class);
+        classes.put("float",float.class);
+        classes.put("char",char.class);
+        classes.put("int[]",int[].class);
+        classes.put("int!",int[].class);
+        classes.put("byte[]",byte[].class);
+        classes.put("byte!",byte[].class);
+        classes.put("short[]",short[].class);
+        classes.put("short!",short[].class);
+        classes.put("long[]",long[].class);
+        classes.put("long!",long[].class);
+        classes.put("double[]",double[].class);
+        classes.put("double!",double[].class);
+        classes.put("float[]",float[].class);
+        classes.put("float!",float[].class);
+        classes.put("char[]",char[].class);
+        classes.put("char!",char[].class);
+        classes.put("Object[]",Object[].class);
+        classes.put("Object!",Object[].class);
+        classes.put("String",String.class);
+    }
+
+
     HashMap<Class,TreeSet<ConvertRule>> classRules = new HashMap<Class, TreeSet<ConvertRule>>();
 
     public Class getClassForName(String name){
@@ -25,6 +52,7 @@ public class Converter {
             return Class.forName(name);
         } catch (ClassNotFoundException ignored) {
         }
+        if(classes.containsKey(name)) return classes.get(name);
         for(Class c:classRules.keySet()){
             if(c.getSimpleName().equals(name)) return c;
         }

@@ -4,9 +4,7 @@ import me.dpohvar.varscript.scheduler.Task;
 import me.dpohvar.varscript.scheduler.TaskEvent;
 import me.dpohvar.varscript.trigger.Trigger;
 import me.dpohvar.varscript.trigger.TriggerBukkitEvent;
-import me.dpohvar.varscript.trigger.TriggerDelay;
 import me.dpohvar.varscript.trigger.TriggerRunner;
-import org.bukkit.Bukkit;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.server.PluginEnableEvent;
 

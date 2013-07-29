@@ -1,23 +1,10 @@
 package me.dpohvar.varscript.converter.rule;
 
 import me.dpohvar.powernbt.nbt.*;
-import me.dpohvar.varscript.VarScript;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.reflect.NBTTagWrapper;
-import me.dpohvar.varscript.utils.region.Region;
 import me.dpohvar.varscript.vs.Scope;
-import org.apache.commons.lang.StringUtils;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.util.Vector;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 

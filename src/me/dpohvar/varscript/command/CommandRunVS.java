@@ -2,7 +2,6 @@ package me.dpohvar.varscript.command;
 
 import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.vs.*;
-import me.dpohvar.varscript.vs.VarscriptProgram;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import org.apache.commons.lang.StringUtils;

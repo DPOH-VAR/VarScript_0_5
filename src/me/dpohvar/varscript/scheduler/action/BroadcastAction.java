@@ -1,11 +1,7 @@
 package me.dpohvar.varscript.scheduler.action;
 
-import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.scheduler.Task;
 import me.dpohvar.varscript.scheduler.TaskAction;
-import me.dpohvar.varscript.vs.*;
-import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.vs.exception.SourceException;
 import org.bukkit.Bukkit;
 
 import java.util.Map;

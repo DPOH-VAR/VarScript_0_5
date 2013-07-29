@@ -1,8 +1,8 @@
 package me.dpohvar.varscript.converter.rule;
 
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
-import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
+import me.dpohvar.varscript.vs.Scope;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.Inventory;

@@ -7,10 +7,8 @@ import me.dpohvar.varscript.scheduler.TaskEvent;
 import me.dpohvar.varscript.trigger.Trigger;
 import me.dpohvar.varscript.trigger.TriggerBukkitEvent;
 import me.dpohvar.varscript.trigger.TriggerRunner;
-import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**

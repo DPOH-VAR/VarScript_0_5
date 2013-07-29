@@ -10,7 +10,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.

@@ -6,7 +6,10 @@ import me.dpohvar.varscript.vs.Command;
 import me.dpohvar.varscript.vs.CommandDebug;
 import me.dpohvar.varscript.vs.CommandList;
 import me.dpohvar.varscript.vs.Worker;
-import me.dpohvar.varscript.vs.exception.*;
+import me.dpohvar.varscript.vs.exception.CloseFunction;
+import me.dpohvar.varscript.vs.exception.CommandException;
+import me.dpohvar.varscript.vs.exception.ParseException;
+import me.dpohvar.varscript.vs.exception.SourceException;
 import me.dpohvar.varscript.vs.init.*;
 
 import java.io.IOException;

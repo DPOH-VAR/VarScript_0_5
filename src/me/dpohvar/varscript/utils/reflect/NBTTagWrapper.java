@@ -6,9 +6,8 @@ import me.dpohvar.powernbt.nbt.NBTTagList;
 import me.dpohvar.varscript.vs.Fieldable;
 import me.dpohvar.varscript.vs.Runnable;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.

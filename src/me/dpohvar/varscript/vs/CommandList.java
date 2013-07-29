@@ -15,8 +15,8 @@ import java.util.List;
  */
 public class CommandList {
 
-    protected final List<Command> commands;
     protected final String name;
+    protected final List<Command> commands;
 
     public CommandList(List<Command> commands, String name){
         this.commands = commands;

@@ -1,11 +1,10 @@
 package me.dpohvar.varscript.converter.rule;
 
 import me.dpohvar.varscript.VarScript;
-import me.dpohvar.varscript.vs.*;
-import me.dpohvar.varscript.vs.Function;
+import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.converter.NextRule;
-import me.dpohvar.varscript.vs.exception.InterruptThread;
-import me.dpohvar.varscript.vs.exception.RuntimeControl;
+import me.dpohvar.varscript.vs.Function;
+import me.dpohvar.varscript.vs.Scope;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,7 +26,7 @@ public class RuleBytes extends ConvertRule<byte[]>{
     }
 
     @Override
-    public <V> byte[] convert(V object, me.dpohvar.varscript.vs.Thread thread,Scope scope) throws NextRule {
+    public <V> byte[] convert(V object, me.dpohvar.varscript.vs.Thread thread,Scope scope) throws NextRule, ConvertException {
         if (object==null) return new byte[0];
         if (object instanceof Byte) {
             return ByteBuffer.allocate(1).put((Byte) object).array();

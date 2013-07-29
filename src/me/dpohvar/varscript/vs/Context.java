@@ -23,9 +23,9 @@ public class Context implements Fieldable {
     public Object getRegisterA(){return a;} public void setRegisterA(Object val){a=val;} // FUNCTION ON WHILE
     public Object getRegisterB(){return b;} public void setRegisterB(Object val){b=val;} // ITERATOR
     public Object getRegisterC(){return c;} public void setRegisterC(Object val){c=val;} // WHILE RESULT
-    public Object getRegisterD(){return d;} public void setRegisterD(Object val){d=val;}
-    public Object getRegisterE(){return e;} public void setRegisterE(Object val){e=val;}
-    public Object getRegisterF(){return f;} public void setRegisterF(Object val){f=val;} // CALL RESULT
+    public Object getRegisterD(){return d;} public void setRegisterD(Object val){d=val;} // BOOLEAN FUN
+    public Object getRegisterE(){return e;} public void setRegisterE(Object val){e=val;} // CALLER
+    public Object getRegisterF(){return f;} public void setRegisterF(Object val){f=val;} // CALL NEW RESULT
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Context(Runnable function, Object apply) {

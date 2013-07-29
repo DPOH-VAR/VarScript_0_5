@@ -1,18 +1,16 @@
 package me.dpohvar.varscript.converter.rule;
 
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
-import me.dpohvar.varscript.Program;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.vs.Scope;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import static org.bukkit.Material.*;
+
+import static org.bukkit.Material.AIR;
 
 /**
  * Created with IntelliJ IDEA.

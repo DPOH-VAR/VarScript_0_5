@@ -2,18 +2,18 @@ package me.dpohvar.varscript.vs.init;
 
 import me.dpohvar.varscript.VarScript;
 import me.dpohvar.varscript.caller.Caller;
-import me.dpohvar.varscript.utils.reflect.ReflectClass;
+import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.utils.ScriptManager;
+import me.dpohvar.varscript.utils.reflect.ReflectClass;
+import me.dpohvar.varscript.utils.reflect.ReflectObject;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Runnable;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.*;
-import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.vs.exception.CloseFunction;
 import me.dpohvar.varscript.vs.exception.CommandException;
 import me.dpohvar.varscript.vs.exception.ParseException;
 import me.dpohvar.varscript.vs.exception.SourceException;
-import me.dpohvar.varscript.utils.reflect.ReflectObject;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -22,13 +22,14 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
 
-import static me.dpohvar.varscript.utils.IOStreamPackUtils.*;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+
+import static me.dpohvar.varscript.utils.IOStreamPackUtils.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -150,24 +151,10 @@ public class InitDynamic {
 
     public static Worker<Void> wRunNew = new Worker<Void>() {
         @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
-            Object some = v.pop();
-            Runnable runnable = null;
-            if(some instanceof String){
-                try{
-                    runnable = new ReflectClass((String)some,f.getScope());
-                } catch (Throwable ignored){
-                }
-            }
-            if (runnable==null) {
-                try{
-                    runnable = v.convert(Runnable.class,some);
-                } catch (ConvertException ignored){
-                    runnable = v.convert(CommandList.class,some).build(f.getScope());
-                }
-            }
+            Runnable runnable = v.pop(f.getScope());
             Fieldable o = new Context(runnable,null);
             f.setRegisterF(o);
-            v.pushFunction(runnable,o);
+            v.pushFunction(runnable,o).setRegisterE(f);
             throw interruptFunction;
         }
         @Override public void save(OutputStream out, Void data) throws IOException {
@@ -242,7 +229,7 @@ public class InitDynamic {
         @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
             Fieldable obj = v.pop(Fieldable.class);
             Runnable runnable = (Runnable) obj.getField(d);
-            v.pushFunction(runnable,obj);
+            v.pushFunction(runnable,obj).setRegisterE(f);
             throw interruptFunction;
         }
         @Override public void save(OutputStream out, String data) throws IOException {
@@ -266,14 +253,8 @@ public class InitDynamic {
     public static SimpleWorker wRun = new SimpleWorker(new int[]{0x1A}) {
         @Override
         public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
-            Object t = v.pop();
-            Runnable runnable;
-            try{
-                runnable = v.convert(Runnable.class,t);
-            } catch (ConvertException ignored){
-                runnable = v.convert(CommandList.class,t).build(f.getScope());
-            }
-            v.pushFunction(runnable, f);
+            Runnable runnable = v.pop(f.getScope());
+            v.pushFunction(runnable,f.getApply()).setRegisterE(f);
             throw interruptFunction;
         }
     };
@@ -427,7 +408,7 @@ public class InitDynamic {
             } catch (ConvertException ignored){
                 runnable = v.peek(CommandList.class).build(f.getScope());
             }
-            v.pushFunction(runnable,obj);
+            v.pushFunction(runnable,obj).setRegisterE(f);
             throw interruptFunction;
         }
         @Override public void save(OutputStream out, Void data) throws IOException {
@@ -715,7 +696,7 @@ public class InitDynamic {
         } else if(object instanceof Integer){
             int value = (Integer)object;
             if(Byte.MIN_VALUE <= value && value <= Byte.MAX_VALUE){
-                out.write(0xF9);
+                out.write(0xFA);
                 out.write(value);
             }else{
                 out.write(0xF3);

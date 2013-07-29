@@ -1,8 +1,7 @@
 package me.dpohvar.varscript.command;
 
 import me.dpohvar.varscript.caller.Caller;
-import me.dpohvar.varscript.scheduler.*;
-import org.apache.commons.lang.StringUtils;
+import me.dpohvar.varscript.scheduler.Scheduler;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

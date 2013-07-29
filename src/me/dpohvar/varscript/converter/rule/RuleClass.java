@@ -1,9 +1,10 @@
 package me.dpohvar.varscript.converter.rule;
 
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
+import me.dpohvar.varscript.converter.Converter;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.reflect.ReflectClass;
-import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Scope;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,33 +17,6 @@ import java.util.Map;
  */
 public class RuleClass extends ConvertRule<Class>{
 
-    private static Map<String,Class> classes = new HashMap<String, Class>();
-    static {
-        classes.put("int",int.class);
-        classes.put("byte",byte.class);
-        classes.put("short",short.class);
-        classes.put("long",long.class);
-        classes.put("double",double.class);
-        classes.put("float",float.class);
-        classes.put("char",char.class);
-        classes.put("int[]",int[].class);
-        classes.put("int!",int[].class);
-        classes.put("byte[]",byte[].class);
-        classes.put("byte!",byte[].class);
-        classes.put("short[]",short[].class);
-        classes.put("short!",short[].class);
-        classes.put("long[]",long[].class);
-        classes.put("long!",long[].class);
-        classes.put("double[]",double[].class);
-        classes.put("double!",double[].class);
-        classes.put("float[]",float[].class);
-        classes.put("float!",float[].class);
-        classes.put("char[]",char[].class);
-        classes.put("char!",char[].class);
-        classes.put("Object[]",Object[].class);
-        classes.put("Object!",Object[].class);
-        classes.put("String",String.class);
-    }
 
     public RuleClass() {
         super(10);
@@ -54,7 +28,7 @@ public class RuleClass extends ConvertRule<Class>{
             return ((ReflectClass)object).getInnerClass();
         }
         if (object instanceof String) {
-            if(classes.containsKey(object)) return classes.get(object);
+            if(Converter.classes.containsKey(object)) return Converter.classes.get(object);
             try{
                 return Class.forName((String)object);
             } catch (ClassNotFoundException ignored) {

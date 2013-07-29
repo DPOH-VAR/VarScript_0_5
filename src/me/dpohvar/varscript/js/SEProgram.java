@@ -1,6 +1,6 @@
 package me.dpohvar.varscript.js;
 
-import me.dpohvar.varscript.*;
+import me.dpohvar.varscript.Program;
 import me.dpohvar.varscript.Runtime;
 import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.trigger.Trigger;

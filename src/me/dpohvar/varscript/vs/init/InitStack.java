@@ -1,11 +1,10 @@
 package me.dpohvar.varscript.vs.init;
 
+import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.vs.*;
-import me.dpohvar.varscript.vs.FieldableObject;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.converter.ConvertException;
 
 import java.util.Stack;
 
@@ -182,7 +181,7 @@ public class InitStack {
 
         VSCompiler.addRule(new SimpleCompileRule(
                 "MYLOCATION",
-                "MYLOCATION",
+                "MYLOCATION MYLOC ML",
                 "",
                 "Location",
                 "stack location",

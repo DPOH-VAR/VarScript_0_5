@@ -1,8 +1,9 @@
 package me.dpohvar.varscript.utils.reflect;
 
-import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Fieldable;
 import me.dpohvar.varscript.vs.FieldableObject;
 import me.dpohvar.varscript.vs.Runnable;
+import me.dpohvar.varscript.vs.Scope;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

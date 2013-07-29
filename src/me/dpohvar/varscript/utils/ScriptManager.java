@@ -2,6 +2,7 @@ package me.dpohvar.varscript.utils;
 
 import me.dpohvar.varscript.VarScript;
 import org.apache.commons.io.IOUtils;
+
 import java.io.*;
 import java.util.HashMap;
 

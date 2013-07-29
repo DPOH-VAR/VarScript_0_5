@@ -2,7 +2,6 @@ package me.dpohvar.varscript.scheduler;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.

@@ -1,12 +1,13 @@
 package me.dpohvar.varscript;
 
-import me.dpohvar.varscript.scheduler.Scheduler;
-import me.dpohvar.varscript.utils.reflect.ReflectClass;
-import me.dpohvar.varscript.utils.ScriptManager;
-import me.dpohvar.varscript.vs.*;
-import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import me.dpohvar.varscript.converter.Converter;
 import me.dpohvar.varscript.converter.rule.*;
+import me.dpohvar.varscript.scheduler.Scheduler;
+import me.dpohvar.varscript.utils.ScriptManager;
+import me.dpohvar.varscript.utils.reflect.ReflectClass;
+import me.dpohvar.varscript.vs.Fieldable;
+import me.dpohvar.varscript.vs.Scope;
+import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -46,6 +47,7 @@ public class Runtime implements Fieldable,Scope {
         converter.addRule(new RuleCharacter());
         converter.addRule(new RuleClass());
         converter.addRule(new RuleCollection());
+        converter.addRule(new RuleCommandList());
         converter.addRule(new RuleDouble());
         converter.addRule(new RuleEntity());
         converter.addRule(new RuleFieldable());

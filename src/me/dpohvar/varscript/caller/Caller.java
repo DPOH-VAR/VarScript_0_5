@@ -1,7 +1,7 @@
 package me.dpohvar.varscript.caller;
 
 import me.dpohvar.varscript.scheduler.Task;
-import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Fieldable;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;

@@ -1,8 +1,8 @@
 package me.dpohvar.varscript.vs;
 
-import me.dpohvar.varscript.trigger.Trigger;
 import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.converter.Converter;
+import me.dpohvar.varscript.trigger.Trigger;
 import me.dpohvar.varscript.vs.exception.InterruptFunction;
 import me.dpohvar.varscript.vs.exception.StopThread;
 
@@ -27,10 +27,6 @@ public class Thread implements Fieldable {
     private boolean sleeping = false;
     Fieldable proto;
     Runnable constructor;
-
-    public Stack<Context> getContextStack(){
-        return runners;
-    }
 
     public Thread(VarscriptProgram program) {
         this.program = program;

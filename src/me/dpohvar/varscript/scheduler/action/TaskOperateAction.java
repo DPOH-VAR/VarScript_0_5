@@ -1,6 +1,5 @@
 package me.dpohvar.varscript.scheduler.action;
 
-import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.scheduler.Scheduler;
 import me.dpohvar.varscript.scheduler.Task;
 import me.dpohvar.varscript.scheduler.TaskList;

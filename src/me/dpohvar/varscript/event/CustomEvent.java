@@ -1,6 +1,6 @@
 package me.dpohvar.varscript.event;
 
-import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Fieldable;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;

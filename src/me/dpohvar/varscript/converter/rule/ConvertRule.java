@@ -1,8 +1,8 @@
 package me.dpohvar.varscript.converter.rule;
 
-import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.converter.NextRule;
-import me.dpohvar.varscript.vs.exception.InterruptThread;
+import me.dpohvar.varscript.vs.Scope;
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,7 +19,7 @@ public abstract class ConvertRule<T> implements Comparable<ConvertRule> {
         this.priority = priority;
     }
 
-    public abstract <V> T convert(V object, me.dpohvar.varscript.vs.Thread thread,Scope scope) throws NextRule;
+    public abstract <V> T convert(V object, me.dpohvar.varscript.vs.Thread thread,Scope scope) throws NextRule, ConvertException;
 
     public abstract Class<T> getClassTo();
 

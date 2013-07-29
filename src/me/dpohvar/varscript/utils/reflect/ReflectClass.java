@@ -1,7 +1,6 @@
 package me.dpohvar.varscript.utils.reflect;
 
 import me.dpohvar.varscript.vs.*;
-import me.dpohvar.varscript.vs.FieldableObject;
 import me.dpohvar.varscript.vs.Runnable;
 import me.dpohvar.varscript.vs.Thread;
 
@@ -80,9 +79,8 @@ public class ReflectClass implements Runnable,Fieldable {
             params[i]=thread.convert(types[i], pops[i]);
         }
         java.lang.Object result = constr.newInstance(params);
-        Stack<Context> runners = thread.getContextStack();
-        if(runners.size()<2) return;
-        Context topContext = runners.get(runners.size()-2);
+        Context topContext = (Context)context.getRegisterE();
+        if(topContext==null) return;
         topContext.setRegisterF(result);
     }
 

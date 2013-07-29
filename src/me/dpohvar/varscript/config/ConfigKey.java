@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.config;
-import static me.dpohvar.varscript.config.ConfigType.*;
+
+import static me.dpohvar.varscript.config.ConfigType.BOOLEAN;
 /**
  * Created with IntelliJ IDEA.
  * User: DPOH-VAR

@@ -1,21 +1,24 @@
 package me.dpohvar.varscript.vs.init;
 
 import me.dpohvar.varscript.converter.ConvertException;
-import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Context;
+import me.dpohvar.varscript.vs.SimpleWorker;
 import me.dpohvar.varscript.vs.Thread;
+import me.dpohvar.varscript.vs.ThreadRunner;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
-import org.bukkit.ChunkSnapshot;
 import org.bukkit.Material;
-import org.bukkit.block.*;
+import org.bukkit.block.Biome;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.util.List;
-import java.util.Stack;
 
 /**
  * Created with IntelliJ IDEA.

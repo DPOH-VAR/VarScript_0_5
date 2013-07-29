@@ -1,15 +1,15 @@
 package me.dpohvar.varscript.vs.init;
 
 
+import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.utils.reflect.ReflectBukkitUtils;
 import me.dpohvar.varscript.utils.reflect.ReflectUtils;
-import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Context;
+import me.dpohvar.varscript.vs.SimpleWorker;
 import me.dpohvar.varscript.vs.Thread;
+import me.dpohvar.varscript.vs.ThreadRunner;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
-import me.dpohvar.varscript.converter.ConvertException;
-import net.minecraft.server.v1_6_R2.EntityPlayer;
-import net.minecraft.server.v1_6_R2.Packet205ClientCommand;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;

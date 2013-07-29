@@ -34,6 +34,7 @@ public class VSSmartParser {
         UNICODE3,
         UNICODE4,
         COLONVALUES,
+        CLASSNAME,
 
     }
 
@@ -74,7 +75,7 @@ public class VSSmartParser {
                         case '<':{
                             currentOperand = new ParsedOperand(row, col);
                             currentOperand.builder.append(b);
-                            parseMode = COLONVALUES;
+                            parseMode = CLASSNAME;
                             break;
                         }
                         case '0':{
@@ -622,6 +623,45 @@ public class VSSmartParser {
                             break;
                         }
                         case ',':case '}':case ']':{
+                            operands.add(currentOperand);
+                            currentOperand = new ParsedOperand(row, col);
+                            currentOperand.builder.append(b);
+                            operands.add(currentOperand);
+                            parseMode = SPACER;
+                            break;
+                        }
+                        case '{':{
+                            currentOperand.builder.append(b);
+                            operands.add(currentOperand);
+                            parseMode = SPACER;
+                            break;
+                        }
+                        default:{
+                            currentOperand.builder.append(b);
+                            break;
+                        }
+                    }
+                    break;
+                }
+
+                case CLASSNAME:{
+                    switch (b){
+                        case ' ':case '\n':case '\t':case '\r':{
+                            operands.add(currentOperand);
+                            parseMode = SPACER;
+                            break;
+                        }
+                        case '\"':{
+                            currentOperand.builder.append(b);
+                            parseMode = STRINGQUOTE;
+                            break;
+                        }
+                        case '>':{
+                            currentOperand.builder.append(b);
+                            parseMode = OPER;
+                            break;
+                        }
+                        case ',':case '}':{
                             operands.add(currentOperand);
                             currentOperand = new ParsedOperand(row, col);
                             currentOperand.builder.append(b);

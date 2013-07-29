@@ -2,7 +2,7 @@ package me.dpohvar.varscript.command;
 
 import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.vs.*;
-import me.dpohvar.varscript.vs.Program;
+import me.dpohvar.varscript.vs.VarscriptProgram;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import org.apache.commons.lang.StringUtils;
@@ -28,8 +28,8 @@ public class CommandRunVS implements CommandExecutor {
         Caller caller = Caller.getCallerFor(commandSender);
         try{
             String source = StringUtils.join(strings,' ');
-            NamedCommandList cmd = VSCompiler.compile(source);
-            Program program = new Program(runtime,caller);
+            CommandList cmd = VSCompiler.compile(source);
+            VarscriptProgram program = new VarscriptProgram(runtime,caller);
             Thread thread = new me.dpohvar.varscript.vs.Thread(program);
             Context cc = thread.pushFunction(cmd.build(program.getScope()),program);
             new ThreadRunner(thread).runThreads();

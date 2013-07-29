@@ -1,9 +1,6 @@
 package me.dpohvar.varscript.scheduler;
 
-import me.dpohvar.varscript.scheduler.action.BroadcastAction;
-import me.dpohvar.varscript.scheduler.action.LogAction;
-import me.dpohvar.varscript.scheduler.action.TaskOperateAction;
-import me.dpohvar.varscript.scheduler.action.VSRunAction;
+import me.dpohvar.varscript.scheduler.action.*;
 
 import java.util.Map;
 
@@ -44,6 +41,8 @@ public abstract class TaskAction extends TaskEntry {
         }
         if("TASK".equals(type)){
             return new TaskOperateAction(task,argument);
+        }if("VSFILE".equals(type)){
+            return new VSFileAction(task,argument);
         }
         return new TaskActionError(task,s);
     }

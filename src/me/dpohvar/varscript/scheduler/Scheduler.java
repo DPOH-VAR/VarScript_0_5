@@ -22,10 +22,14 @@ import static me.dpohvar.varscript.config.ConfigKey.*;
 public class Scheduler {
 
     HashMap<String,Task> tasks = new HashMap<String, Task>();
-    public boolean enabled = false;
+    boolean enabled = false;
     public final me.dpohvar.varscript.Runtime runtime;
     private final ConfigManager config;
     final File home;
+
+    public boolean isEnabled(){
+        return enabled;
+    }
 
     public String toString(){
         return "Varscript scheduler, Tasks: "+getTasks().size();
@@ -119,5 +123,11 @@ public class Scheduler {
             String name = t.substring(0,p);
             if(name.startsWith(prefix)) loadTask(name);
         }
+    }
+
+    public void reload() {
+        for(Task t:getTasks()) t.free();
+        tasks.clear();
+        loadTasks("");
     }
 }

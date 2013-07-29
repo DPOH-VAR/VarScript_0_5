@@ -4,6 +4,8 @@ import me.dpohvar.varscript.utils.reflect.NBTTagWrapper;
 import me.dpohvar.varscript.utils.reflect.ReflectObject;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.rule.ConvertRule;
+import me.dpohvar.varscript.vs.exception.InterruptThread;
+import me.dpohvar.varscript.vs.exception.RuntimeControl;
 
 import java.lang.reflect.Method;
 import java.util.*;

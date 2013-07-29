@@ -4,6 +4,8 @@ import me.dpohvar.varscript.VarScript;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Function;
 import me.dpohvar.varscript.converter.NextRule;
+import me.dpohvar.varscript.vs.exception.InterruptThread;
+import me.dpohvar.varscript.vs.exception.RuntimeControl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

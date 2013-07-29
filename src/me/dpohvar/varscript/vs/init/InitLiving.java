@@ -67,7 +67,7 @@ public class InitLiving {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "MAXHEALTH",
-                "MAXHEALTH MAXHP",
+                "MAXHEALTH MAXHP MXHP",
                 "Entity",
                 "Integer",
                 "entity living",
@@ -272,7 +272,7 @@ public class InitLiving {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETMAXHEALTH",
-                "SETMAXHEALTH SETMAXHP >MXHP",
+                "SETMAXHEALTH SETMAXHP >MAXHP",
                 "Entity Double",
                 "Entity",
                 "entity living",
@@ -287,7 +287,7 @@ public class InitLiving {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "RESETMAXHEALTH",
-                "RESETMAXHEALTH RMXHP",
+                "RESETMAXHEALTH RMXHP RMAXHP",
                 "Entity",
                 "Entity",
                 "entity living",

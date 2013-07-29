@@ -10,7 +10,7 @@ import java.util.Set;
  * Date: 30.06.13
  * Time: 1:10
  */
-public class FieldableObject implements Fieldable {
+public class FieldableObject implements Fieldable, Cloneable {
 
     HashMap<String, java.lang.Object> fields = new HashMap<String, java.lang.Object>();
     Fieldable proto;

@@ -18,7 +18,9 @@ import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.util.Vector;
 
 import static me.dpohvar.varscript.utils.IOStreamPackUtils.*;
 
@@ -114,34 +116,34 @@ public class InitDynamic {
         }
     };
 
-    public static Worker<NamedCommandList> wPutFunction = new Worker<NamedCommandList>() {
-        @Override public void run(ThreadRunner r, Thread v, Context f, NamedCommandList d) throws Exception {
+    public static Worker<CommandList> wPutFunction = new Worker<CommandList>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, CommandList d) throws Exception {
             v.push(d.build(f.getScope()));
         }
-        @Override public void save(OutputStream out, NamedCommandList data) throws IOException {
+        @Override public void save(OutputStream out, CommandList data) throws IOException {
             out.write(0x14);
             data.save(out);
         }
         @Override public byte[] getBytes() {
             return new byte[]{0x14};
         }
-        @Override public NamedCommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
+        @Override public CommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
             return VSCompiler.read(input);
         }
     };
 
-    public static Worker<NamedCommandList> wDefineFunction = new Worker<NamedCommandList>() {
-        @Override public void run(ThreadRunner r, Thread v, Context f, NamedCommandList d) throws Exception {
+    public static Worker<CommandList> wDefineFunction = new Worker<CommandList>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, CommandList d) throws Exception {
             f.getScope().defineVar(d.getName(), d.build(f.getScope()));
         }
-        @Override public void save(OutputStream out, NamedCommandList data) throws IOException {
+        @Override public void save(OutputStream out, CommandList data) throws IOException {
             out.write(0x15);
             data.save(out);
         }
         @Override public byte[] getBytes() {
             return new byte[]{0x15};
         }
-        @Override public NamedCommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
+        @Override public CommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
             return VSCompiler.read(input);
         }
     };
@@ -160,7 +162,7 @@ public class InitDynamic {
                 try{
                     runnable = v.convert(Runnable.class,some);
                 } catch (ConvertException ignored){
-                    runnable = v.convert(NamedCommandList.class,some).build(f.getScope());
+                    runnable = v.convert(CommandList.class,some).build(f.getScope());
                 }
             }
             Fieldable o = new Context(runnable,null);
@@ -269,7 +271,7 @@ public class InitDynamic {
             try{
                 runnable = v.convert(Runnable.class,t);
             } catch (ConvertException ignored){
-                runnable = v.convert(NamedCommandList.class,t).build(f.getScope());
+                runnable = v.convert(CommandList.class,t).build(f.getScope());
             }
             v.pushFunction(runnable, f);
             throw interruptFunction;
@@ -377,11 +379,11 @@ public class InitDynamic {
         }
     };
 
-    public static Worker<NamedCommandList> wSetFunctionForThis = new Worker<NamedCommandList>() {
-        @Override public void run(ThreadRunner r, Thread v, Context f, NamedCommandList d) throws Exception {
+    public static Worker<CommandList> wSetFunctionForThis = new Worker<CommandList>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, CommandList d) throws Exception {
             v.convert(Fieldable.class,f.getApply()).setField(d.getName(),d.build(f.getScope()));
         }
-        @Override public void save(OutputStream out, NamedCommandList data) throws IOException {
+        @Override public void save(OutputStream out, CommandList data) throws IOException {
             out.write(0x1F);
             out.write(0x10);
             data.save(out);
@@ -389,7 +391,7 @@ public class InitDynamic {
         @Override public byte[] getBytes() {
             return new byte[]{0x1F,0x10};
         }
-        @Override public NamedCommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
+        @Override public CommandList readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
             return VSCompiler.read(input);
         }
     };
@@ -423,7 +425,7 @@ public class InitDynamic {
             try{
                 runnable = v.peek(Runnable.class);
             } catch (ConvertException ignored){
-                runnable = v.peek(NamedCommandList.class).build(f.getScope());
+                runnable = v.peek(CommandList.class).build(f.getScope());
             }
             v.pushFunction(runnable,obj);
             throw interruptFunction;
@@ -984,11 +986,58 @@ public class InitDynamic {
         VSCompiler.addRule(new ComplexCompileRule("x:y:z","stack vector","","Vector","put to stack new vector.\nExample: 0:1.5:0"){ //0x13
             @Override public boolean checkCondition(String string) {
                 return string.matches("-?\\d+(?:\\.\\d+)?:-?\\d+(?:\\.\\d+)?:-?\\d+(?:\\.\\d+)?");
-                //todo: parse vector (loc,block)
             }
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) {
                 String op = operand.toString();
-                functionSession.addCommand(wPutObject,Double.parseDouble(op),operand);
+                String[] val = op.split(":");
+                double x = Double.parseDouble(val[0]);
+                double y = Double.parseDouble(val[1]);
+                double z = Double.parseDouble(val[2]);
+                functionSession.addCommand(wPutObject,new Vector(x,y,z),operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
+                return null;
+            }
+        });
+
+        VSCompiler.addRule(new ComplexCompileRule("X:Y:Z:world","stack block","","Block","put to stack new block.\nExample: 3:15:5:world"){ //0x13
+            @Override public boolean checkCondition(String string) {
+                return string.matches("-?\\d+:-?\\d+:-?\\d+:[^:]*(?::B)?");
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws CommandException{
+                String op = operand.toString();
+                String[] val = op.split(":");
+                int x = Integer.parseInt(val[0]);
+                int y = Integer.parseInt(val[1]);
+                int z = Integer.parseInt(val[2]);
+                String w = val[3];
+                World world;
+                if(w.isEmpty()) world = Bukkit.getWorlds().get(0);
+                else world = Bukkit.getWorld(w);
+                if(world==null) throw new CommandException(operand,compileSession.getSource(),"no world for name "+w);
+                functionSession.addCommand(wPutObject,world.getBlockAt(x,y,z),operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
+                return null;
+            }
+        });
+
+        VSCompiler.addRule(new ComplexCompileRule("x:y:z:world","stack location","","Location","put to stack new location.\nExample: 0:1.5:0:world"){ //0x13
+            @Override public boolean checkCondition(String string) {
+                return string.matches("-?\\d+(?:\\.\\d+)?:-?\\d+(?:\\.\\d+)?:-?\\d+(?:\\.\\d+)?:[^:]*(?::L)?");
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws CommandException{
+                String op = operand.toString();
+                String[] val = op.split(":");
+                double x = Double.parseDouble(val[0]);
+                double y = Double.parseDouble(val[1]);
+                double z = Double.parseDouble(val[2]);
+                String w = val[3];
+                World world;
+                if(w.isEmpty()) world = Bukkit.getWorlds().get(0);
+                else world = Bukkit.getWorld(w);
+                if(world==null) throw new CommandException(operand,compileSession.getSource(),"no world for name "+w);
+                functionSession.addCommand(wPutObject,new Location(world,x,y,z),operand);
             }
             @Override public Worker[] getNewWorkersWithRules() {
                 return null;
@@ -1573,7 +1622,7 @@ public class InitDynamic {
                         try{
                             runnable = v.peek(Runnable.class);
                         } catch (ConvertException ignored){
-                            runnable = v.peek(NamedCommandList.class).build(f.getScope());
+                            runnable = v.peek(CommandList.class).build(f.getScope());
                         }
                         runnable.setPrototype(fieldable);
                     }
@@ -1594,7 +1643,7 @@ public class InitDynamic {
                         try{
                             runnable = v.convert(Runnable.class,t);
                         } catch (ConvertException ignored){
-                            runnable = v.convert(NamedCommandList.class,t).build(f.getScope());
+                            runnable = v.convert(CommandList.class,t).build(f.getScope());
                         }
                         v.push(runnable.getPrototype());
                     }
@@ -1680,7 +1729,7 @@ public class InitDynamic {
                     @Override public void run(final ThreadRunner r,final Thread v,final Context f, Void d) throws Exception {
                         Caller caller = v.pop(Caller.class);
                         Runnable runnable = v.pop(f.getScope());
-                        Program program = new Program(v.getProgram().getRuntime(),caller);
+                        VarscriptProgram program = new VarscriptProgram(v.getProgram().getRuntime(),caller);
                         Thread thread = new Thread(program);
                         thread.pushFunction(runnable,null);
                         new ThreadRunner(thread).runThreads();

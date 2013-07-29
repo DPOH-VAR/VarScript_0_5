@@ -19,7 +19,7 @@ import java.util.Map;
 public class VSRunAction extends TaskAction {
 
     final String param;
-    NamedCommandList commandList;
+    CommandList commandList;
     private me.dpohvar.varscript.Runtime runtime;
 
     public VSRunAction(Task task, String param) {
@@ -29,7 +29,7 @@ public class VSRunAction extends TaskAction {
 
     @Override public void run(Map<String,Object> environment) {
         if(commandList!=null){
-            Program program = new Program(runtime, Caller.getCallerFor(getTask()));
+            VarscriptProgram program = new VarscriptProgram(runtime, Caller.getCallerFor(getTask()));
             Thread thread = new Thread(program);
             Scope scope = thread.pushFunction(commandList.build(program.getScope()),program).getScope();
             for(Map.Entry<String,Object> e:environment.entrySet()){

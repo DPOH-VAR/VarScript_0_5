@@ -11,7 +11,6 @@ import java.util.HashSet;
  * User: DPOH-VAR
  * Date: 21.06.12
  * Time: 12:07
- * To change this template use File | Settings | File Templates.
  */
 public abstract class Region implements Cloneable {
     abstract public World getWorld();

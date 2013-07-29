@@ -18,7 +18,7 @@ import java.util.Set;
  * Date: 21.06.13
  * Time: 19:48
  */
-public class Function extends NamedCommandList implements Runnable,Fieldable {
+public class Function extends CommandList implements Runnable,Fieldable,Cloneable {
 
     Fieldable prototype;
     Runnable constructor = null;

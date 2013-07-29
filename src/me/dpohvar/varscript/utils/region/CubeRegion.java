@@ -11,7 +11,6 @@ import java.util.HashSet;
  * User: DPOH-VAR
  * Date: 21.06.12
  * Time: 11:58
- * To change this template use File | Settings | File Templates.
  */
 public class CubeRegion extends Region {
     protected double x1, y1, z1;

@@ -2,9 +2,13 @@ package me.dpohvar.varscript.converter.rule;
 
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.VarScript;
+import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.region.Region;
+import me.dpohvar.varscript.vs.Runnable;
+import me.dpohvar.varscript.vs.Thread;
+import me.dpohvar.varscript.vs.exception.InterruptThread;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -50,14 +54,32 @@ public class RuleString extends ConvertRule<String>{
             return b.getX()+':'+b.getY()+':'+b.getZ()+':'+b.getWorld().getName();
         }
         if (object instanceof Inventory) return ((Inventory)object).getName();
-        if (object instanceof ItemStack) return ((ItemStack)object).getType().name();
+        if (object instanceof ItemStack) {
+            ItemStack item = (ItemStack) object;
+            if(item.getAmount()!=1) return "^"+item.getType()+":"+item.getData()+":"+item.getAmount();
+            else if (item.getData().getData()==0) return "^"+item.getType();
+            else return "^"+item.getType()+":"+item.getData();
+        }
         if (object instanceof Collection) return StringUtils.join((Collection)object,", ");
-        // if (object instanceof Map) return ((Map)object).size();
         if (object instanceof Boolean) return ((Boolean)object)?"TRUE":"FALSE";
         if (object instanceof Region) return object.toString();
         if (object instanceof World) return ((World) object).getName();
         if (object instanceof PotionEffect) return ((PotionEffect)object).getType().getName();
         if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
+        if (object instanceof Fieldable) {
+            try{
+                Fieldable f = (Fieldable)object;
+                Runnable run = (Runnable) f.getField("toString");
+                Thread t = new Thread(thread.getProgram());
+                ThreadRunner r = new ThreadRunner(t);
+                t.pushFunction(run,f);
+                r.runThreads();
+                Object ob = t.pop();
+                if(ob instanceof Fieldable) return ob.toString();
+                else return convert(ob, thread, scope);
+            } catch (Exception ignored){
+            }
+        }
         if (object instanceof byte[]) {
             byte[] bytes = (byte[])object;
             return new String(bytes, VarScript.UTF8);

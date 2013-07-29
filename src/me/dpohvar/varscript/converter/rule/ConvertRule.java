@@ -2,6 +2,7 @@ package me.dpohvar.varscript.converter.rule;
 
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.converter.NextRule;
+import me.dpohvar.varscript.vs.exception.InterruptThread;
 
 /**
  * Created with IntelliJ IDEA.

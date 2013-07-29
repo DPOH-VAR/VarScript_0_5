@@ -14,14 +14,14 @@ import java.io.ByteArrayInputStream;
  * Date: 28.06.13
  * Time: 1:03
  */
-public class RuleCommandList extends ConvertRule<NamedCommandList>{
+public class RuleCommandList extends ConvertRule<CommandList>{
 
     public RuleCommandList() {
         super(10);
     }
 
     @Override
-    public <V> NamedCommandList convert(V object, Thread thread,Scope scope) throws NextRule {
+    public <V> CommandList convert(V object, Thread thread,Scope scope) throws NextRule {
         if (object==null) return new Function(null,"",scope);
         if (object instanceof String) {
             try {
@@ -51,7 +51,7 @@ public class RuleCommandList extends ConvertRule<NamedCommandList>{
    }
 
     @Override
-    public Class<NamedCommandList> getClassTo() {
-        return NamedCommandList.class;
+    public Class<CommandList> getClassTo() {
+        return CommandList.class;
     }
 }

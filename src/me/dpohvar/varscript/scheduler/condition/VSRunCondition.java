@@ -2,7 +2,6 @@ package me.dpohvar.varscript.scheduler.condition;
 
 import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.scheduler.Task;
-import me.dpohvar.varscript.scheduler.TaskAction;
 import me.dpohvar.varscript.scheduler.TaskCondition;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Thread;
@@ -20,7 +19,7 @@ import java.util.Map;
 public class VSRunCondition extends TaskCondition {
 
     final String param;
-    NamedCommandList commandList;
+    CommandList commandList;
     private me.dpohvar.varscript.Runtime runtime;
 
     public VSRunCondition(Task task, String param) {
@@ -30,7 +29,7 @@ public class VSRunCondition extends TaskCondition {
 
     @Override public boolean check(Map<String,Object> environment) {
         if(commandList==null) return false;
-        Program program = new Program(runtime, Caller.getCallerFor(getTask()));
+        VarscriptProgram program = new VarscriptProgram(runtime, Caller.getCallerFor(getTask()));
         Thread thread = new Thread(program);
         Scope scope = thread.pushFunction(commandList.build(program.getScope()),program).getScope();
         for(Map.Entry<String,Object> e:environment.entrySet()){

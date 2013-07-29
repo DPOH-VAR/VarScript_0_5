@@ -2,6 +2,7 @@ package me.dpohvar.varscript.vs;
 
 import me.dpohvar.varscript.Runtime;
 import me.dpohvar.varscript.caller.Caller;
+import me.dpohvar.varscript.trigger.Trigger;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,7 +15,7 @@ import java.util.Set;
  * Date: 21.06.13
  * Time: 19:34
  */
-public class Program implements me.dpohvar.varscript.Program, Iterable<Thread>, Fieldable {
+public class VarscriptProgram implements me.dpohvar.varscript.Program, Iterable<Thread>, Fieldable {
     HashSet<Thread> threads = new HashSet<Thread>();
     private final Caller caller;
     private final Runtime runtime;
@@ -32,7 +33,7 @@ public class Program implements me.dpohvar.varscript.Program, Iterable<Thread>, 
         return "Program{"+caller.getInstance().toString()+"}";
     }
 
-    public Program(Runtime runtime, final Caller caller) {
+    public VarscriptProgram(Runtime runtime, final Caller caller) {
         this.caller = caller;
         this.runtime = runtime;
         runtime.registerProgram(this);

@@ -13,12 +13,12 @@ import java.util.List;
  * Date: 30.06.13
  * Time: 1:52
  */
-public class NamedCommandList {
+public class CommandList {
 
     protected final List<Command> commands;
     protected final String name;
 
-    public NamedCommandList(List<Command> commands, String name){
+    public CommandList(List<Command> commands, String name){
         this.commands = commands;
         this.name = name;
     }

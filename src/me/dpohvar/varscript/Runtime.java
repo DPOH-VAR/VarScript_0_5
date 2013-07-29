@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
+import javax.script.ScriptEngineManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
@@ -25,6 +26,7 @@ public class Runtime implements Fieldable,Scope {
     private ArrayList<Program> programs = new ArrayList<Program>();
     public final ScriptManager scriptManager;
     public final Scheduler scheduler;
+    public final ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
 
     public void registerProgram(Program program){
         if(program.getPID()!= -1) throw new RuntimeException("program already registered with PID="+program.getPID());
@@ -36,6 +38,7 @@ public class Runtime implements Fieldable,Scope {
         this.plugin = plugin;
         plugin.runtime = this;
         this.scriptManager = new ScriptManager(plugin.getScriptHome());
+        converter.addRule(new RuleBlock());
         converter.addRule(new RuleBoolean());
         RuleByte ruleByte = new RuleByte();
         converter.addRule(ruleByte);
@@ -49,6 +52,7 @@ public class Runtime implements Fieldable,Scope {
         converter.addRule(new RuleFloat());
         converter.addRule(new RuleInteger());
         converter.addRule(new RuleInventory());
+        converter.addRule(new RuleItemStack());
         converter.addRule(new RuleIterable());
         converter.addRule(new RuleList());
         converter.addRule(new RuleLocation());
@@ -87,9 +91,6 @@ public class Runtime implements Fieldable,Scope {
             programs.set(id,null);
         }
     }
-    HashMap<String,Object> variables = new HashMap<String, Object>();
-
-
     HashMap<String,Object> fields = new HashMap<String, Object>();
     @Override
     public Set<String> getAllFields() {

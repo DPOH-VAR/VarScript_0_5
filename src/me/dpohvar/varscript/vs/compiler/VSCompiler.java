@@ -4,7 +4,7 @@ import me.dpohvar.varscript.VarScript;
 import me.dpohvar.varscript.converter.Converter;
 import me.dpohvar.varscript.vs.Command;
 import me.dpohvar.varscript.vs.CommandDebug;
-import me.dpohvar.varscript.vs.NamedCommandList;
+import me.dpohvar.varscript.vs.CommandList;
 import me.dpohvar.varscript.vs.Worker;
 import me.dpohvar.varscript.vs.exception.*;
 import me.dpohvar.varscript.vs.init.*;
@@ -31,6 +31,7 @@ public class VSCompiler {
     static HashSet<String> validatorName = new HashSet<String>();
 
     static{
+        InitBlockChunk.load();
         InitCallback.load();
         InitDynamic.load();
         InitEntity.load();
@@ -82,7 +83,7 @@ public class VSCompiler {
         }
     }
 
-    public static NamedCommandList read(InputStream input) throws IOException {
+    public static CommandList read(InputStream input) throws IOException {
         int size = input.read();
         if(size==-1) throw new RuntimeException("can't read commands: EOS");
         if(size==255){ //read name length
@@ -118,7 +119,7 @@ public class VSCompiler {
         for(byte b:sBytes){
             if(current[b&0xFF]==null) current[b&0xFF] = new Object[256];
             if(current[b&0xFF] instanceof  Object[]) current = (Object[]) current[b&0xFF];
-            else throw new RuntimeException("can not add worker to rules: rule already exists");
+            else throw new RuntimeException("can not add worker to rules: rule already exists "+current[b&0xFF]+" "+worker);
         }
         if(current[id&0xFF]!=null) throw new RuntimeException("can not add worker to rules: worker already exists "+current[id&0xFF]);
         current[id&0xFF]=worker;
@@ -137,7 +138,7 @@ public class VSCompiler {
         } else throw new RuntimeException("bytecode error: "+pos+"="+got);
     }
 
-    public static NamedCommandList compile(String name,CompileSession compileSession, boolean first) throws SourceException {
+    public static CommandList compile(String name,CompileSession compileSession, boolean first) throws SourceException {
         FunctionSession functionSession = compileSession.newFunctionSession(name);
         try{
             whileForOperands: while(functionSession.hasOperand()){
@@ -167,11 +168,11 @@ public class VSCompiler {
         }
         return functionSession.getCommandList();
     }
-    public static NamedCommandList compile(String source) throws SourceException {
+    public static CommandList compile(String source) throws SourceException {
         return compile(source,"");
     }
 
-    public static NamedCommandList compile(String source,String name) throws SourceException {
+    public static CommandList compile(String source,String name) throws SourceException {
         if (name==null) name="";
         CompileSession compileSession = new CompileSession(source,converter);
         return compile(name, compileSession, true);
@@ -179,11 +180,11 @@ public class VSCompiler {
 
     public static class ReadSession {
 
-        private final NamedCommandList commandList;
+        private final CommandList commandList;
         private final ArrayList<Command> commands = new ArrayList<Command>();
         private final ArrayList<Command> commandsAfter = new ArrayList<Command>();
         public ReadSession(String funName){
-            commandList = new NamedCommandList(commands,funName);
+            commandList = new CommandList(commands,funName);
         }
         public <T> void addCommand(Command<T> command){
             commands.add(command);
@@ -203,7 +204,7 @@ public class VSCompiler {
 
     public static class FunctionSession {
         private final ArrayList<Command> commands = new ArrayList<Command>();
-        private final NamedCommandList commandList;
+        private final CommandList commandList;
         private final JumpStack jumpStack = new JumpStack();
         private final JumpStack metaJumpStack = new JumpStack();
         private final Queue<VSSmartParser.ParsedOperand> operands;
@@ -222,7 +223,7 @@ public class VSCompiler {
         }
 
         public FunctionSession(String name,Queue<VSSmartParser.ParsedOperand> operands,String source) throws ParseException {
-            this.commandList = new NamedCommandList(commands,name);
+            this.commandList = new CommandList(commands,name);
             this.operands = operands;
             this.source = source;
         }
@@ -247,7 +248,7 @@ public class VSCompiler {
             return commands.size();
         }
 
-        public NamedCommandList getCommandList(){
+        public CommandList getCommandList(){
             return commandList;
         }
 

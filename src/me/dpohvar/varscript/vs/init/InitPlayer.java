@@ -11,9 +11,11 @@ import me.dpohvar.varscript.converter.ConvertException;
 import net.minecraft.server.v1_6_R2.EntityPlayer;
 import net.minecraft.server.v1_6_R2.Packet205ClientCommand;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * Created with IntelliJ IDEA.
@@ -775,19 +777,18 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "FALEBLOCK",
-                "FBLOCK",
-                "Player Location Integer(material) Byte(data)",
+                "SENDBLOCK",
+                "SBLOCK SBL",
+                "Player Block ItemStack",
                 "Player",
                 "player",
                 "Send a block change",
                 new SimpleWorker(new int[]{0x5F,0x5B}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Byte data = v.pop(Byte.class);
-                        Integer mat = v.pop(Integer.class);
-                        Location l = v.pop(Location.class);
+                        ItemStack item = v.pop(ItemStack.class);
+                        Block l = v.pop(Block.class);
                         Player p = v.peek(Player.class);
-                        p.sendBlockChange(l,mat,data);
+                        p.sendBlockChange(l.getLocation(),item.getTypeId(),item.getData().getData());
                     }
                 }
         ));
@@ -1067,7 +1068,7 @@ public class InitPlayer {
                 "FIRSTPLAYED",
                 "Player",
                 "Long",
-                "Get ",
+                "player",
                 "Gets the first date and time that this player was witnessed on server",
                 new SimpleWorker(new int[]{0x5F,0x6E}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {

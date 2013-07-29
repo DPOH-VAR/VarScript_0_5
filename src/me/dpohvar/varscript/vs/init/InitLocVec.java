@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.vs.init;
 
+import me.dpohvar.varscript.utils.region.*;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
@@ -9,6 +10,10 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Random;
+
 /**
  * Created with IntelliJ IDEA.
  * User: DPOH-VAR
@@ -16,6 +21,8 @@ import org.bukkit.util.Vector;
  * Time: 1:28
  */
 public class InitLocVec {
+    private static Random random = new Random();
+
     public static void load(){
         VSCompiler.addRule(new SimpleCompileRule(
                 "LOCATION",
@@ -370,11 +377,426 @@ public class InitLocVec {
                         if(loc1==null||loc2==null||!loc1.getWorld().equals(loc2.getWorld())){
                             v.push(null);
                         } else {
-                            v.push(loc1.toVector().multiply(-1).add(loc2.toVector()));
+                            v.push(loc2.toVector().subtract(loc1.toVector()));
                         }
                     }
                 }
         ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "VECTORXADD",
+                "VECTORXADD VXADD VX+",
+                "Vector Double",
+                "Vector",
+                "vector",
+                "Add value to vector x",
+                new SimpleWorker(new int[]{0x6F,0x06}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Double val = v.pop(Double.class);
+                        Vector vec = v.pop(Vector.class);
+                        v.push(new Vector(vec.getX()+val,vec.getY(),vec.getZ()));
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "VECTORYADD",
+                "VECTORYADD VYADD VY+",
+                "Vector Double",
+                "Vector",
+                "vector",
+                "Add value to vector y",
+                new SimpleWorker(new int[]{0x6F,0x07}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Double val = v.pop(Double.class);
+                        Vector vec = v.pop(Vector.class);
+                        v.push(new Vector(vec.getX(),vec.getY()+val,vec.getZ()));
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "VECTORZADD",
+                "VECTORZADD VZADD VZ+",
+                "Vector Double",
+                "Vector",
+                "vector",
+                "Add value to vector z",
+                new SimpleWorker(new int[]{0x6F,0x08}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Double val = v.pop(Double.class);
+                        Vector vec = v.pop(Vector.class);
+                        v.push(new Vector(vec.getX(),vec.getY(),vec.getZ()+val));
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "VECTORANGLE",
+                "VECTORANGLE VANG",
+                "Vector(A) Vector(B)",
+                "Float",
+                "vector",
+                "get angle from vector A to vector B",
+                new SimpleWorker(new int[]{0x6F,0x09}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Vector vec2 = v.pop(Vector.class);
+                        Vector vec = v.pop(Vector.class);
+                        v.push(vec.angle(vec2));
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "VECTORMUL",
+                "VECTORMUL V*",
+                "Vector(A) Double",
+                "Vector(Multiplied)",
+                "vector",
+                "Multiply vector to scalar",
+                new SimpleWorker(new int[]{0x6F,0x0A}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Double val = v.pop(Double.class);
+                        Vector vec = v.pop(Vector.class);
+                        v.push(vec.multiply(val));
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "VECTORLEN",
+                "VECTORLEN VLEN",
+                "Vector",
+                "Double",
+                "vector",
+                "Get length of vector",
+                new SimpleWorker(new int[]{0x6F,0x0B}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Vector vec = v.pop(Vector.class);
+                        v.push(vec.length());
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "NORMALIZE",
+                "NORMALIZE NRM",
+                "Vector(Source)",
+                "Vector(Normalized)",
+                "vector",
+                "Normalize vector",
+                new SimpleWorker(new int[]{0x6F,0x0C}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Vector vec = v.pop(Vector.class);
+                        v.push(vec.normalize());
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "VRANDOM",
+                "VRANDOM VRND",
+                "",
+                "Vector",
+                "vector",
+                "Generate random vector with length 1",
+                new SimpleWorker(new int[]{0x6F,0x0D}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        double ang1 = Math.PI*2*random.nextDouble();
+                        double ang2 = Math.PI*random.nextDouble();
+                        Vector l = new Vector(Math.sin(ang1),Math.cos(ang1),Math.cos(ang2));
+                        v.push(l.normalize());
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "LOCATIONPITCH",
+                "LOCATIONPITCH LPT",
+                "Location",
+                "Float",
+                "location",
+                "Get location pitch",
+                new SimpleWorker(new int[]{0x6F,0x0E}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Location l = v.pop(Location.class);
+                        v.push(l.getPitch());
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "LOCATIONYAW",
+                "LOCATIONYAW LYW",
+                "Location",
+                "Float",
+                "location",
+                "Get location yaw",
+                new SimpleWorker(new int[]{0x6F,0x0F}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Location l = v.pop(Location.class);
+                        v.push(l.getYaw());
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETLOCATIONYAW",
+                "LOCATIONYAW SETLYW >LYW",
+                "Location Float",
+                "Location",
+                "location",
+                "Set location yaw",
+                new SimpleWorker(new int[]{0x6F,0x10}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Float val = v.pop(Float.class);
+                        Location l = v.pop(Location.class);
+                        l.setYaw(val);
+                        v.push(l);
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETLOCATIONPITCH",
+                "SETLOCATIONPITCH SETLPT >LPT",
+                "Location Float",
+                "Location",
+                "location",
+                "Set location pitch",
+                new SimpleWorker(new int[]{0x6F,0x11}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Float val = v.pop(Float.class);
+                        Location l = v.pop(Location.class);
+                        l.setPitch(val);
+                        v.push(l);
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "LOCATIONYAWADD",
+                "LOCATIONYAWADD LYWADD LYW+",
+                "Location Float",
+                "Location",
+                "location",
+                "Add value to location yaw",
+                new SimpleWorker(new int[]{0x6F,0x12}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Float val = v.pop(Float.class);
+                        Location l = v.pop(Location.class);
+                        l.setYaw(l.getYaw()+val);
+                        v.push(l);
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "LOCATIONPITCHADD",
+                "LOCATIONPITCHADD LPTADD LPT+",
+                "Location Float",
+                "Location",
+                "location",
+                "Add value to location pitch",
+                new SimpleWorker(new int[]{0x6F,0x13}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Float val = v.pop(Float.class);
+                        Location l = v.pop(Location.class);
+                        l.setPitch(l.getPitch()+val);
+                        v.push(l);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SPHERE",
+                "SHPERE SPH",
+                "Location Double(radius)",
+                "Region",
+                "region",
+                "Create new sphere",
+                new SimpleWorker(new int[]{0x6F,0x14}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Double radius = v.pop(Double.class);
+                        Location l = v.pop(Location.class);
+                        v.push(new SphereRegion(l,radius));
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SPHEREAREA",
+                "SPHEREAREA SPHA",
+                "Location(center) Double(radius)",
+                "Region",
+                "region",
+                "Create new sphere",
+                new SimpleWorker(new int[]{0x6F,0x15}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Double radius = v.pop(Double.class);
+                        Location l = v.pop(Location.class);
+                        v.push(new SphereRegion(l,radius));
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CUBE",
+                "CUBE",
+                "Location(center) Double(width/2)",
+                "Region",
+                "region",
+                "Create new cube region",
+                new SimpleWorker(new int[]{0x6F,0x16}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Double radius = v.pop(Double.class);
+                        Location l1 = v.pop(Location.class);
+                        Location l2 = l1.clone();
+                        l1.add(radius,radius,radius);
+                        l2.subtract(radius, radius, radius);
+                        v.push(new CubeRegion(l1,l2));
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CUBEAB",
+                "CUBEAB",
+                "Location(A) Location(B)",
+                "Region",
+                "region",
+                "Create new cube region from location A to location B",
+                new SimpleWorker(new int[]{0x6F,0x17}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Location l2 = v.pop(Location.class);
+                        Location l1 = v.pop(Location.class);
+                        v.push(new CubeRegion(l1,l2));
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CUBEAREA",
+                "CUBEAREA CUBEA",
+                "Location(center) Double(width/2)",
+                "Region",
+                "region",
+                "Create new cube area",
+                new SimpleWorker(new int[]{0x6F,0x18}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Double radius = v.pop(Double.class);
+                        Location l1 = v.pop(Location.class);
+                        Location l2 = l1.clone();
+                        l1.add(radius,0,radius);
+                        l2.subtract(radius, 0, radius);
+                        v.push(new CubeArea(l1,l2));
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CUBEABAREA",
+                "CUBEABAREA CUBEABA",
+                "Location(A) Location(B)",
+                "Region",
+                "region",
+                "Create new cube area from location A to location B",
+                new SimpleWorker(new int[]{0x6F,0x19}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Location l2 = v.pop(Location.class);
+                        Location l1 = v.pop(Location.class);
+                        v.push(new CubeRegion(l1,l2));
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "REGIONHAS",
+                "REGIONHASR RHAS",
+                "Region(A) Location(B)",
+                "Boolean",
+                "region",
+                "True, if region A has location B",
+                new SimpleWorker(new int[]{0x6F,0x1A}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Location l = v.pop(Location.class);
+                        Region region = v.pop(Region.class);
+                        v.push(region.hasLocation(l));
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "INSIDE",
+                "INSIDE INS",
+                "Region(A) Collection(B)",
+                "List",
+                "region",
+                "Get all objects from B that places inside region A",
+                new SimpleWorker(new int[]{0x6F,0x1B}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        ArrayList<Object> list = new ArrayList<Object>();
+                        Collection col = v.pop(Collection.class);
+                        Region region = v.pop(Region.class);
+                        for(Object o:col) {
+                            if(region.hasLocation(v.convert(Location.class,o))){
+                                list.add(o);
+                            }
+                        }
+                        v.push(list);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SCAN",
+                "SCAN",
+                "Collection(A) Region(B)",
+                "List",
+                "region",
+                "Get all objects from A that places inside region B",
+                new SimpleWorker(new int[]{0x6F,0x1C}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        ArrayList<Object> list = new ArrayList<Object>();
+                        Collection col = v.pop(Collection.class);
+                        Region region = v.pop(Region.class);
+                        for(Object o:col) {
+                            if(region.hasLocation(v.convert(Location.class,o))){
+                                list.add(o);
+                            }
+                        }
+                        v.push(list);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "BLOCKS",
+                "BLOCKS",
+                "Region",
+                "Set(Block)",
+                "region block",
+                "Get all blocks in region",
+                new SimpleWorker(new int[]{0x6F,0x1D}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Region region = v.pop(Region.class);
+                        v.push(region.getBlocks());
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "EDGE",
+                "EDGE",
+                "Region",
+                "Set(Block)",
+                "region block",
+                "Get all edge blocks in region",
+                new SimpleWorker(new int[]{0x6F,0x1E}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Region region = v.pop(Region.class);
+                        v.push(region.getOutsideBlocks());
+                    }
+                }
+        ));
+
 
 
 

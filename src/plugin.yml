@@ -6,13 +6,18 @@ main: me.dpohvar.varscript.VarScript
 version: 0.5.3
 softdepend: [PowerNBT]
 commands:
+    "task":
+        description: manage tasks
+        usage: /task <name> <operation>
+        permission: varscript.command.task
+    "scheduler":
+        description: manage scheduler
+        usage: /scheduler [enable|disable|reload]
+        permission: varscript.command.scheduler
+        aliases: ">s"
     "vs":
         description: manage varscript
         usage: /vs <varscript>
-        permission: varscript.command.vs
-    "task":
-        description: manage tasks
-        usage: /task [name [operation [...]]]
         permission: varscript.command.vs
     "js":
         description: manage javascript

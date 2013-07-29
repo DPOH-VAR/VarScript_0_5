@@ -10,6 +10,8 @@ import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.converter.Converter;
 
+import java.util.Random;
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,6 +21,8 @@ import me.dpohvar.varscript.converter.Converter;
  */
 public class InitMathematic {
     public static void load(){
+        final Random random = new Random();
+
         VSCompiler.addRule(new SimpleCompileRule(
                 "+",
                 "+",
@@ -415,11 +419,11 @@ public class InitMathematic {
                 "RANDOM RND",
                 "",
                 "Double(B)",
-                "math",
+                "math random",
                 "Put to stack a random number (0 <= B < 1)",
                 new SimpleWorker(new int[]{0x3F,0x0F}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        v.push(Math.random());
+                        v.push(random.nextDouble());
                     }
                 }
         ));
@@ -504,6 +508,45 @@ public class InitMathematic {
                     }
                 }
         ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "RANDOMINT",
+                "RANDOMINT RNDI",
+                "Integer(A)",
+                "Integer",
+                "random",
+                "Put to stack random Integer from 0 to A",
+                new SimpleWorker(new int[]{0x3F,0x13}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                random.nextInt(
+                                        v.pop(Integer.class)
+                                )
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "RANDOMFOR",
+                "RANDOMFOR",
+                "Double(Start) Double(End)",
+                "Double",
+                "random",
+                "Put to stack random Double from Start to End",
+                new SimpleWorker(new int[]{0x3F,0x14}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        double end = v.pop(Double.class);
+                        double start = v.pop(Double.class);
+                        double len = end-start;
+                        v.push(
+                                random.nextDouble()*len+start
+                        );
+                    }
+                }
+        ));
+
+
 
 
     }

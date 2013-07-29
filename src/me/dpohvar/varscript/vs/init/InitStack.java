@@ -125,21 +125,6 @@ public class InitStack {
         ));
 
         VSCompiler.addRule(new SimpleCompileRule(
-                "PRINT",
-                "PRINT .",
-                "Object",
-                "",
-                "stack string print",
-                "print object to caller",
-                new SimpleWorker(new int[]{0x0F}){
-                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        v.getProgram().getCaller().send(v.pop());
-                    }
-                }
-        ));
-
-
-        VSCompiler.addRule(new SimpleCompileRule(
                 "THIS",
                 "THIS",
                 "",
@@ -223,17 +208,36 @@ public class InitStack {
                 }
         ));
 
-
         VSCompiler.addRule(new SimpleCompileRule(
-                "RUNTIME",
-                "RUNTIME",
-                "",
-                "Runtime",
+                "CLONE",
+                "CLONE",
+                "Object",
+                "Object Object",
                 "stack",
-                "get current runtime",
+                "try to clone object",
                 new SimpleWorker(new int[]{0x0D}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        v.push(v.getProgram().getRuntime());
+                        Object t = v.pop();
+                        Object x = null;
+                        try{
+                            x = t.getClass().getMethod("clone").invoke(t);
+                        } catch (Exception ignored){
+                        }
+                        v.push(x);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "PRINT",
+                "PRINT .",
+                "Object",
+                "",
+                "stack string print",
+                "print object to caller",
+                new SimpleWorker(new int[]{0x0E}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.getProgram().getCaller().send(v.pop());
                     }
                 }
         ));
@@ -245,11 +249,25 @@ public class InitStack {
                 "Object(A) Object(B) Object(A) Object(B)",
                 "stack basic",
                 "duplicate last 2 values",
-                new SimpleWorker(new int[]{0x0E}){
+                new SimpleWorker(new int[]{0x0F,0x00}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) {
                         Object b = v.pop();
                         Object a = v.pop();
                         v.push(a).push(b).push(a).push(b);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "RUNTIME",
+                "RUNTIME",
+                "",
+                "Runtime",
+                "stack",
+                "get current runtime",
+                new SimpleWorker(new int[]{0x0F,0x01}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(v.getProgram().getRuntime());
                     }
                 }
         ));

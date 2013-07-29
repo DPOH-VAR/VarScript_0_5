@@ -22,7 +22,7 @@ public class Thread implements Fieldable {
     private Stack<java.lang.Object> stack = new Stack<java.lang.Object>();
     private Stack<Context> runners = new Stack<Context>();
     boolean finished = false;
-    private final Program program;
+    private final VarscriptProgram program;
     private final Converter converter;
     private boolean sleeping = false;
     Fieldable proto;
@@ -32,7 +32,7 @@ public class Thread implements Fieldable {
         return runners;
     }
 
-    public Thread(Program program) {
+    public Thread(VarscriptProgram program) {
         this.program = program;
         program.threads.add(this);
         converter = program.getRuntime().converter;
@@ -67,7 +67,7 @@ public class Thread implements Fieldable {
         triggers.remove(trigger);
     }
 
-    public Program getProgram(){
+    public VarscriptProgram getProgram(){
         return program;
     }
 
@@ -78,7 +78,6 @@ public class Thread implements Fieldable {
     void clearTriggers(){
         for (Trigger t:triggers) t.unregister();
         triggers.clear();
-
     }
 
     public void setFinished(){
@@ -125,7 +124,7 @@ public class Thread implements Fieldable {
         try{
             return convert(Runnable.class,t);
         } catch (ConvertException e){
-            return convert(NamedCommandList.class,t).build(scope);
+            return convert(CommandList.class,t).build(scope);
         }
     }
 
@@ -164,6 +163,11 @@ public class Thread implements Fieldable {
 
     public Thread push(java.lang.Object val){
         stack.push(val);
+        return this;
+    }
+
+    public <T> Thread push(java.lang.Object val,Class<T> clazz) throws ConvertException {
+        stack.push(convert(clazz,val));
         return this;
     }
 

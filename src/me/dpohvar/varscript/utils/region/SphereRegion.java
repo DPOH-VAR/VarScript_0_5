@@ -11,7 +11,6 @@ import java.util.HashSet;
  * User: DPOH-VAR
  * Date: 21.06.12
  * Time: 11:58
- * To change this template use File | Settings | File Templates.
  */
 public class SphereRegion extends Region {
     protected double px, py, pz;

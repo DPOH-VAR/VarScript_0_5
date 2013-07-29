@@ -1,20 +1,26 @@
 package me.dpohvar.varscript.vs.init;
 
+import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Runnable;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.ComplexCompileRule;
+import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import me.dpohvar.varscript.vs.compiler.VSSmartParser;
 import me.dpohvar.varscript.vs.exception.SourceException;
+import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
+import org.bukkit.command.ConsoleCommandSender;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Stack;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,6 +29,33 @@ import java.util.Stack;
  * Time: 1:28
  */
 public class InitCallback {
+
+    private static class MinecraftLogHandler extends Handler {
+        private final Writer writer;
+        MinecraftLogHandler( final Writer writer ){
+            this.writer = writer;
+        }
+        @Override public void publish( LogRecord record ){
+            try {
+                writer.write( String.format( "%s\n", record.getMessage() ) );
+            } catch( IOException e ) {
+            }
+        }
+        public void close() {
+            try {
+                writer.close();
+            }
+            catch( IOException e ) {
+            }
+        }
+        public void flush() {
+            try {
+                writer.flush();
+            } catch( IOException e ) {
+            }
+        }
+    }
+
 
     public static Worker<Void> wMapStart = new Worker<Void>() {
         @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
@@ -534,6 +567,51 @@ public class InitCallback {
                 return new Worker[]{wEndLoop};
             }
         });
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CONSOLE",
+                "CONSOLE CON",
+                "String(command)",
+                "String(result)",
+                "console",
+                "execute console command",
+                new SimpleWorker(new int[]{0xEF,0x10}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        String command = v.pop(String.class);
+                        // --- from plugin HTTPConsole
+                        ConsoleCommandSender sender = Bukkit.getConsoleSender();
+                        StringWriter command_output = new StringWriter();
+                        Logger minecraft_logger = Logger.getLogger( "Minecraft" );
+                        MinecraftLogHandler minecraft_log_handler = new MinecraftLogHandler( command_output );
+                        minecraft_logger.addHandler( minecraft_log_handler );
+                        Bukkit.dispatchCommand( sender, command );
+                        minecraft_logger.removeHandler( minecraft_log_handler );
+                        minecraft_log_handler.flush();
+                        minecraft_log_handler.close();
+                        // ---
+                        v.push(command_output.toString());
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "BROADCAST",
+                "BROADCAST BC",
+                "String(message)",
+                "",
+                "console",
+                "broadcast message",
+                new SimpleWorker(new int[]{0xEF,0x11}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Bukkit.broadcastMessage(
+                                v.pop(String.class)
+                        );
+                    }
+                }
+        ));
+
+
+
 
     }
 }

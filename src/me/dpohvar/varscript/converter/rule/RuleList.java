@@ -65,8 +65,8 @@ public class RuleList extends ConvertRule<List>{
         if (object instanceof Map) return new ArrayList(((Map)object).keySet());
         if (object instanceof Region) return new ArrayList(((Region)object).getBlocks());
         if (object instanceof World) return ((World)object).getEntities();
-        if (object instanceof NBTTagList) return convert(((NBTTagList)object).asList(),thread,scope);
-        if (object instanceof NBTTagCompound) return convert(((NBTTagCompound)object).asList(),thread,scope);
+        if (object instanceof NBTTagList) return ((NBTTagList)object).asList();
+        if (object instanceof NBTTagCompound) return ((NBTTagCompound)object).asList();
         if (object instanceof byte[]) {
             byte[] bytes = (byte[])object;
             ArrayList<Byte> a = new ArrayList<Byte>();

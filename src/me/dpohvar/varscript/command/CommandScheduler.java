@@ -32,7 +32,7 @@ public class CommandScheduler implements CommandExecutor {
     @Override public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         Caller caller = Caller.getCallerFor(commandSender);
         try{
-            Scheduler scheduler = runtime.scheduler;
+            Scheduler scheduler = runtime.getScheduler();
             Queue<String> words = new LinkedList<String>(Arrays.asList(strings));
             String cmd = words.poll();
             if (cmd==null||cmd.isEmpty()){

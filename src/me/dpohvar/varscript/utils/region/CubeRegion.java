@@ -108,6 +108,20 @@ public class CubeRegion extends Region {
     }
 
     @Override
+    public HashSet<Block> getSolidBlocks() {
+        HashSet<Block> blocks = new HashSet<Block>();
+        int xa = (int) (Math.floor(x1)), ya = (int) (y1), za = (int) (Math.floor(z1));
+        int xb = (int) (Math.floor(x2)), yb = (int) (y2), zb = (int) (Math.floor(z2));
+        for (int x = xa; x <= xb; x++)
+            for (int y = ya; y <= yb; y++)
+                for (int z = za; z <= zb; z++) {
+                    Block b = world.getBlockAt(x, y, z);
+                    if(!b.isEmpty()) blocks.add(b);
+                }
+        return blocks;
+    }
+
+    @Override
     public HashSet<Block> getOutsideBlocks() {
         HashSet<Block> blocks = new HashSet<Block>();
         int xa = (int) (Math.floor(x1)), ya = (int) (y1), za = (int) (Math.floor(z1));

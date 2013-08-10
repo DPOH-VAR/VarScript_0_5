@@ -120,7 +120,9 @@ public class Thread implements Fieldable {
         try{
             return convert(Runnable.class,t);
         } catch (ConvertException e){
-            return convert(CommandList.class,t).build(scope);
+            CommandList list = convert(CommandList.class,t);
+            if(list==null) return null;
+            return list.build(scope);
         }
     }
 
@@ -128,8 +130,18 @@ public class Thread implements Fieldable {
         return convert(enums,stack.pop());
     }
 
-    public <V extends Enum> V convert(V[] enums, java.lang.Object a){
+    public <V> V convert(V[] enums, java.lang.Object a){
         return Converter.convert(enums,a);
+    }
+
+    public Runnable convert(Scope scope, Object a) throws ConvertException{
+        try{
+            return convert(Runnable.class,a);
+        } catch (ConvertException e){
+            CommandList list = convert(CommandList.class,a);
+            if(list==null) return null;
+            return list.build(scope);
+        }
     }
 
     public java.lang.Object peek(){

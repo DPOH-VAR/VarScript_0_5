@@ -20,6 +20,9 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.v1_6_R2.entity.CraftVillager;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Villager;
 import org.bukkit.util.Vector;
 
 import java.io.IOException;
@@ -229,6 +232,7 @@ public class InitDynamic {
         @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
             Fieldable obj = v.pop(Fieldable.class);
             Runnable runnable = (Runnable) obj.getField(d);
+            if(runnable==null) throw new Exception("function is null");
             v.pushFunction(runnable,obj).setRegisterE(f);
             throw interruptFunction;
         }
@@ -251,9 +255,9 @@ public class InitDynamic {
     };
 
     public static SimpleWorker wRun = new SimpleWorker(new int[]{0x1A}) {
-        @Override
-        public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
             Runnable runnable = v.pop(f.getScope());
+            if(runnable==null) throw new Exception("function is null");
             v.pushFunction(runnable,f.getApply()).setRegisterE(f);
             throw interruptFunction;
         }
@@ -402,12 +406,7 @@ public class InitDynamic {
     public static Worker<Void> wApply = new Worker<Void>() {
         @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
             Fieldable obj = v.pop(Fieldable.class);
-            Runnable runnable;
-            try{
-                runnable = v.peek(Runnable.class);
-            } catch (ConvertException ignored){
-                runnable = v.peek(CommandList.class).build(f.getScope());
-            }
+            Runnable runnable = v.pop(f.getScope());
             v.pushFunction(runnable,obj).setRegisterE(f);
             throw interruptFunction;
         }
@@ -542,6 +541,32 @@ public class InitDynamic {
         }
         @Override public byte[] getBytes() {
             return new byte[]{0x1F,0x17};
+        }
+        @Override public String readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
+            int len = input.read();
+            byte[] bytes = new byte[len];
+            input.read(bytes);
+            return new String(bytes, VarScript.UTF8);
+        }
+    };
+
+    public static Worker<String> wApplyFunction = new Worker<String>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, String d) throws Exception {
+            Object apply = v.pop();
+            Object fun = f.getScope().getVar(d);
+            Runnable run = v.convert(f.getScope(),fun);
+            v.pushFunction(run,apply).setRegisterE(f);
+            throw interruptFunction;
+        }
+        @Override public void save(OutputStream out, String data) throws IOException {
+            out.write(0x1F);
+            out.write(0x18);
+            byte[] bytes = data.getBytes(VarScript.UTF8);
+            out.write(bytes.length);
+            out.write(bytes);
+        }
+        @Override public byte[] getBytes() {
+            return new byte[]{0x1F,0x18};
         }
         @Override public String readObject(InputStream input, VSCompiler.ReadSession session) throws IOException {
             int len = input.read();
@@ -842,9 +867,9 @@ public class InitDynamic {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("%!variable","variable","","","delete variable"){ //0x11
+        VSCompiler.addRule(new ComplexCompileRule("%~variable","variable","","","delete variable"){ //0x11
             @Override public boolean checkCondition(String string) {
-                return string.matches("%![A-Za-z0-9_\\-/]+");
+                return string.matches("%~[A-Za-z0-9_\\-/]+");
             }
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) {
                 String object = operand.builder.toString().substring(1);
@@ -1108,7 +1133,7 @@ public class InitDynamic {
 
         VSCompiler.addRule(new ComplexCompileRule(".field","field","Fieldable","Object","get field of object"){
             @Override public boolean checkCondition(String string) {
-                return string.matches("\\.[A-Za-z0-9_\\-/]+");
+                return string.matches("\\.[A-Za-z0-9_\\-]+(?:\\([A-Za-z0-9_\\-,\\.]*\\))?");
             }
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
                 String name = operand.builder.toString().substring(1);
@@ -1119,9 +1144,9 @@ public class InitDynamic {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule(".%field","field","Object(value) Fieldable","","set field of object"){
+        VSCompiler.addRule(new ComplexCompileRule(".>field","field","Object(value) Fieldable","","set field of object"){
             @Override public boolean checkCondition(String string) {
-                return string.matches("\\.(?:%|>)[A-Za-z0-9_\\-/]+");
+                return string.matches("\\.>[A-Za-z0-9_\\-]+");
             }
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
                 String name = operand.builder.toString().substring(2);
@@ -1132,9 +1157,9 @@ public class InitDynamic {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule(".!field","field","Fieldable","","delete field of object"){
+        VSCompiler.addRule(new ComplexCompileRule(".~field","field","Fieldable","","delete field of object"){
             @Override public boolean checkCondition(String string) {
-                return string.matches("\\.![A-Za-z0-9_\\-/]+");
+                return string.matches("\\.~[A-Za-z0-9_\\-]+");
             }
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
                 String name = operand.builder.toString().substring(2);
@@ -1148,7 +1173,7 @@ public class InitDynamic {
 
         VSCompiler.addRule(new ComplexCompileRule(":field","field function","Fieldable","...","apply method for object"){
             @Override public boolean checkCondition(String string) {
-                return string.matches(":[A-Za-z0-9_\\-/]+");
+                return string.matches(":[A-Za-z0-9_\\-]+(?:\\([A-Za-z0-9_\\-,\\.]*\\))?");
             }
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
                 String name = operand.builder.toString().substring(1);
@@ -1648,7 +1673,7 @@ public class InitDynamic {
 
         VSCompiler.addRule(new SimpleCompileRule(
                 "REFLECT",
-                "REFLECT",
+                "REFLECT :",
                 "Object",
                 "Fieldable",
                 "field reflection",
@@ -1815,6 +1840,21 @@ public class InitDynamic {
             }
             @Override public Worker[] getNewWorkersWithRules() {
                 return new Worker[]{wStoreField};
+            }
+        });
+
+        VSCompiler.addRule(new ComplexCompileRule(":@function","function","","","apply function to object\n" +
+                "Example:\n {THIS 1 THROW} %throw\n ME:@throw"){
+            @Override public boolean checkCondition(String string) {
+                return string.matches(":@[A-Za-z0-9_\\-]+");
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
+                String op = operand.toString();
+                String name = op.substring(2);
+                functionSession.addCommand(wApplyFunction,name,operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wApplyFunction};
             }
         });
 

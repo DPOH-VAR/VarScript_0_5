@@ -27,7 +27,7 @@ import java.util.zip.GZIPInputStream;
 
 public class VSCompiler {
 
-    static Collection<CompileRule> compileRules = new LinkedList<CompileRule>();
+    static Collection<CompileRule> compileRules = new HashSet<CompileRule>();
     static Object[] readRules = new Object[256];
     static HashMap<String,Set<CompileRule>> tags = new HashMap<String, Set<CompileRule>>();
     static HashSet<String> validatorDescription = new HashSet<String>();
@@ -36,8 +36,10 @@ public class VSCompiler {
     static{
         InitBlockChunk.load();
         InitCallback.load();
+        InitCustomEntity.load();
         InitDynamic.load();
         InitEntity.load();
+        InitInventory.load();
         InitList.load();
         InitLiving.load();
         InitLocVec.load();
@@ -48,6 +50,8 @@ public class VSCompiler {
         InitPowerNBTAPI.load();
         InitStack.load();
         InitString.load();
+        InitSystem.load();
+        InitWorld.load();
     }
 
     private static Converter converter;
@@ -144,22 +148,20 @@ public class VSCompiler {
     public static CommandList compile(String name,CompileSession compileSession, boolean first) throws SourceException {
         FunctionSession functionSession = compileSession.newFunctionSession(name);
         try{
-            whileForOperands: while(functionSession.hasOperand()){
+            read_operands: while(functionSession.hasOperand()){
                 VSSmartParser.ParsedOperand operand = functionSession.pollOperand();
                 String string = operand.toString();
                 for(CompileRule rule: compileRules){
                     if(rule.checkCondition(string)){
                         rule.apply(operand,functionSession, compileSession);
-                        continue whileForOperands;
+                        continue read_operands;
                     }
                 }
-                ////////////////////////////ADDITIONAL////////////////////////
-                if(compileSession.hasVarName(string)){
+                if(string.matches("[A-Za-z0-9_\\-/]+")){
                     functionSession.addCommand(InitDynamic.wGetVariable,string,operand);
                     functionSession.addCommand(InitDynamic.wRun,null,operand);
                     continue;
                 }
-                ////////////////////////////ADDITIONAL////////////////////////
                 throw new CommandException(operand, compileSession.getSource(),new RuntimeException("operand is not recognized: "+string));
             }
         } catch (CloseFunction e){

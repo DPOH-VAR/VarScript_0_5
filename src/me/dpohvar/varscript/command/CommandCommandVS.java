@@ -24,10 +24,9 @@ public class CommandCommandVS implements CommandExecutor {
         try{
             Set<CompileRule> rules = VSCompiler.getRules();
             if (strings.length==0){
-                String commands = StringUtils.join(rules,' ');
-                caller.send("Commands: ".concat(commands));
+                caller.send("There are "+ChatColor.AQUA+rules.size()+ChatColor.RESET+" commands");
             } else {
-                String query = StringUtils.join(strings,"");
+                String query = StringUtils.join(strings," ");
                 for (CompileRule rule:rules){
                     if (rule.checkCondition(query)){
                         caller.send(rule.getDescription());

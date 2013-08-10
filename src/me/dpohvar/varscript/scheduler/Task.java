@@ -18,6 +18,7 @@ public class Task {
 
     boolean enabled = false;
     String description = "";
+    ArrayList<TaskAction> init = new ArrayList<TaskAction>();
     ArrayList<TaskEvent> events = new ArrayList<TaskEvent>();
     ArrayList<TaskCondition> conditions = new ArrayList<TaskCondition>();
     ArrayList<TaskAction> actions = new ArrayList<TaskAction>();
@@ -130,6 +131,7 @@ public class Task {
         }
 
         if(needRead) try {
+            List<String> ymlInit = new ArrayList<String>();
             List<String> ymlEvents = new ArrayList<String>();
             List<String> ymlConditions = new ArrayList<String>();
             List<String> ymlActions = new ArrayList<String>();
@@ -142,12 +144,23 @@ public class Task {
             if (map.containsKey("enabled")) enabled = (Boolean) map.get("enabled");
             if (map.containsKey("description")) description = (String) map.get("description");
 
+            if (map.containsKey("init")) ymlInit = (List<String>) map.get("init");
             if (map.containsKey("events")) ymlEvents = (List<String>) map.get("events");
             if (map.containsKey("conditions")) ymlConditions = (List<String>) map.get("conditions");
             if (map.containsKey("actions")) ymlActions = (List<String>) map.get("actions");
 
             Collection<TaskEntry> toEnable = new ArrayList<TaskEntry>();
 
+            if (ymlInit != null) for (String s : ymlInit) if(s!=null) {
+                boolean currentEnabled = true;
+                if(s.startsWith("<disabled> ")){
+                    currentEnabled = false;
+                    s = s.substring(11);
+                }
+                TaskAction t = TaskAction.fromString(this,s);
+                init.add(t);
+                if(currentEnabled) toEnable.add(t);
+            }
             if (ymlEvents != null) for (String s : ymlEvents) if(s!=null) {
                 boolean currentEnabled = true;
                 if(s.startsWith("<disabled> ")){
@@ -178,9 +191,17 @@ public class Task {
                 actions.add(t);
                 if(currentEnabled) toEnable.add(t);
             }
-
-
             for(TaskEntry t:toEnable) t.setEnabled(true);
+            if(enabled && scheduler.enabled){
+                HashMap<String,Object> environment = new HashMap<String,Object>();
+                environment.put("Task",this);
+                for(TaskAction t:init){
+                    environment.put("TaskAction",t);
+                    if(!t.enabled) continue;
+                    if(t.error) continue;
+                    t.run(environment);
+                }
+            }
 
         } catch (Exception e) {
             free();
@@ -262,6 +283,9 @@ public class Task {
 
 
     void register(){
+        for(TaskAction t:init){
+            if(t.enabled) t.error=!t.register();
+        }
         for(TaskEvent t:events){
             if(t.enabled) t.error=!t.register();
         }
@@ -270,6 +294,14 @@ public class Task {
         }
         for(TaskAction t:actions){
             if(t.enabled) t.error=!t.register();
+        }
+        HashMap<String,Object> environment = new HashMap<String,Object>();
+        environment.put("Task",this);
+        for(TaskAction t:init){
+            environment.put("TaskAction",t);
+            if(!t.enabled) continue;
+            if(t.error) continue;
+            t.run(environment);
         }
     }
 
@@ -293,9 +325,14 @@ public class Task {
         data.put("enabled", this.enabled);
         if (description!=null && !description.isEmpty()) data.put("description", description);
 
+        List<String> ymlInit = new ArrayList<String>();
         List<String> ymlEvents = new ArrayList<String>();
         List<String> ymlConditions = new ArrayList<String>();
         List<String> ymlActions = new ArrayList<String>();
+        for (TaskAction t : init) {
+            if(t.enabled) ymlInit.add(t.toString());
+            else ymlInit.add("<disabled> "+t.toString());
+        }
         for (TaskEvent t : events) {
             if(t.enabled) ymlEvents.add(t.toString());
             else ymlEvents.add("<disabled> "+t.toString());
@@ -309,6 +346,7 @@ public class Task {
             else ymlActions.add("<disabled> "+t.toString());
         }
 
+        if (!ymlInit.isEmpty()) data.put("init", ymlInit);
         if (!ymlEvents.isEmpty()) data.put("events", ymlEvents);
         if (!ymlConditions.isEmpty()) data.put("conditions", ymlConditions);
         if (!ymlActions.isEmpty()) data.put("actions", ymlActions);
@@ -331,7 +369,9 @@ public class Task {
     public Scheduler getScheduler(){
         return scheduler;
     }
-
+    public TaskAction getInit(int index){
+        return init.get(index);
+    }
     public TaskEvent getEvent(int index){
         return events.get(index);
     }
@@ -341,13 +381,18 @@ public class Task {
     public TaskAction getAction(int index){
         return actions.get(index);
     }
+
     public TaskEntry get(TaskEntryType type,int index){
         switch (type){
+            case INIT: return getInit(index);
             case EVENT: return getEvent(index);
             case CONDITION: return getCondition(index);
             case ACTION: return getAction(index);
         }
         return null;
+    }
+    public int getInitCount(){
+        return init.size();
     }
     public int getEventCount(){
         return events.size();
@@ -360,6 +405,7 @@ public class Task {
     }
     public int getCount(TaskEntryType type){
         switch (type){
+            case INIT: return getInitCount();
             case EVENT: return getEventCount();
             case CONDITION: return getConditionCount();
             case ACTION: return getActionCount();
@@ -367,6 +413,11 @@ public class Task {
         return -1;
     }
 
+    public TaskAction addInit(String constructor){
+        TaskAction t = TaskAction.fromString(this,constructor);
+        init.add(t);
+        return t;
+    }
     public TaskEvent addEvent(String constructor){
         TaskEvent t = TaskEvent.fromString(this,constructor);
         events.add(t);
@@ -384,6 +435,7 @@ public class Task {
     }
     public TaskEntry add(TaskEntryType type,String constructor){
         switch (type){
+            case INIT: return addInit(constructor);
             case EVENT: return addEvent(constructor);
             case CONDITION: return addCondition(constructor);
             case ACTION: return addAction(constructor);
@@ -391,6 +443,15 @@ public class Task {
         return null;
     }
 
+    public TaskAction editInit(int index,String constructor){
+        TaskAction t = init.get(index);
+        boolean needEnable = t.enabled;
+        t.remove();
+        t = TaskAction.fromString(this,constructor);
+        init.add(index,t);
+        if(needEnable) t.enable();
+        return t;
+    }
     public TaskEvent editEvent(int index,String constructor){
         TaskEvent t = events.get(index);
         boolean needEnable = t.enabled;
@@ -421,6 +482,7 @@ public class Task {
     }
     public TaskEntry edit(TaskEntryType type, int index, String constructor){
         switch (type){
+            case INIT: return editInit(index, constructor);
             case EVENT: return editEvent(index, constructor);
             case CONDITION: return  editCondition(index, constructor);
             case ACTION: return  editAction(index, constructor);

@@ -42,6 +42,7 @@ public class Converter {
         classes.put("Object[]",Object[].class);
         classes.put("Object!",Object[].class);
         classes.put("String",String.class);
+        classes.put("Player",org.bukkit.entity.Player.class);
     }
 
 
@@ -123,7 +124,7 @@ public class Converter {
         }
         try {
             Method m_values = classTo.getMethod("values");
-            Enum[] values = (Enum[]) m_values.invoke(null);
+            Object[] values = (Object[]) m_values.invoke(null);
             return (T) convert(values,object);
         } catch (Exception ignored) {
         }
@@ -153,17 +154,29 @@ public class Converter {
             if (o instanceof Double) o = ((Double) o).intValue();
             if (o instanceof Integer) return examples[(Integer) o];
             V tra = null;
+            V example = null;
             if (o instanceof String) {
                 for (int i = 0; i < examples.length; i++) {
                     String s = ((String) o).toUpperCase();
-                    String e = examples[i].toString();
-                    if (e.toUpperCase().equals(s)) return examples[i];
-                    if (e.toUpperCase().startsWith(s)) tra = examples[i];
-                    if (s.equals(((Integer) i).toString())) tra = examples[i];
+                    if(examples[i]==null) continue;
+                    example = examples[i];
+                    String e = example.toString();
+                    if (e.toUpperCase().equals(s)) return example;
+                    if (e.toUpperCase().startsWith(s)) tra = example;
+                    if (s.equals(((Integer) i).toString())) tra = example;
                 }
                 if (tra != null) return tra;
+                if (example == null) return null;
+                Class<?> c = example.getClass();
+                Method m;
+                try{
+                    m = c.getMethod("getByName",String.class);
+                    return (V) m.invoke(null,o);
+                } catch (NoSuchMethodException ignored) {
+                }
             }
         } catch (Throwable ignore) {
+            return null;
         }
         return null;
     }

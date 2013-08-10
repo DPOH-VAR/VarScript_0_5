@@ -7,6 +7,7 @@ package me.dpohvar.varscript.scheduler;
  * Time: 19:45
  */
 public enum TaskEntryType {
+    INIT,
     EVENT,
     CONDITION,
     ACTION

@@ -43,26 +43,19 @@ public class NBTTagWrapper implements Fieldable {
         return names;
     }
 
-    public static Object tryWrap(Object object){
-        if(object instanceof NBTTagCompound) return new NBTTagWrapper((NBTTagCompound)object);
-        if(object instanceof NBTTagList) return new NBTTagWrapper((NBTTagList)object);
-        return object;
-    }
-
     @Override public Object getField(final String name) {
-        NBTBase r = null;
         if(tag instanceof NBTTagList){
             try{
                 int pos = Integer.parseInt(name);
                 NBTTagList list = (NBTTagList) tag;
-                r = list.get(pos);
+                return list.get(pos);
             }catch (Exception ignored){
             }
         } else if(tag instanceof NBTTagCompound){
             NBTTagCompound compound = (NBTTagCompound) tag;
-            if(compound.has(name)) r = compound.get(name);
+            if(compound.has(name)) return compound.get(name);
         }
-        return tryWrap(r);
+        return null;
     }
 
     @Override public void setField(String key, Object value) {

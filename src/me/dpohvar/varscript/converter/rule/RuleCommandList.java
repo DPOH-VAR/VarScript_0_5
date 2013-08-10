@@ -25,7 +25,7 @@ public class RuleCommandList extends ConvertRule<CommandList>{
 
     @Override
     public <V> CommandList convert(V object, Thread thread,Scope scope) throws NextRule, ConvertException {
-        if (object==null) return new Function(null,"",scope);
+        if (object==null) return null;
         if (object instanceof String) {
             try {
                 return VSCompiler.compile(object.toString(),"");

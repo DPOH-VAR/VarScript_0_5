@@ -13,6 +13,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.scoreboard.Score;
 import org.bukkit.util.Vector;
 
 import java.nio.ByteBuffer;
@@ -51,6 +52,7 @@ public class RuleFloat extends ConvertRule<Float>{
         if (object instanceof World) return (float)Bukkit.getWorlds().indexOf(object);
         if (object instanceof PotionEffect) return (float)((PotionEffect)object).getType().getId();
         if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
+        if (object instanceof Score) return (float) ((Score)object).getScore();
         if (object instanceof byte[]) {
             byte[] bytes = (byte[])object;
             if (bytes.length==0) return 0f;

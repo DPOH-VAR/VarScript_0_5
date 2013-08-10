@@ -381,6 +381,22 @@ public class InitString {
                 }
         ));
 
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CHARS",
+                "CHARS",
+                "String",
+                "List<Character>",
+                "char",
+                "get characters",
+                new SimpleWorker(new int[]{0x4F, 0x08}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        List a = new ArrayList();
+                        for(char c:v.pop(String.class).toCharArray()) a.add(c);
+                        v.push(a);
+                    }
+                }
+        ));
+
 
     }
 }

@@ -24,7 +24,7 @@ public class RuleInventory extends ConvertRule<Inventory>{
     public <V> Inventory convert(V object, me.dpohvar.varscript.vs.Thread thread,Scope scope) throws NextRule {
         if (object==null) return null;
         if (object instanceof InventoryHolder) return ((InventoryHolder)object).getInventory();
-        if (object instanceof String) return Bukkit.getPlayer((String)object).getInventory();
+        if (object instanceof String) return Bukkit.getPlayer(((String)object).trim()).getInventory();
         if (object instanceof Block) return ((InventoryHolder)((Block)object).getState()).getInventory();
         if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
         throw nextRule;

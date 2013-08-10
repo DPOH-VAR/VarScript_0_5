@@ -5,6 +5,8 @@ import me.dpohvar.varscript.vs.Fieldable;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.command.BlockCommandSender;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -49,9 +51,7 @@ public abstract class Caller implements Fieldable {
             if(ins instanceof Player) ins = ((Player) ins).getName();
             callers.put(ins,(Caller)object);
             return (Caller)object;
-        }
-
-        else if (object instanceof Player){
+        } else if (object instanceof Player){
             Caller c = callers.get(((Player) object).getName());
             if(c!=null){
                 ((PlayerCaller)c).setPlayer((Player) object);
@@ -60,42 +60,44 @@ public abstract class Caller implements Fieldable {
             c = new PlayerCaller((Player) object);
             callers.put(((Player) object).getName(),c);
             return c;
-        }
-
-        else if (object instanceof Task){
+        } else if (object instanceof Task){
             Caller c = callers.get(object);
             if(c!=null) return c;
             c = new SchedulerTaskCaller((Task) object);
             callers.put(object,c);
             return c;
-        }
-
-        else if (object instanceof Entity){
+        } else if (object instanceof Entity){
             Caller c = callers.get(object);
             if(c!=null) return c;
             c = new EntityCaller((Entity) object);
             callers.put(object,c);
             refresh();
             return c;
-        }
-
-        else if (object instanceof PrintStream){
+        } else if (object instanceof PrintStream){
             Caller c = callers.get(object);
             if(c!=null) return c;
             c = new PrintStreamCaller((PrintStream) object);
             callers.put(object,c);
             return c;
-        }
-
-        else if (object instanceof Block){
+        } else if (object instanceof Block){
             Caller c = callers.get(object);
             if(c!=null) return c;
             c = new BlockCaller((Block) object);
             callers.put(object,c);
             return c;
-        }
-
-        else {
+        } else if (object instanceof BlockCommandSender){
+            Caller c = callers.get(object);
+            if(c!=null) return c;
+            c = new BlockCaller(((BlockCommandSender)object).getBlock());
+            callers.put(object,c);
+            return c;
+        } else if (object instanceof CommandSender){
+            Caller c = callers.get(object);
+            if(c!=null) return c;
+            c = new CommandSenderCaller((CommandSender) object);
+            callers.put(object,c);
+            return c;
+        } else {
             Caller c = callers.get(object);
             if(c!=null) return c;
             c = new SimpleCaller(object);

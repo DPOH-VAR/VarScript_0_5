@@ -10,16 +10,15 @@ import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import me.dpohvar.varscript.vs.compiler.VSSmartParser;
 import me.dpohvar.varscript.vs.exception.SourceException;
 import org.bukkit.Bukkit;
-import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.Server;
+import org.bukkit.command.CommandSender;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionAttachmentInfo;
+import org.bukkit.plugin.Plugin;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Stack;
-import java.util.logging.Handler;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,29 +28,127 @@ import java.util.logging.Logger;
  */
 public class InitCallback {
 
-    private static class MinecraftLogHandler extends Handler {
-        private final Writer writer;
-        MinecraftLogHandler( final Writer writer ){
-            this.writer = writer;
+    public static void sortAsc(List orig, List sort, int low, int high) {
+        int i = low;
+        int j = high;
+        Comparable x = (Comparable) sort.get((low + high) / 2);
+        do {
+            while (((Comparable) sort.get(i)).compareTo(x) < 0) ++i;
+            while (((Comparable) sort.get(j)).compareTo(x) > 0) --j;
+            if (i <= j) {
+                Object tempD = sort.get(i);
+                sort.set(i, sort.get(j));
+                sort.set(j, tempD);
+                Object tempO = orig.get(i);
+                orig.set(i, orig.get(j));
+                orig.set(j, tempO);
+                i++;
+                j--;
+            }
+        } while (i < j);
+        if (low < j) sortAsc(orig, sort, low, j);
+        if (i < high) sortAsc(orig, sort, i, high);
+    }
+
+    public static void sortDesc(List orig, List sort, int low, int high) {
+        int i = low;
+        int j = high;
+        Comparable x = (Comparable) sort.get((low + high) / 2);
+        do {
+            while (((Comparable) sort.get(i)).compareTo(x) > 0) ++i;
+            while (((Comparable) sort.get(j)).compareTo(x) < 0) --j;
+            if (i <= j) {
+                Object tempD = sort.get(i);
+                sort.set(i, sort.get(j));
+                sort.set(j, tempD);
+                Object tempO = orig.get(i);
+                orig.set(i, orig.get(j));
+                orig.set(j, tempO);
+                i++;
+                j--;
+            }
+        } while (i < j);
+        if (low < j) sortDesc(orig, sort, low, j);
+        if (i < high) sortDesc(orig, sort, i, high);
+    }
+
+    private static class VarscriptCommandSender implements CommandSender {
+
+        StringBuilder buffer = new StringBuilder();
+
+        public String getAnswer(){
+            int size = buffer.length();
+            if(size!=0){
+                if(buffer.charAt(size-1)=='\n'){
+                    buffer.deleteCharAt(size-1);
+                }
+            }
+            return buffer.toString();
         }
-        @Override public void publish( LogRecord record ){
-            try {
-                writer.write( String.format( "%s\n", record.getMessage() ) );
-            } catch( IOException e ) {
-            }
+
+        @Override public void sendMessage(String s) {
+            buffer.append(s).append('\n');
         }
-        public void close() {
-            try {
-                writer.close();
-            }
-            catch( IOException e ) {
-            }
+
+        @Override public void sendMessage(String[] strings) {
+            for(String s:strings) buffer.append(s).append('\n');
         }
-        public void flush() {
-            try {
-                writer.flush();
-            } catch( IOException e ) {
-            }
+
+        @Override public Server getServer() {
+            return Bukkit.getServer();
+        }
+
+        @Override public String getName() {
+            return "VarScript";
+        }
+
+        @Override public boolean isPermissionSet(String s) {
+            return true;
+        }
+
+        @Override public boolean isPermissionSet(Permission permission) {
+            return true;
+        }
+
+        @Override public boolean hasPermission(String s) {
+            return true;
+        }
+
+        @Override public boolean hasPermission(Permission permission) {
+            return true;
+        }
+
+        @Override public PermissionAttachment addAttachment(Plugin plugin, String s, boolean b) {
+            return null;
+        }
+
+        @Override public PermissionAttachment addAttachment(Plugin plugin) {
+            return null;
+        }
+
+        @Override public PermissionAttachment addAttachment(Plugin plugin, String s, boolean b, int i) {
+            return null;
+        }
+
+        @Override public PermissionAttachment addAttachment(Plugin plugin, int i) {
+            return null;
+        }
+
+        @Override public void removeAttachment(PermissionAttachment permissionAttachment) {
+        }
+
+        @Override public void recalculatePermissions() {
+        }
+
+        @Override public Set<PermissionAttachmentInfo> getEffectivePermissions() {
+            return null;
+        }
+
+        @Override public boolean isOp() {
+            return true;
+        }
+
+        @Override public void setOp(boolean b) {
         }
     }
 
@@ -378,6 +475,254 @@ public class InitCallback {
 
 
 
+    public static Worker<Void> wFilterStart = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+            f.setRegisterA(v.pop(f.getScope())); // A = program
+            Iterable itr = v.pop(Iterable.class);
+            f.setRegisterB(itr.iterator()); // B = iterator
+            f.setRegisterC(itr); // C = source collection
+        }
+        @Override public void save(OutputStream out, Void data) throws IOException {
+            out.write(0xE8);
+        }
+        @Override public byte[] getBytes() {
+            return new byte[]{(byte)0xE8};
+        }
+        @Override public Void readObject(InputStream input, VSCompiler.ReadSession readSession) throws IOException {
+            readSession.addCommandAfter(wFilterCheck,null);
+            readSession.addCommandAfter(wFilterAgain,null);
+            return null;
+        }
+    };
+    public static Worker<Void> wFilterCheck = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+            Iterator iterator = (Iterator) f.getRegisterB();
+            if(iterator!=null && iterator.hasNext()){
+                Object apply = iterator.next();
+                f.setRegisterF(apply); // F = apply
+                v.push(apply);
+                v.pushFunction((Runnable)f.getRegisterA(),apply).setRegisterE(f); // E - callback
+                throw interruptFunction;
+            } else {
+                v.push(f.getRegisterC()); // C = source array
+                f.jumpPointer(1);
+            }
+        }
+        @Override public void save(OutputStream out, Void data) throws IOException {
+        }
+        @Override public byte[] getBytes() {
+            return null;
+        }
+        @Override public Void readObject(InputStream input, VSCompiler.ReadSession readSession) throws IOException {
+            return null;
+        }
+    };
+
+    public static Worker<Void> wFilterAgain = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+            boolean bool = v.pop(Boolean.class);
+            Iterator iterator = (Iterator) f.getRegisterB();
+            if(!bool) iterator.remove();
+            f.jumpPointer(-2);
+
+        }
+        @Override public void save(OutputStream out, Void data) throws IOException {
+        }
+        @Override public byte[] getBytes() {
+            return null;
+        }
+        @Override public Void readObject(InputStream input, VSCompiler.ReadSession readSession) throws IOException {
+            return null;
+        }
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static Worker<Void> wSortAscStart = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+            f.setRegisterA(v.pop(f.getScope()));
+            List orig = v.pop(List.class);
+            f.setRegisterB(orig.iterator());
+            f.setRegisterC(new ArrayList());
+            f.setRegisterD(orig);
+        }
+        @Override public void save(OutputStream out, Void data) throws IOException {
+            out.write(0xE9);
+        }
+        @Override public byte[] getBytes() {
+            return new byte[]{(byte)0xE9};
+        }
+        @Override public Void readObject(InputStream input, VSCompiler.ReadSession readSession) throws IOException {
+            readSession.addCommandAfter(wSortAscCheck,null);
+            readSession.addCommandAfter(wSortAscAgain,null);
+            return null;
+        }
+    };
+
+    public static Worker<Void> wSortAscCheck = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+            Iterator iterator = (Iterator) f.getRegisterB();
+            if(iterator!=null && iterator.hasNext()){
+                Object apply = iterator.next();
+                v.push(apply);
+                v.pushFunction((Runnable)f.getRegisterA(),apply).setRegisterE(f);
+                throw interruptFunction;
+            } else {
+                List sort = (List) f.getRegisterC();
+                List orig = (List) f.getRegisterD();
+                if(sort.size()==orig.size()){
+                    sortAsc(orig,sort,0,sort.size()-1);
+                }
+                v.push(orig);
+                f.jumpPointer(1);
+            }
+        }
+        @Override public void save(OutputStream out, Void data) throws IOException {
+        }
+        @Override public byte[] getBytes() {
+            return null;
+        }
+        @Override public Void readObject(InputStream input, VSCompiler.ReadSession readSession) throws IOException {
+            return null;
+        }
+    };
+
+    public static Worker<Void> wSortAscAgain = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+            ArrayList c = (ArrayList) f.getRegisterC();
+            c.add(v.pop());
+            f.jumpPointer(-2);
+        }
+        @Override public void save(OutputStream out, Void data) throws IOException {
+        }
+        @Override public byte[] getBytes() {
+            return null;
+        }
+        @Override public Void readObject(InputStream input, VSCompiler.ReadSession readSession) throws IOException {
+            return null;
+        }
+    };
+
+    public static Worker<Void> wSortDescStart = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+            f.setRegisterA(v.pop(f.getScope()));
+            List orig = v.pop(List.class);
+            f.setRegisterB(orig.iterator());
+            f.setRegisterC(new ArrayList());
+            f.setRegisterD(orig);
+        }
+        @Override public void save(OutputStream out, Void data) throws IOException {
+            out.write(0xE9);
+        }
+        @Override public byte[] getBytes() {
+            return new byte[]{(byte)0xEA};
+        }
+        @Override public Void readObject(InputStream input, VSCompiler.ReadSession readSession) throws IOException {
+            readSession.addCommandAfter(wSortDescCheck,null);
+            readSession.addCommandAfter(wSortDescAgain,null);
+            return null;
+        }
+    };
+
+    public static Worker<Void> wSortDescCheck = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+            Iterator iterator = (Iterator) f.getRegisterB();
+            if(iterator!=null && iterator.hasNext()){
+                Object apply = iterator.next();
+                v.push(apply);
+                v.pushFunction((Runnable)f.getRegisterA(),apply).setRegisterE(f);
+                throw interruptFunction;
+            } else {
+                List sort = (List) f.getRegisterC();
+                List orig = (List) f.getRegisterD();
+                if(sort.size()==orig.size()){
+                    sortDesc(orig,sort,0,sort.size()-1);
+                }
+                v.push(orig);
+                f.jumpPointer(1);
+            }
+        }
+        @Override public void save(OutputStream out, Void data) throws IOException {
+        }
+        @Override public byte[] getBytes() {
+            return null;
+        }
+        @Override public Void readObject(InputStream input, VSCompiler.ReadSession readSession) throws IOException {
+            return null;
+        }
+    };
+
+    public static Worker<Void> wSortDescAgain = new Worker<Void>() {
+        @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+            ArrayList c = (ArrayList) f.getRegisterC();
+            c.add(v.pop());
+            f.jumpPointer(-2);
+        }
+        @Override public void save(OutputStream out, Void data) throws IOException {
+        }
+        @Override public byte[] getBytes() {
+            return null;
+        }
+        @Override public Void readObject(InputStream input, VSCompiler.ReadSession readSession) throws IOException {
+            return null;
+        }
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -388,7 +733,7 @@ public class InitCallback {
 
     public static void load(){
 
-        VSCompiler.addRule(new ComplexCompileRule(":MAP{...}","function while collection list collection","Collection(old)","ArrayList(new)","map all elements in collection by function. Example: [1,2,3]:MAP{100 +} ## [101,102,103]"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule(":MAP{...}","while collection","Collection(old)","ArrayList(new)","map all elements in collection by function. Example: [1,2,3]:MAP{100 +} ## [101,102,103]"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.matches(":(MAP)?\\{");
             }
@@ -405,7 +750,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("MAP","function while collection","Collection(old) Runnable(F)","ArrayList(new)","map all elements in collection with function F\nExample: [1,2,3] {100 +} MAP ## [101,102,103]"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule("MAP","while collection","Collection(old) Runnable(F)","ArrayList(new)","map all elements in collection with function F\nExample: [1,2,3] {100 +} MAP ## [101,102,103]"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.equals("MAP");
             }
@@ -419,7 +764,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule(":SELECT{...}","function while list collection","Collection(old)","ArrayList(new)","choose from old collection only that satisfy the condition\nExample: [1,12,3,15]:SELECT{10 >} ## [12, 15]"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule(":SELECT{...}","while collection","Collection(old)","ArrayList(new)","choose from old collection only that satisfy the condition\nExample: [1,12,3,15]:SELECT{10 >} ## [12, 15]"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.matches(":(SELECT|\\?)\\{");
             }
@@ -436,7 +781,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("SELECT","function while list collection","Collection(old) Runnable(F)","ArrayList(new)","choose from old collection only that satisfy the condition F\nExample: [1,12,3,15] {10 >} SELECT ## [12, 15]"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule("SELECT","while collection","Collection(old) Runnable(F)","ArrayList(new)","choose from old collection only that satisfy the condition F\nExample: [1,12,3,15] {10 >} SELECT ## [12, 15]"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.equals("SELECT");
             }
@@ -466,9 +811,9 @@ public class InitCallback {
         });
 
 
-        VSCompiler.addRule(new ComplexCompileRule(":EACH{...}","function while list collection","Collection(old)","","apply function for each entry\nExample: [1,12,3,15]:EACH{PRINT}"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule(":EACH{...}","function list","Collection(old)","","apply function for each entry\nExample: [1,12,3,15]:EACH{PRINT}"){ //0x10
             @Override public boolean checkCondition(String string) {
-                return string.matches(":EACH\\{");
+                return string.matches(":(?:EACH|@)\\{");
             }
             @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
                 String op = operand.toString();
@@ -483,7 +828,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("EACH","function while list collection","Collection(old) Runnable(F)","","apply function for each entry\nExample: [1,12,3,15] {PRINT} EACH"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule("EACH","while collection","Collection(old) Runnable(F)","","apply function for each entry\nExample: [1,12,3,15] {PRINT} EACH"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.equals("EACH");
             }
@@ -497,7 +842,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule(":FOLD{...}","function while list collection","Collection(old)","Object(result)","fold collection to left\nExample: [1,5,100]:FOLD{+} ## returns 106"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule(":FOLD{...}","while collection","Collection(old)","Object(result)","fold collection to left\nExample: [1,5,100]:FOLD{+} ## returns 106"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.matches(":FOLD\\{");
             }
@@ -514,7 +859,7 @@ public class InitCallback {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("FOLD","function while list collection","Collection(old)","Object(result)","fold collection to left\nExample: [1,5,100] {+} FOLD ## returns 106"){ //0x10
+        VSCompiler.addRule(new ComplexCompileRule("FOLD","while collection","Collection(old)","Object(result)","fold collection to left\nExample: [1,5,100] {+} FOLD ## returns 106"){ //0x10
             @Override public boolean checkCondition(String string) {
                 return string.equals("FOLD");
             }
@@ -579,18 +924,9 @@ public class InitCallback {
                 new SimpleWorker(new int[]{0xEF,0x10}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String command = v.pop(String.class);
-                        // --- from plugin HTTPConsole
-                        ConsoleCommandSender sender = Bukkit.getConsoleSender();
-                        StringWriter command_output = new StringWriter();
-                        Logger minecraft_logger = Logger.getLogger( "Minecraft" );
-                        MinecraftLogHandler minecraft_log_handler = new MinecraftLogHandler( command_output );
-                        minecraft_logger.addHandler( minecraft_log_handler );
-                        Bukkit.dispatchCommand( sender, command );
-                        minecraft_logger.removeHandler( minecraft_log_handler );
-                        minecraft_log_handler.flush();
-                        minecraft_log_handler.close();
-                        // ---
-                        v.push(command_output.toString());
+                        VarscriptCommandSender sender = new VarscriptCommandSender();
+                        Bukkit.dispatchCommand(sender,command);
+                        v.push(sender.getAnswer());
                     }
                 }
         ));
@@ -610,6 +946,71 @@ public class InitCallback {
                     }
                 }
         ));
+
+        VSCompiler.addRule(new ComplexCompileRule(":FILTER{...}","while collection","Collection","Collection","filtering array by condition\nExample: [1,12,3,15]:FILTER{10 >} ## [12, 15]\nThis command changes the original collection"){ //0x10
+            @Override public boolean checkCondition(String string) {
+                return string.matches(":(?:FILTER|=)\\{");
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
+                String op = operand.toString();
+                String name = op.substring(0,op.length()-1);
+                functionSession.addCommand(InitDynamic.wPutFunction,VSCompiler.compile(name,compileSession,false),operand);
+                functionSession.addCommand(wFilterStart,null,operand);
+                functionSession.addCommand(wFilterCheck,null,operand);
+                functionSession.addCommand(wFilterAgain,null,operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wFilterStart};
+            }
+        });
+
+        VSCompiler.addRule(new ComplexCompileRule("FILTER","while collection","Collection","Collection","filtering array by condition\nExample: [1,12,3,15] {10 >} FILTER ## [12, 15]\nThis command changes the original collection"){ //0x10
+            @Override public boolean checkCondition(String string) {
+                return string.equals("FILTER");
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
+                functionSession.addCommand(wFilterStart,null,operand);
+                functionSession.addCommand(wFilterCheck,null,operand);
+                functionSession.addCommand(wFilterAgain,null,operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
+                return null;
+            }
+        });
+
+        VSCompiler.addRule(new ComplexCompileRule(":SORTASC{...}","while collection","Collection","Collection","sorting array in ascending order by criteria"){
+            @Override public boolean checkCondition(String string) {
+                return string.matches(":SORT(?:ASC|\\+)?\\{");
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
+                String op = operand.toString();
+                String name = op.substring(0,op.length()-1);
+                functionSession.addCommand(InitDynamic.wPutFunction,VSCompiler.compile(name,compileSession,false),operand);
+                functionSession.addCommand(wSortAscStart,null,operand);
+                functionSession.addCommand(wSortAscCheck,null,operand);
+                functionSession.addCommand(wSortAscAgain,null,operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wSortAscStart};
+            }
+        });
+
+        VSCompiler.addRule(new ComplexCompileRule(":SORTDESC{...}","while collection","Collection","Collection","sorting array in descending order by criteria"){
+            @Override public boolean checkCondition(String string) {
+                return string.matches(":SORT(?:DESC|\\-)\\{");
+            }
+            @Override public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) throws SourceException {
+                String op = operand.toString();
+                String name = op.substring(0,op.length()-1);
+                functionSession.addCommand(InitDynamic.wPutFunction,VSCompiler.compile(name,compileSession,false),operand);
+                functionSession.addCommand(wSortDescStart,null,operand);
+                functionSession.addCommand(wSortDescCheck,null,operand);
+                functionSession.addCommand(wSortDescAgain,null,operand);
+            }
+            @Override public Worker[] getNewWorkersWithRules() {
+                return new Worker[]{wSortDescStart};
+            }
+        });
 
 
 

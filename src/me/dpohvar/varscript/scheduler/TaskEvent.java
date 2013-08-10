@@ -1,7 +1,6 @@
 package me.dpohvar.varscript.scheduler;
 
 import me.dpohvar.varscript.scheduler.event.BukkitEvent;
-import me.dpohvar.varscript.scheduler.event.PluginLoadEvent;
 import me.dpohvar.varscript.scheduler.event.RepeatEvent;
 import me.dpohvar.varscript.scheduler.event.TaskLoadEvent;
 
@@ -35,8 +34,6 @@ public abstract class TaskEvent extends TaskEntry {
             return new RepeatEvent(task,argument);
         } else if ("LOAD".equals(type)||"TASKLOAD".equals(type)){
             return new TaskLoadEvent(task,argument);
-        } else if ("PLUGINLOAD".equals(type)){
-            return new PluginLoadEvent(task,argument);
         }
         return new TaskEventError(task,s);
     }

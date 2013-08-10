@@ -17,8 +17,8 @@ public class VarScript extends JavaPlugin {
 
     private File scriptHome;
     private File schedulerHome;
-    public static String prefix_normal = ChatColor.translateAlternateColorCodes('&',"&3&l[&bvarscript&3&l]");
-    public static String prefix_error = ChatColor.translateAlternateColorCodes('&',"&4&l[&cvarscript&4&l]");
+    public static String prefix_normal = ChatColor.translateAlternateColorCodes('&',"&3&l[&bVarScript&3&l]");
+    public static String prefix_error = ChatColor.translateAlternateColorCodes('&',"&4&l[&cVarScript&4&l]");
     public static Charset UTF8 = Charset.forName("UTF8");
     public static VarScript instance;
     public Runtime runtime;
@@ -53,6 +53,10 @@ public class VarScript extends JavaPlugin {
         getServer().getPluginCommand("vs>").setExecutor(new CommandRunVS(runtime));
         getServer().getPluginCommand("vs>tag").setExecutor(new CommandTagVS());
         getServer().getPluginCommand("vs>cmd").setExecutor(new CommandCommandVS());
+    }
+
+    @Override public void onDisable(){
+        runtime.disable();
     }
 
 

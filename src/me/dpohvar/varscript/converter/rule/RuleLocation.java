@@ -30,7 +30,7 @@ public class RuleLocation extends ConvertRule<Location>{
         if (object==null) return thread.getProgram().getCaller().getLocation();
         if (object instanceof Number) return thread.getProgram().getCaller().getLocation().add(0.0,((Number)object).doubleValue(),0);
         if (object instanceof Character) return thread.getProgram().getCaller().getLocation().add(0.0,((Character)object),0);
-        if (object instanceof String) return Bukkit.getPlayer((String)object).getLocation();
+        if (object instanceof String) return Bukkit.getPlayer(((String)object).trim()).getLocation();
         if (object instanceof Entity) return ((Entity)object).getLocation();
         if (object instanceof Vector) return thread.getProgram().getCaller().getLocation().add((Vector)object);
         if (object instanceof Block) return ((Block)object).getLocation();

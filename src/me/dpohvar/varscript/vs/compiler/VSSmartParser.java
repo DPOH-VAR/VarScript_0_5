@@ -16,25 +16,26 @@ import static me.dpohvar.varscript.vs.compiler.VSSmartParser.ParseMode.*;
 public class VSSmartParser {
 
     static enum ParseMode{
-        OPER,
-        TRYCOMMENT,
-        LINECOMMENT,
-        NEEDSPACE,
-        STRINGQUOTE,
-        DOUBLE,
-        ESCAPING,
-        SPACER,
-        NUMBER,
-        NUMBER0,
-        NUMBERHEX,
-        OPENSQ,
-        STILLSPACES,
-        UNICODE1,
-        UNICODE2,
-        UNICODE3,
-        UNICODE4,
-        COLONVALUES,
-        CLASSNAME,
+        OPER, // start operand
+        TRYCOMMENT, // single #*
+        LINECOMMENT, // ##*
+        NEEDSPACE, // end of operand. for example: ]*
+        STRINGQUOTE, // "*
+        DOUBLE, // 0.*
+        ESCAPING, // "...\*
+        SPACER, // space, tab, enter, etc
+        NUMBER, // 1-9
+        NUMBER0, // starts with 0
+        NUMBERHEX, // 0x*
+        OPENSQ, // [*
+        STILLSPACES, // "...\[enter]
+        UNICODE1, // \ u*
+        UNICODE2, // \ uX*
+        UNICODE3, // \ uX*
+        UNICODE4, // \ uXXX*
+        COLONVALUES, // [0-9]:[0-9]:[0-9]
+        CLASSNAME, // <*>
+        ARGNAME, // ...(*)
 
     }
 
@@ -78,13 +79,19 @@ public class VSSmartParser {
                             parseMode = CLASSNAME;
                             break;
                         }
+                        case '(':{
+                            currentOperand = new ParsedOperand(row, col);
+                            currentOperand.builder.append(b);
+                            parseMode = ARGNAME;
+                            break;
+                        }
                         case '0':{
                             currentOperand = new ParsedOperand(row, col);
                             currentOperand.builder.append(b);
                             parseMode = NUMBER0;
                             break;
                         }
-                        case '1':case '2':case '3':case '4':case '5':case '6':case '7':case '8':case '9':{
+                        case '1':case '2':case '3':case '4':case '5':case '6':case '7':case '8':case '9':case '-':{
                             currentOperand = new ParsedOperand(row, col);
                             currentOperand.builder.append(b);
                             parseMode = NUMBER;
@@ -165,6 +172,11 @@ public class VSSmartParser {
                         case '\"':{
                             currentOperand.builder.append(b);
                             parseMode = STRINGQUOTE;
+                            break;
+                        }
+                        case '(':{
+                            currentOperand.builder.append(b);
+                            parseMode = ARGNAME;
                             break;
                         }
                         case ',':case '}':case ']':{
@@ -661,7 +673,46 @@ public class VSSmartParser {
                             parseMode = OPER;
                             break;
                         }
-                        case ',':case '}':{
+                        case '}':{
+                            operands.add(currentOperand);
+                            currentOperand = new ParsedOperand(row, col);
+                            currentOperand.builder.append(b);
+                            operands.add(currentOperand);
+                            parseMode = SPACER;
+                            break;
+                        }
+                        case '{':{
+                            currentOperand.builder.append(b);
+                            operands.add(currentOperand);
+                            parseMode = SPACER;
+                            break;
+                        }
+                        default:{
+                            currentOperand.builder.append(b);
+                            break;
+                        }
+                    }
+                    break;
+                }
+
+                case ARGNAME:{
+                    switch (b){
+                        case ' ':case '\n':case '\t':case '\r':{
+                            operands.add(currentOperand);
+                            parseMode = SPACER;
+                            break;
+                        }
+                        case '\"':{
+                            currentOperand.builder.append(b);
+                            parseMode = STRINGQUOTE;
+                            break;
+                        }
+                        case ')':{
+                            currentOperand.builder.append(b);
+                            parseMode = OPER;
+                            break;
+                        }
+                        case '}':{
                             operands.add(currentOperand);
                             currentOperand = new ParsedOperand(row, col);
                             currentOperand.builder.append(b);
@@ -702,7 +753,6 @@ public class VSSmartParser {
                 operands.add(currentOperand);
                 break;
             }
-            case LINECOMMENT:
             case STRINGQUOTE:
             case ESCAPING:
             case OPENSQ:
@@ -713,26 +763,14 @@ public class VSSmartParser {
             case UNICODE4:{
                 throw new ParseException(input,row,col,"Unexpected end of source");
             }
-            case TRYCOMMENT:default:{
+            case TRYCOMMENT:
+            case LINECOMMENT:
+            default:{
                 break;
             }
         }
         return operands;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

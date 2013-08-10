@@ -30,7 +30,7 @@ public class RuleBlock extends ConvertRule<Block>{
         if (object==null) return thread.getProgram().getCaller().getLocation().getBlock();
         if (object instanceof Number) return thread.getProgram().getCaller().getLocation().add(0.0,((Number)object).doubleValue(),0).getBlock();
         if (object instanceof Character) return thread.getProgram().getCaller().getLocation().add(0.0,((Character)object),0).getBlock();
-        if (object instanceof String) return Bukkit.getPlayer((String)object).getLocation().getBlock();
+        if (object instanceof String) return Bukkit.getPlayer(((String)object).trim()).getLocation().getBlock();
         if (object instanceof Entity) return ((Entity)object).getLocation().getBlock();
         if (object instanceof Vector) return thread.getProgram().getCaller().getLocation().add((Vector)object).getBlock();
         if (object instanceof Location) return ((Location)object).getBlock();

@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.converter.rule;
 
+import com.google.common.io.Files;
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.VarScript;
 import me.dpohvar.varscript.converter.NextRule;
@@ -16,8 +17,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.scoreboard.Score;
 import org.bukkit.util.Vector;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -40,16 +44,16 @@ public class RuleString extends ConvertRule<String>{
         if (object instanceof Player) return ((Player)object).getName();
         if (object instanceof Location) {
             Location l = (Location)object;
-            return l.getX()+':'+l.getY()+':'+l.getZ()+':'+l.getWorld().getName();
+            return l.getX()+":"+l.getY()+":"+l.getZ()+":"+l.getWorld().getName();
         }
         if (object instanceof Entity) return ((Entity)object).getType().toString();
         if (object instanceof Vector) {
             Vector v = (Vector)object;
-            return v.getX()+':'+v.getY()+":"+v.getZ();
+            return v.getX()+":"+v.getY()+":"+v.getZ();
         }
         if (object instanceof Block) {
             Block b = (Block)object;
-            return b.getX()+':'+b.getY()+':'+b.getZ()+':'+b.getWorld().getName();
+            return b.getX()+":"+b.getY()+":"+b.getZ()+":"+b.getWorld().getName();
         }
         if (object instanceof Inventory) return ((Inventory)object).getName();
         if (object instanceof ItemStack) {
@@ -64,6 +68,8 @@ public class RuleString extends ConvertRule<String>{
         if (object instanceof World) return ((World) object).getName();
         if (object instanceof PotionEffect) return ((PotionEffect)object).getType().getName();
         if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
+        if (object instanceof Score) return String.valueOf(((Score)object).getScore());
+        if (object instanceof Class) return ((Class)object).getName();
         if (object instanceof Fieldable) {
             try{
                 Fieldable f = (Fieldable)object;

@@ -8,6 +8,7 @@ import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.Map;
 
@@ -61,7 +62,7 @@ public class VSFileAction extends TaskAction {
 
     @Override protected boolean register() {
         if(param==null) return false;
-        if(!param.matches("[A-Za-z0-9_\\-]+")) return false;
+        if(param.contains(File.separator)) return false;
         runtime = task.getScheduler().runtime;
         manager = runtime.scriptManager;
         return true;

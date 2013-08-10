@@ -3,6 +3,7 @@ package me.dpohvar.varscript.converter.rule;
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.vs.Scope;
+import org.bukkit.scoreboard.Score;
 
 import java.nio.ByteBuffer;
 
@@ -24,6 +25,7 @@ public class RuleCharacter extends ConvertRule<Character>{
         if (object instanceof Number) return (char)((Number)object).intValue();
         if (object instanceof String) return ((String)object).charAt(0) ;
         if (object instanceof Boolean) return ((Boolean)object)?(char)1:(char)0;
+        if (object instanceof Score) return (char) ((Score)object).getScore();
         if (object instanceof byte[]) {
             byte[] bytes = (byte[])object;
             if (bytes.length==0) return 0;

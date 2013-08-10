@@ -4,6 +4,7 @@ import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.vs.compiler.CompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -21,16 +22,24 @@ public class CommandTagVS implements CommandExecutor {
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         Caller caller = Caller.getCallerFor(commandSender);
         try{
+            ChatColor[] colors = new ChatColor[]{ChatColor.YELLOW, ChatColor.AQUA};
+            int i=0;
             if (strings.length==0){
-                String tags = StringUtils.join(VSCompiler.geTags(),' ');
-                caller.send("Tags: ".concat(tags));
+                StringBuilder buffer = new StringBuilder("Tags:");
+                for(String tag:VSCompiler.geTags()){
+                    buffer.append(' ').append(colors[i++%2]).append(tag);
+                }
+                caller.send(buffer.toString());
             } else {
                 HashSet<CompileRule> rules = new HashSet<CompileRule>();
                 for (String tag:strings){
                     rules.addAll(VSCompiler.getRules(tag));
                 }
-                String commands = StringUtils.join(rules,' ');
-                caller.send("Commands: ".concat(commands));
+                StringBuilder buffer = new StringBuilder("Commands:");
+                for(CompileRule rule:rules){
+                    buffer.append(' ').append(colors[i++%2]).append(rule);
+                }
+                caller.send(buffer.toString());
             }
         } catch (Throwable e){
             caller.handleException(e);

@@ -205,6 +205,10 @@ public class InitList {
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Collection c = v.pop(Collection.class);
                         int item = random.nextInt(c.size());
+                        if(c instanceof List){
+                            v.push(((List) c).get(item));
+                            return;
+                        }
                         int i=0; for(Object o:c){
                             if(i++ == item) {
                                 v.push(o);
@@ -247,6 +251,136 @@ public class InitList {
                 }
         ));
 
+        VSCompiler.addRule(new SimpleCompileRule(
+                "POP",
+                "POP",
+                "Collection",
+                "Object(last)",
+                "collection",
+                "pop last object from Collection (with reduce Collection)",
+                new SimpleWorker(new int[]{0xDD}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Collection col = v.pop(Collection.class);
+                        Object val = null;
+                        if(col.size()==0){
+                            // do nothing
+                        } else if (col instanceof Stack){
+                            val = ((Stack) col).pop();
+                        } else if (col instanceof LinkedList){
+                            val = ((LinkedList) col).pop();
+                        } else if (col instanceof List){
+                            int size = col.size();
+                            val = ((List) col).get(size-1);
+                            ((List) col).remove(size-1);
+                        } else {
+                            for (Object aCol : col) val = aCol;
+                            col.remove(val);
+                        }
+                        v.push(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "POLL",
+                "POLL",
+                "Collection",
+                "Object(first)",
+                "collection",
+                "poll first object from Collection (with reduce Collection)",
+                new SimpleWorker(new int[]{0xDE}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Collection col = v.pop(Collection.class);
+                        Object val = null;
+                        if(col.size()==0){
+                            // do nothing
+                        } else if (col instanceof LinkedList){
+                            val = ((LinkedList) col).pollFirst();
+                        } else if (col instanceof List){
+                            val = ((List) col).get(0);
+                            ((List) col).remove(0);
+                        } else {
+                            val = col.iterator().next();
+                            col.remove(val);
+                        }
+                        v.push(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "FIRST",
+                "FIRST",
+                "Collection",
+                "Object(first)",
+                "collection",
+                "get first element in Collection",
+                new SimpleWorker(new int[]{0xDF,0x00}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Collection col = v.pop(Collection.class);
+                        Object val = null;
+                        if(col.size()==0){
+                            // do nothing
+                        } else if (col instanceof List){
+                            val = ((List) col).get(0);
+                        } else {
+                            val = col.iterator().next();
+                        }
+                        v.push(val);
+                    }
+                }
+        ));
+
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "LAST",
+                "LAST",
+                "Collection",
+                "Object(last)",
+                "collection",
+                "get last element in Collection",
+                new SimpleWorker(new int[]{0xDF,0x01}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Collection col = v.pop(Collection.class);
+                        Object val = null;
+                        if(col.size()==0){
+                            // do nothing
+                        } else if (col instanceof List){
+                            val = ((List) col).get(col.size()-1);
+                        } else {
+                            for (Object c:col) val=c;
+                        }
+                        v.push(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "POPRANDOM",
+                "POPRANDOM POPRND",
+                "Collection",
+                "Object",
+                "collection list",
+                "get random element from collection",
+                new SimpleWorker(new int[]{0xDF,0x02}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Collection c = v.pop(Collection.class);
+                        int item = random.nextInt(c.size());
+                        if(c instanceof List){
+                            v.push(((List) c).get(item));
+                            ((List)c).remove(item);
+                            return;
+                        }
+                        int i=0;
+                        for(Object o:c){
+                            if(i++ != item) continue;
+                            v.push(o);
+                            c.remove(o);
+                            return;
+                        }
+                    }
+                }
+        ));
 
 
 

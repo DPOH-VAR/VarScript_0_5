@@ -1,20 +1,27 @@
 package me.dpohvar.varscript;
 
+import com.google.common.io.Files;
+import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.converter.Converter;
 import me.dpohvar.varscript.converter.rule.*;
 import me.dpohvar.varscript.scheduler.Scheduler;
 import me.dpohvar.varscript.utils.ScriptManager;
 import me.dpohvar.varscript.utils.reflect.ReflectClass;
-import me.dpohvar.varscript.vs.Fieldable;
-import me.dpohvar.varscript.vs.Scope;
+import me.dpohvar.varscript.vs.*;
+import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
+import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
 import javax.script.ScriptEngineManager;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -24,27 +31,50 @@ import java.util.Set;
 public class Runtime implements Fieldable,Scope {
     public final Converter converter = new Converter();
     public final VarScript plugin;
-    private ArrayList<Program> programs = new ArrayList<Program>();
+    private HashMap<Integer,Program> programs = new HashMap<Integer,Program>();
+    private int freeId = 0;
     public final ScriptManager scriptManager;
-    public final Scheduler scheduler;
+    private Scheduler scheduler;
+    private HashMap<String,Object> constants;
+
+    private final String folder_autorun = "autorun";
+    private final String folder_module = "modules";
+
+
     public final ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
+
+    public Scheduler getScheduler(){
+        return scheduler;
+    }
 
     public void registerProgram(Program program){
         if(program.getPID()!= -1) throw new RuntimeException("program already registered with PID="+program.getPID());
-        programs.add(program);
-        program.setPID(programs.size()-1);
+        programs.put(freeId,program);
+        program.setPID(freeId++);
+    }
+
+    HashMap<String,Object> fields = new HashMap<String, Object>();
+
+
+    public void disable() {
+        for(Program program:new ArrayList<Program>(programs.values())){
+            program.setFinished();
+        }
     }
 
     public Runtime(VarScript plugin){
         this.plugin = plugin;
         plugin.runtime = this;
         this.scriptManager = new ScriptManager(plugin.getScriptHome());
+        PluginManager pm = Bukkit.getPluginManager();
+
         converter.addRule(new RuleBlock());
         converter.addRule(new RuleBoolean());
         RuleByte ruleByte = new RuleByte();
         converter.addRule(ruleByte);
         converter.addRule(new RuleBytes(ruleByte));
         converter.addRule(new RuleCharacter());
+        converter.addRule(new RuleCaller());
         converter.addRule(new RuleClass());
         converter.addRule(new RuleCollection());
         converter.addRule(new RuleCommandList());
@@ -59,15 +89,36 @@ public class Runtime implements Fieldable,Scope {
         converter.addRule(new RuleList());
         converter.addRule(new RuleLocation());
         converter.addRule(new RuleLong());
-        converter.addRule(new RuleNBTContainer());
-        converter.addRule(new RuleNBTTag());
+        converter.addRule(new RuleMap());
+        converter.addRule(new RuleOfflinePlayer());
+        converter.addRule(new RuleScoreboard());
         converter.addRule(new RuleShort());
         converter.addRule(new RuleString());
+        converter.addRule(new RuleVector());
+        converter.addRule(new RuleWorld());
+        if(pm.getPlugin("PowerNBT")!=null) {
+            converter.addRule(new RuleMapNBT());
+            converter.addRule(new RuleNBTContainer());
+            converter.addRule(new RuleNBTTag());
+        }
 
+        VSCompiler.init(converter);
+
+        load();
+
+    }
+
+
+    public void load(){
+        PluginManager pm = Bukkit.getPluginManager();
 
         final Runtime runtime = this;
+        if(scheduler!=null) scheduler.disable();
         scheduler = new Scheduler(this,plugin.getSchedulerHome());
-        PluginManager pm = Bukkit.getPluginManager();
+
+        constants = new HashMap<String, Object>();
+        fields = new HashMap<String, Object>();
+
         defineConst("Server", Bukkit.getServer());
         defineConst("Runtime", runtime);
         defineConst("VarScript", VarScript.instance);
@@ -77,23 +128,103 @@ public class Runtime implements Fieldable,Scope {
             defineConst(p.getName(), p);
         }
 
-        VSCompiler.init(converter);
+        Map<String,File> files;
+        files = scriptManager.getModuleFiles("vs", folder_autorun);
+        if(files != null) for(File file: files.values()){
+            try {
+                String script = new String(
+                        IOUtils.toByteArray(file.toURI()),
+                        VarScript.UTF8
+                );
+                Caller caller = Caller.getCallerFor(this);
+                VarscriptProgram program = new VarscriptProgram(this,caller);
+                Thread thread = new Thread(program);
+                Function function = VSCompiler.compile(script).build(program.getScope());
+                thread.pushFunction(function, program);
+                new ThreadRunner(thread).runThreads();
+            } catch (Exception ignored) {
+            }
+        }
+        files = scriptManager.getModuleFiles("vsbin", folder_autorun);
+        if(files != null ) for(File file: files.values()){
+            try {
+                byte[] bytes = IOUtils.toByteArray(file.toURI());
+                Caller caller = Caller.getCallerFor(this);
+                VarscriptProgram program = new VarscriptProgram(this,caller);
+                Thread thread = new Thread(program);
+                Function function = VSCompiler.read(new ByteArrayInputStream(bytes)).build(program.getScope());
+                thread.pushFunction(function, program);
+                new ThreadRunner(thread).runThreads();
+            } catch (Exception ignored) {
+            }
+        }
+        files = scriptManager.getModuleFiles("vs", folder_module);
+        if(files != null ) for(Map.Entry<String,File> e: files.entrySet()){
+            try {
+                String name = e.getKey();
+                if(!name.matches("[A-Za-z0-9_\\-]+")) {
+                    Bukkit.getLogger().warning(
+                            "varsript module " + name + " has incorrect name"
+                    );
+                    continue;
+                }
+                File file = e.getValue();
+                String script = new String(
+                        IOUtils.toByteArray(file.toURI()),
+                        VarScript.UTF8
+                );
+                Caller caller = Caller.getCallerFor(this);
+                VarscriptProgram program = new VarscriptProgram(this,caller);
+                Thread thread = new Thread(program);
+                Function function = VSCompiler.compile(script,name).build(program.getScope());
+                Context context = thread.pushFunction(function);
+                defineConst(name, context);
+                new ThreadRunner(thread).runThreads();
+            } catch (Exception ignored) {
+            }
+        }
+        files = scriptManager.getModuleFiles("vsbin", folder_module);
+        if(files != null ) for(Map.Entry<String,File> e: files.entrySet()){
+            try {
+                String name = e.getKey();
+                if(!name.matches("[A-Za-z0-9_\\-]+")) {
+                    Bukkit.getLogger().warning(
+                            "varsript binary module " + name + " has incorrect name"
+                    );
+                    continue;
+                }
+                File file = e.getValue();
+                byte[] bytes = IOUtils.toByteArray(file.toURI());
+                Caller caller = Caller.getCallerFor(this);
+                VarscriptProgram program = new VarscriptProgram(this,caller);
+                Thread thread = new Thread(program);
+                Function function = VSCompiler.read(new ByteArrayInputStream(bytes)).build(program.getScope());
+                if(!function.getName().equals(name)) {
+                    Bukkit.getLogger().warning(
+                            "varsript binary module " + name + " has incorrect inner name"
+                    );
+                    continue;
+                }
+                Context context = thread.pushFunction(function);
+                defineConst(name, context);
+                new ThreadRunner(thread).runThreads();
+            } catch (Exception ignored) {
+            }
+        }
 
         scheduler.loadTasks("");
     }
-
     public Program getProgram(int pid){
         return programs.get(pid);
     }
 
-
     public void removeProgram(int id){
         Program p = programs.get(id);
         if(p!=null && p.isFinished()){
-            programs.set(id,null);
+            programs.remove(id);
         }
     }
-    HashMap<String,Object> fields = new HashMap<String, Object>();
+
     @Override
     public Set<String> getAllFields() {
         return fields.keySet();
@@ -133,8 +264,6 @@ public class Runtime implements Fieldable,Scope {
 
     @Override public void setProto(Fieldable proto) {
     }
-
-    HashMap<String,Object> constants = new HashMap<String, Object>();
 
     @Override public Object getVar(String varName) {
         if(constants.containsKey(varName)) return constants.get(varName);

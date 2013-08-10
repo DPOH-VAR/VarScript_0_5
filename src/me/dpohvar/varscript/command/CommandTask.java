@@ -33,7 +33,7 @@ public class CommandTask implements CommandExecutor {
     @Override public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         Caller caller = Caller.getCallerFor(commandSender);
         try{
-            Scheduler scheduler = runtime.scheduler;
+            Scheduler scheduler = runtime.getScheduler();
             Queue<String> words = new LinkedList<String>(Arrays.asList(strings));
             String taskname = words.poll();
             if(taskname == null) taskname = "*";
@@ -145,7 +145,17 @@ public class CommandTask implements CommandExecutor {
                         StringBuilder buffer = new StringBuilder();
                         buffer.append(task.getStatus()).append(task);
                         String description = task.getDescription();
-                        if(description!=null) buffer.append('\n').append(INFO).append(description);
+                        if(description!=null && !description.isEmpty()) {
+                            buffer.append('\n').append(INFO).append(description);
+                        }
+                        int initCount = task.getInitCount();
+                        if(initCount>0){
+                            buffer.append('\n').append(RESET).append("Init:");
+                            for(int i=0;i<initCount;i++){
+                                TaskAction t = task.getInit(i);
+                                buffer.append('\n').append(t.getStatus()).append("- ").append(t);
+                            }
+                        }
                         int eventCount = task.getEventCount();
                         if(eventCount>0){
                             buffer.append('\n').append(RESET).append("Events:");
@@ -183,6 +193,14 @@ public class CommandTask implements CommandExecutor {
                     buffer.append(task.getStatus()).append(task).append(RESET).append(" reloaded");
                     String description = task.getDescription();
                     if(description!=null) buffer.append('\n').append(INFO).append(description);
+                    int initCount = task.getInitCount();
+                    if(initCount>0){
+                        buffer.append('\n').append(RESET).append("Init:");
+                        for(int i=0;i<initCount;i++){
+                            TaskAction t = task.getInit(i);
+                            buffer.append('\n').append(t.getStatus()).append("- ").append(t);
+                        }
+                    }
                     int eventCount = task.getEventCount();
                     if(eventCount>0){
                         buffer.append('\n').append(RESET).append("Events:");
@@ -308,6 +326,7 @@ public class CommandTask implements CommandExecutor {
                     return true;
                 }
                 TaskEntryType entryType = null;
+                if(checkNoCase(op,"init","i")) entryType = TaskEntryType.INIT;
                 if(checkNoCase(op,"events","event","e")) entryType = TaskEntryType.EVENT;
                 if(checkNoCase(op,"conditions","condition","c")) entryType = TaskEntryType.CONDITION;
                 if(checkNoCase(op,"actions","action","a")) entryType = TaskEntryType.ACTION;
@@ -326,6 +345,7 @@ public class CommandTask implements CommandExecutor {
                             StringBuilder buffer = new StringBuilder();
                             buffer.append(task.getStatus()).append(task).append(' ').append(RESET);
                             switch (entryType){
+                                case INIT: buffer.append("init"); break;
                                 case EVENT: buffer.append("events"); break;
                                 case CONDITION: buffer.append("conditions"); break;
                                 case ACTION: buffer.append("actions"); break;
@@ -339,6 +359,7 @@ public class CommandTask implements CommandExecutor {
                         } else if(checkNoCase(entryOperation, "remove")) {
                             StringBuilder buffer = new StringBuilder("all ");
                             switch (entryType){
+                                case INIT: buffer.append("inits"); break;
                                 case EVENT: buffer.append("events"); break;
                                 case CONDITION: buffer.append("conditions"); break;
                                 case ACTION: buffer.append("actions"); break;
@@ -355,6 +376,7 @@ public class CommandTask implements CommandExecutor {
                         } else if(checkNoCase(entryOperation, "enable","en","on")) {
                             StringBuilder buffer = new StringBuilder("all ");
                             switch (entryType){
+                                case INIT: buffer.append("inits"); break;
                                 case EVENT: buffer.append("events"); break;
                                 case CONDITION: buffer.append("conditions"); break;
                                 case ACTION: buffer.append("actions"); break;
@@ -371,6 +393,7 @@ public class CommandTask implements CommandExecutor {
                         } else if(checkNoCase(entryOperation, "disable","dis","off")) {
                             StringBuilder buffer = new StringBuilder("all ");
                             switch (entryType){
+                                case INIT: buffer.append("init"); break;
                                 case EVENT: buffer.append("events"); break;
                                 case CONDITION: buffer.append("conditions"); break;
                                 case ACTION: buffer.append("actions"); break;

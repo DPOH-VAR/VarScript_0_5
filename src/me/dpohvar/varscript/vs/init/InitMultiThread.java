@@ -106,7 +106,7 @@ public class InitMultiThread {
         VSCompiler.addRule(new SimpleCompileRule(
                 "REGISTERPRIORITY",
                 "REGISTERPRIORITY REGP",
-                "Runnable String(event) EventPriority(Enum)",
+                "Runnable String(event) #EventPriority",
                 "Trigger",
                 "event listener trigger",
                 "register new event listener with custom priority",

@@ -211,18 +211,17 @@ public class InitStack {
                 "CLONE",
                 "CLONE",
                 "Object",
-                "Object Object",
+                "Object(clone)",
                 "stack",
                 "try to clone object",
                 new SimpleWorker(new int[]{0x0D}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Object t = v.pop();
-                        Object x = null;
                         try{
-                            x = t.getClass().getMethod("clone").invoke(t);
+                            t = t.getClass().getMethod("clone").invoke(t);
                         } catch (Exception ignored){
                         }
-                        v.push(x);
+                        v.push(t);
                     }
                 }
         ));

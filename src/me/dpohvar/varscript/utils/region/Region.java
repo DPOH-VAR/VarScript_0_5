@@ -21,5 +21,19 @@ public abstract class Region implements Cloneable {
 
     abstract public HashSet<Block> getBlocks();
 
+    public HashSet<Block> getBlocks(int id){
+        HashSet<Block> blocks = new HashSet<Block>();
+        for(Block b:getBlocks()){
+            if(b.getTypeId()==id) blocks.add(b);
+        }
+        return blocks;
+    }
+
+    public HashSet<Block> getSolidBlocks(){
+        HashSet<Block> blocks = getBlocks();
+        blocks.removeAll(getBlocks(0));
+        return blocks;
+    }
+
     abstract public HashSet<Block> getOutsideBlocks();
 }

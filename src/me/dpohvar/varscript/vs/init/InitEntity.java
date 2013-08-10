@@ -8,10 +8,12 @@ import me.dpohvar.varscript.vs.ThreadRunner;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import org.bukkit.Bukkit;
+import org.bukkit.EntityEffect;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -44,14 +46,17 @@ public class InitEntity {
         VSCompiler.addRule(new SimpleCompileRule(
                 "TELEPORT",
                 "TELEPORT TP",
-                "Entity Location",
-                "Entity",
+                "Entity(A) Location(B)",
+                "Entity(A)",
                 "entity",
-                "Teleport entity",
+                "Teleport entity A to location B, save pitch and yaw",
                 new SimpleWorker(new int[]{0x51}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Location s = v.pop(Location.class);
+                        Location s = v.pop(Location.class).clone();
                         Entity e = v.peek(Entity.class);
+                        Location el = e.getLocation();
+                        s.setPitch(el.getPitch());
+                        s.setYaw(el.getYaw());
                         e.teleport(s);
                     }
                 }
@@ -199,20 +204,25 @@ public class InitEntity {
                     }
                 }
         ));
+
         VSCompiler.addRule(new SimpleCompileRule(
-                "ENTITYTYPE",
-                "ENTITYTYPE ENTTYPE",
+                "SPAWNENTITY",
+                "SPAWNENTITY SPAWNMOB SPE SPM",
+                "Location #EntityType",
                 "Entity",
-                "String",
                 "entity",
-                "Get type of entity",
-                new SimpleWorker(new int[]{0x5F,0x13}){
+                "Spawn mob",
+                new SimpleWorker(new int[]{0x5C}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Entity e = v.pop(Entity.class);
-                        v.push(e.getType());
+                        EntityType s = v.pop(EntityType.values());
+                        Location l = v.pop(Location.class);
+                        World w = l.getWorld();
+                        v.push(w.spawnEntity(l, s));
                     }
                 }
         ));
+
+
         VSCompiler.addRule(new SimpleCompileRule(
                 "VELOCITY",
                 "VELOCITY VEL",
@@ -264,7 +274,7 @@ public class InitEntity {
                 "ArrayList",
                 "entity",
                 "Get all entities",
-                new SimpleWorker(new int[]{0x5F,0x08}){
+                new SimpleWorker(new int[]{0x5F,0x01}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         ArrayList<Entity> ar = new ArrayList<Entity>();
                         for(World w: Bukkit.getWorlds()){
@@ -284,13 +294,15 @@ public class InitEntity {
                 "ArrayList",
                 "entity player",
                 "Get all players",
-                new SimpleWorker(new int[]{0x5F,0x09}){
+                new SimpleWorker(new int[]{0x5F,0x02}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(Arrays.asList(Bukkit.getOnlinePlayers()));
 
                     }
                 }
         ));
+
+
         VSCompiler.addRule(new SimpleCompileRule(
                 "MOBS",
                 "MOBS M LIVINGS",
@@ -298,7 +310,7 @@ public class InitEntity {
                 "ArrayList",
                 "entity living",
                 "Get all living entities",
-                new SimpleWorker(new int[]{0x5F,0x0A}){
+                new SimpleWorker(new int[]{0x5F,0x03}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         ArrayList<Entity> ar = new ArrayList<Entity>();
                         for(World w: Bukkit.getWorlds()){
@@ -318,7 +330,7 @@ public class InitEntity {
                 "ArrayList",
                 "entity",
                 "Get all items",
-                new SimpleWorker(new int[]{0x5F,0x0B}){
+                new SimpleWorker(new int[]{0x5F,0x04}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         ArrayList<Entity> ar = new ArrayList<Entity>();
                         for(World w: Bukkit.getWorlds()){
@@ -333,12 +345,12 @@ public class InitEntity {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "VEHICLES",
-                "VEHICLE VEHS",
+                "VEHICLES VEHS",
                 "",
                 "ArrayList",
                 "entity",
                 "Get all vehicles",
-                new SimpleWorker(new int[]{0x5F,0x0C}){
+                new SimpleWorker(new int[]{0x5F,0x05}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         ArrayList<Entity> ar = new ArrayList<Entity>();
                         for(World w: Bukkit.getWorlds()){
@@ -353,12 +365,12 @@ public class InitEntity {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "ISPLAYER",
-                "ISPLAYER _PLAYER",
+                "ISPLAYER PLAYER",
                 "Entity",
                 "Boolean",
                 "entity player",
                 "Put to stack true if entity instanceof player",
-                new SimpleWorker(new int[]{0x5F,0x0D}){
+                new SimpleWorker(new int[]{0x5F,0x06}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Entity e = v.pop(Entity.class);
                         v.push(e instanceof Player);
@@ -373,7 +385,7 @@ public class InitEntity {
                 "Boolean",
                 "entity living",
                 "Put to stack true if entity instanceof living",
-                new SimpleWorker(new int[]{0x5F,0x0E}){
+                new SimpleWorker(new int[]{0x5F,0x07}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Entity e = v.pop(Entity.class);
                         v.push(e instanceof LivingEntity);
@@ -383,12 +395,12 @@ public class InitEntity {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "ISITEM",
-                "ISITEM _ITEM",
+                "ISITEM ITEM",
                 "Entity",
                 "Boolean",
                 "entity",
                 "Put to stack true if entity instanceof item",
-                new SimpleWorker(new int[]{0x5F,0x0F}){
+                new SimpleWorker(new int[]{0x5F,0x08}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Entity e = v.pop(Entity.class);
                         v.push(e instanceof Item);
@@ -398,12 +410,12 @@ public class InitEntity {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "ISVEHICLE",
-                "ISVEHICLE _VEHICLE",
+                "ISVEHICLE VEHICLE",
                 "Entity",
                 "Boolean",
                 "entity",
                 "Put to stack true if entity instanceof vehicle",
-                new SimpleWorker(new int[]{0x5F,0x10}){
+                new SimpleWorker(new int[]{0x5F,0x09}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Entity e = v.pop(Entity.class);
                         v.push(e instanceof Vehicle);
@@ -418,7 +430,7 @@ public class InitEntity {
                 "",
                 "entity",
                 "Remove entity",
-                new SimpleWorker(new int[]{0x5F,0x11}){
+                new SimpleWorker(new int[]{0x5F,0x0A}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Entity e = v.pop(Entity.class);
                         if(!(e instanceof Player))e.remove();
@@ -426,52 +438,8 @@ public class InitEntity {
                     }
                 }
         ));
-        VSCompiler.addRule(new SimpleCompileRule(
-                "PLAYERREMOVE",
-                "PLAYERREMOVE PLRM",
-                "Player",
-                "",
-                "",
-                "Remove player",
-                new SimpleWorker(new int[]{0x5F,0x12}){
-                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Player e = v.pop(Player.class);
-                        e.remove();
 
-                    }
-                }
-        ));
-
-        VSCompiler.addRule(new SimpleCompileRule(
-                "SPAWNENTITY",
-                "SPAWNENTITY SPAWNMOB SPE SPM",
-                "Location EntityType",
-                "Entity",
-                "entity",
-                "Spawn mob",
-                new SimpleWorker(new int[]{0x5C}){
-                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        EntityType s = v.pop(EntityType.values());
-                        Location l = v.pop(Location.class);
-                        World w = l.getWorld();
-                        v.push(w.spawnEntity(l, s));
-                    }
-                }
-        ));
-
-        VSCompiler.addRule(new SimpleCompileRule(
-                "INVENTORY",
-                "INVENTORY INV",
-                "InventoryHolder",
-                "Inventory",
-                "blockstate player entity",
-                "Get inventory",
-                new SimpleWorker(new int[]{0x5F,0x14}){
-                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        v.push(v.pop(Inventory.class));
-                    }
-                }
-        ));
+        // FREEID (0x5F,0x0B)
 
         VSCompiler.addRule(new SimpleCompileRule(
                 "SPAWNCLASS",
@@ -480,13 +448,13 @@ public class InitEntity {
                 "Entity",
                 "entity",
                 "Spawn entity by class",
-                new SimpleWorker(new int[]{0x5F,0x15}){
+                new SimpleWorker(new int[]{0x5F,0x0C}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Class c = v.pop(Class.class);
                         Location l = v.pop(Location.class);
                         World w = l.getWorld();
                         if(Entity.class.isAssignableFrom(c)){
-                            v.push(w.spawn(l,c));
+                            v.push(w.<Entity>spawn(l,c));
                         } else {
                             v.push(null);
                         }
@@ -500,7 +468,7 @@ public class InitEntity {
                 "Entity",
                 "entity",
                 "Throw entity to location",
-                new SimpleWorker(new int[]{0x5F,0x16}){
+                new SimpleWorker(new int[]{0x5F,0x0D}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Location l = v.pop(Location.class);
                         Entity e = v.peek(Entity.class);
@@ -509,6 +477,103 @@ public class InitEntity {
                     }
                 }
         ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "ENTITYTYPE",
+                "ENTITYTYPE ENTTYPE",
+                "Entity",
+                "String",
+                "entity",
+                "Get type of entity",
+                new SimpleWorker(new int[]{0x5F,0x0E}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Entity e = v.pop(Entity.class);
+                        v.push(e.getType());
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "ENTITYEFFECT",
+                "ENTITYEFFECT EEF",
+                "Entity #EntityEffect",
+                "Entity",
+                "entity",
+                "Play effect for entity\nExample: ME \"HURT\" ENTITYEFFECT",
+                new SimpleWorker(new int[]{0x5F,0x0F}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        EntityEffect ef = v.pop(EntityEffect.values());
+                        v.peek(Entity.class).playEffect(ef);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SPAWNFALLINGBLOCK",
+                "SPAWNFALLINGBLOCK SFB",
+                "Location ItemStack",
+                "FallingBlock",
+                "entity",
+                "Spawn new falling block",
+                new SimpleWorker(new int[]{0x5F,0x10}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        ItemStack item = v.pop(ItemStack.class);
+                        Location l = v.pop(Location.class);
+                        v.push(
+                                l.getWorld().spawnFallingBlock(l, item.getTypeId(), item.getData().getData())
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "NEAR",
+                "NEAR",
+                "Entity(A) Double(length)",
+                "List(Entity)",
+                "entity",
+                "Get all entities nearby to A",
+                new SimpleWorker(new int[]{0x5F,0x11}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Double val = v.pop(Double.class);
+                        v.push(
+                                v.pop(Entity.class).getNearbyEntities(val,val,val)
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "TELEPORTTO",
+                "TELEPORT TPTO",
+                "Entity(A) Location(B)",
+                "Entity",
+                "entity",
+                "Teleport entity A to location B",
+                new SimpleWorker(new int[]{0x5F,0x12}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Location s = v.pop(Location.class);
+                        Entity e = v.peek(Entity.class);
+                        e.teleport(s);
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SHIFT",
+                "SHIFT",
+                "Entity Vector",
+                "Entity",
+                "entity",
+                "Teleport entity to shifted location",
+                new SimpleWorker(new int[]{0x5F,0x13}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Vector s = v.pop(Vector.class);
+                        Entity e = v.peek(Entity.class);
+                        e.teleport(e.getLocation().add(s));
+                    }
+                }
+        ));
+
 
     }
 

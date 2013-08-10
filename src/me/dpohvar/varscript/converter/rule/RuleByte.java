@@ -15,6 +15,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.scoreboard.Score;
 import org.bukkit.util.Vector;
 
 import java.util.Collection;
@@ -54,18 +55,13 @@ public class RuleByte extends ConvertRule<Byte>{
         if (object instanceof World) return (byte)Bukkit.getWorlds().indexOf(object);
         if (object instanceof PotionEffect) return (byte)((PotionEffect)object).getType().getId();
         if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
+        if (object instanceof Score) return (byte) ((Score)object).getScore();
         if (object instanceof byte[]) {
             byte[] bytes = (byte[])object;
             if (bytes.length==0) return 0;
             return bytes[0];
         }
         throw nextRule;
-		// в идеале написать в конце Throw nextRule вместо return true
-		
-		// класс Number объединяет в себе все числовые типы: Byte,Short,Int,Long,Float,Double и другие (хз есть ли там Character)
-		// делаем конвертер для каждого из них
-		// а также для Vector,Entity,Player,Inventory,Collection,List,Map,Region и других.
-		// в List мы конвертим инвентарь, коллекцию, Inventory, Строку и т.д.
     }
 
     @Override

@@ -88,7 +88,7 @@ public class InitLocVec {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Location l = v.pop(Location.class);
-                        v.push(l.getY());
+                        v.push(l.getZ());
                     }
                 }
         ));
@@ -255,7 +255,7 @@ public class InitLocVec {
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Double y = v.pop(Double.class);
                         Vector vec = v.pop(Vector.class);
-                        vec.setX(y);
+                        vec.setY(y);
                         v.push(vec);
                     }
                 }
@@ -272,7 +272,7 @@ public class InitLocVec {
                     public void run(ThreadRunner r, me.dpohvar.varscript.vs.Thread v, Context f, Void d) throws ConvertException {
                         Double z = v.pop(Double.class);
                         Vector vec = v.pop(Vector.class);
-                        vec.setX(z);
+                        vec.setZ(z);
                         v.push(vec);
                     }
                 }
@@ -543,7 +543,7 @@ public class InitLocVec {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETLOCATIONYAW",
-                "LOCATIONYAW SETLYW >LYW",
+                "SETLOCATIONYAW SETLYW >LYW",
                 "Location Float",
                 "Location",
                 "location",
@@ -662,12 +662,12 @@ public class InitLocVec {
         ));
 
         VSCompiler.addRule(new SimpleCompileRule(
-                "CUBEAB",
-                "CUBEAB",
+                "BOX",
+                "BOX",
                 "Location(A) Location(B)",
                 "Region",
                 "region",
-                "Create new cube region from location A to location B",
+                "Create new box region from location A to location B",
                 new SimpleWorker(new int[]{0x6F,0x17}) {
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Location l2 = v.pop(Location.class);
@@ -697,8 +697,8 @@ public class InitLocVec {
         ));
 
         VSCompiler.addRule(new SimpleCompileRule(
-                "CUBEABAREA",
-                "CUBEABAREA CUBEABA",
+                "BOXAREA",
+                "BOXAREA CUBEABA",
                 "Location(A) Location(B)",
                 "Region",
                 "region",
@@ -760,8 +760,8 @@ public class InitLocVec {
                 new SimpleWorker(new int[]{0x6F,0x1C}) {
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         ArrayList<Object> list = new ArrayList<Object>();
-                        Collection col = v.pop(Collection.class);
                         Region region = v.pop(Region.class);
+                        Collection col = v.pop(Collection.class);
                         for(Object o:col) {
                             if(region.hasLocation(v.convert(Location.class,o))){
                                 list.add(o);
@@ -801,26 +801,54 @@ public class InitLocVec {
                     }
                 }
         ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "DIRECTION",
+                "DIRECTION DIR",
+                "Location",
+                "Vector",
+                "location vector",
+                "get direction of location",
+                new SimpleWorker(new int[]{0x6F,0x1F}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Location.class).getDirection()
+                        );
+                    }
+                }
+        ));
 
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SOLIDBLOCKS",
+                "SOLIDBLOCKS SOLID",
+                "Region",
+                "Set(Block)",
+                "region block",
+                "Get all solid blocks in region",
+                new SimpleWorker(new int[]{0x6F,0x20}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Region region = v.pop(Region.class);
+                        v.push(region.getSolidBlocks());
+                    }
+                }
+        ));
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        VSCompiler.addRule(new SimpleCompileRule(
+                "BLOCKSID",
+                "BLOCKSID BSID",
+                "Region Integer(id)",
+                "Set(Block)",
+                "region block",
+                "Get blocks in region with selected id",
+                new SimpleWorker(new int[]{0x6F,0x21}) {
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Integer id = v.pop(Integer.class);
+                        Region region = v.pop(Region.class);
+                        v.push(region.getBlocks(id));
+                    }
+                }
+        ));
 
 
     }
-
-
 }

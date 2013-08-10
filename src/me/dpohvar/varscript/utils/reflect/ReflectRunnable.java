@@ -5,6 +5,7 @@ import me.dpohvar.varscript.vs.Runnable;
 import me.dpohvar.varscript.vs.Thread;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,6 +21,7 @@ public class ReflectRunnable implements Runnable {
         this.method = method;
         this.scope = scope;
         this.fullName = fullName;
+        if(method!=null) method.setAccessible(true);
     }
     public Method getMethod(){
         return method;
@@ -41,13 +43,18 @@ public class ReflectRunnable implements Runnable {
             params[i]=thread.convert(types[i], pops[i]);
         }
         Object apply = context.getApply();
-        if (apply instanceof ReflectClass){
-            apply=null;
+        Object result;
+        if(Modifier.isStatic(method.getModifiers())){
+            result = method.invoke(apply,params);
         } else {
-            if(apply instanceof ReflectObject) apply = ((ReflectObject)apply).getObject();
-            apply = thread.convert(method.getDeclaringClass(),apply);
+            if (apply instanceof ReflectClass){
+                apply=null;
+            } else {
+                if(apply instanceof ReflectObject) apply = ((ReflectObject)apply).getObject();
+                apply = thread.convert(method.getDeclaringClass(),apply);
+            }
+            result = method.invoke(apply,params);
         }
-        Object result = method.invoke(apply,params);
         if(method.getReturnType() != void.class) thread.push(result);
     }
 

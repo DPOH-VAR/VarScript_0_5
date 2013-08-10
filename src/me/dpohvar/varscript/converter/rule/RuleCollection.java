@@ -16,6 +16,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -83,8 +85,10 @@ public class RuleCollection extends ConvertRule<Collection>{
             return a;
         }
         if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
-        if (object instanceof NBTTagList) return convert(((NBTTagList)object).asList(),thread,scope);
-        if (object instanceof NBTTagCompound) return convert(((NBTTagCompound)object).asList(),thread,scope);
+        if (object instanceof NBTTagList) return ((NBTTagList)object).asList();
+        if (object instanceof NBTTagCompound) return ((NBTTagCompound)object).asList();
+        if (object instanceof Team) return ((Team)object).getPlayers();
+        if (object instanceof Scoreboard) return ((Scoreboard)object).getObjectives();
         throw nextRule;
 	}
 

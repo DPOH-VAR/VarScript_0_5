@@ -4,6 +4,7 @@ import me.dpohvar.powernbt.nbt.NBTTagCompound;
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.powernbt.nbt.NBTTagList;
 import me.dpohvar.varscript.Program;
+import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.vs.Scope;
 import org.bukkit.OfflinePlayer;
@@ -12,6 +13,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scoreboard.Score;
 import org.bukkit.util.Vector;
 
 import java.util.Collection;
@@ -47,6 +49,7 @@ public class RuleBoolean extends ConvertRule<Boolean>{
         if (object instanceof Collection) return !((Collection)object).isEmpty();
         if (object instanceof OfflinePlayer) return ((OfflinePlayer)object).isOnline();
         if (object instanceof Program) return ((Program)object).isFinished();
+        if (object instanceof Thread) return ((Thread)object).isFinished();
         if (object instanceof Map) return !((Map)object).isEmpty();
         if (object instanceof NBTTagList) return ((NBTTagList)object).size()>0;
         if (object instanceof NBTTagCompound) return ((NBTTagCompound)object).size()>0;
@@ -54,6 +57,7 @@ public class RuleBoolean extends ConvertRule<Boolean>{
         if (object instanceof byte[]) return ((byte[])object).length!=0;
         if (object instanceof int[]) return ((int[])object).length!=0;
         if (object instanceof Object[])return ((Object[])object).length!=0;
+        if (object instanceof Score) return ((Score)object).getScore()!=0;
         return true;
     }
 

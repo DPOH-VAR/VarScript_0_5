@@ -1,6 +1,8 @@
 package me.dpohvar.varscript.converter.rule;
 
+import me.dpohvar.powernbt.nbt.NBTTagCompound;
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
+import me.dpohvar.powernbt.nbt.NBTTagList;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.region.Region;
 import me.dpohvar.varscript.vs.Fieldable;
@@ -68,6 +70,8 @@ public class RuleIterable extends ConvertRule<Iterable>{
         if (object instanceof Region) return new ArrayList(((Region)object).getBlocks());
         if (object instanceof World) return ((World)object).getEntities();
         if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
+        if (object instanceof NBTTagList) return ((NBTTagList)object).asList();
+        if (object instanceof NBTTagCompound) return ((NBTTagCompound)object).asList();
         if (object instanceof byte[]) {
             byte[] bytes = (byte[])object;
             ArrayList<Byte> a = new ArrayList<Byte>();

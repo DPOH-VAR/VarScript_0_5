@@ -7,7 +7,6 @@ import org.bukkit.Location;
  * User: DPOH-VAR
  * Date: 21.06.12
  * Time: 13:06
- * To change this template use File | Settings | File Templates.
  */
 public class CubeOutRegion extends CubeRegion {
 

@@ -2,6 +2,7 @@ package me.dpohvar.varscript.vs;
 
 import me.dpohvar.varscript.VarScript;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -59,6 +60,16 @@ public class CommandList {
         }
         for(Command command:commands){
             command.save(out);
+        }
+    }
+
+    public byte[] toBytes(){
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            save(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            return null;
         }
     }
 }

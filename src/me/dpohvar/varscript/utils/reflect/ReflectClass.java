@@ -3,6 +3,7 @@ package me.dpohvar.varscript.utils.reflect;
 import me.dpohvar.varscript.vs.*;
 import me.dpohvar.varscript.vs.Runnable;
 import me.dpohvar.varscript.vs.Thread;
+import org.apache.commons.lang.StringUtils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -17,12 +18,11 @@ import java.util.*;
  * Time: 7:15
  */
 public class ReflectClass implements Runnable,Fieldable {
-    private final Class clazz;
-    private final Constructor constr;
+    private final Class<?> clazz;
+    private final Constructor<?> con;
     private final Scope scope;
     private Runnable constructor;
     private Fieldable proto;
-    int diver = 0;
     public Class getInnerClass(){
         return clazz;
     }
@@ -35,50 +35,97 @@ public class ReflectClass implements Runnable,Fieldable {
             proto = new FieldableObject(scope);
         }
 
-        if(key!=null) if (key.contains("/")) {
-            String[] t = key.split("/");
-            if(t.length==2){
-                key=t[0];
-                try{
-                    diver = Integer.parseInt(t[1]);
-                } catch (Exception ignored){
-                }
+        String name = null;
+        String[] args = null;
+        if(key.matches("[^()]+")){
+            name = key;
+        } else if (key.matches("[^()]+\\([^()]*\\)")){
+            int open = key.indexOf('(');
+            name = key.substring(0,open);
+            String line = key.substring(open+1,key.length()-1);
+            if(line.isEmpty()) args = new String[0];
+            else args = line.split(",");
+        }
+        clazz = Class.forName(name);
+        Constructor<?> tConstructor = null;
+        if(args == null){
+            try{
+                tConstructor = clazz.getConstructor();
+            } catch (Exception ignored){
             }
+            if (tConstructor==null) try{
+                tConstructor = clazz.getDeclaredConstructor();
+            }catch (Exception ignored){
+            }
+            if (tConstructor==null) try{
+                tConstructor = clazz.getConstructors()[0];
+            }catch (Exception ignored){
+            }
+            if (tConstructor==null) try{
+                tConstructor = clazz.getDeclaredConstructors()[0];
+            }catch (Exception ignored){
+            }
+        } else {
+            List<Constructor<?>> constructors = new ArrayList<Constructor<?>>();
+            constructors.addAll(Arrays.asList(clazz.getConstructors()));
+            constructors.addAll(Arrays.asList(clazz.getDeclaredConstructors()));
+            find_constructor: for(Constructor<?> c:constructors){
+                Class[] params = c.getParameterTypes();
+                if(params.length != args.length) continue;
+                for(int i=0;i<params.length;i++){
+                    if(!params[i].getName().endsWith(args[i])) continue find_constructor;
+                }
+                tConstructor = c;
+                break;
+            }
+            if (tConstructor == null) throw new Exception("constructor not found for "+key);
         }
-        this.clazz = Class.forName(key);
-        Constructor temp = null;
-        try{
-            temp = allConstructors(clazz).get(diver);
-        } catch (Exception ignored){
-        }
-        constr = temp;
+        con = tConstructor;
+        if(con !=null) con.setAccessible(true);
     }
 
-    public Constructor getConstr(){
-        return constr;
+    public Constructor getCon(){
+        return con;
     }
 
-    public ReflectClass(Constructor constr, Scope scope) throws Exception{
+    public ReflectClass(Constructor con, Scope scope) {
         this.scope = scope;
-        this.clazz = constr.getDeclaringClass();
-        this.constr = constr;
+        this.clazz = con.getDeclaringClass();
+        this.con = con;
+        con.setAccessible(true);
     }
 
-    @Override public String toString(){return clazz.getName()+(diver==0?"{}":("/"+diver+"{}"));}
+    @Override public String toString(){
+        if(con ==null || con.getParameterTypes().length==0){
+            return clazz.getSimpleName()+"{}";
+        }else {
+            Class[] params = con.getParameterTypes();
+            List<String> args = new ArrayList<String>();
+            for(Class c:params) args.add(c.getSimpleName());
+            return clazz.getSimpleName() + '(' + StringUtils.join(args, ',') + "){}";
+        }
+    }
+
     @Override public String getName() {
         return clazz.getSimpleName();
     }
+
     @Override public void runCommands(ThreadRunner threadRunner, Thread thread, Context context) throws Exception {
-        Class[] types = constr.getParameterTypes();
-        java.lang.Object[] pops = new java.lang.Object[types.length];
-        java.lang.Object[] params = new java.lang.Object[types.length];
-        for(int i=params.length-1;i>=0;i--){
-            pops[i]=thread.pop();
+        java.lang.Object result;
+        if(con ==null){
+            result = clazz.newInstance();
+        } else {
+            Class[] types = con.getParameterTypes();
+            java.lang.Object[] pops = new java.lang.Object[types.length];
+            java.lang.Object[] params = new java.lang.Object[types.length];
+            for(int i=params.length-1;i>=0;i--){
+                pops[i]=thread.pop();
+            }
+            for(int i=0;i<params.length;i++){
+                params[i]=thread.convert(types[i], pops[i]);
+            }
+            result = con.newInstance(params);
         }
-        for(int i=0;i<params.length;i++){
-            params[i]=thread.convert(types[i], pops[i]);
-        }
-        java.lang.Object result = constr.newInstance(params);
         Context topContext = (Context)context.getRegisterE();
         if(topContext==null) return;
         topContext.setRegisterF(result);
@@ -95,72 +142,101 @@ public class ReflectClass implements Runnable,Fieldable {
         return scope;
     }
 
-
-
-    private static ArrayList<Constructor> allConstructors(Class clazz){
-        ArrayList<Constructor> constructors = new ArrayList<Constructor>();
-        Collections.addAll(constructors, clazz.getConstructors());
-        for(Constructor m:clazz.getDeclaredConstructors()){
-            if(!constructors.contains(m)) constructors.add(m);
-        }
-        return constructors;
-    }
-
-
-    HashMap<String, java.lang.Object> additionalFields = new HashMap<String, java.lang.Object>();
+    private HashMap<String, java.lang.Object> additionalFields = new HashMap<String, java.lang.Object>();
     @Override public Set<String> getAllFields() {
-        HashSet<String> names = new HashSet<String>();
-        for(Method m:ReflectObject.methodsAll(clazz)){
-            if(Modifier.isStatic(m.getModifiers())){
-                String methodName = m.getName();
-                String name = methodName;
-                int t = 0;
-                while(names.contains(name)){
-                    name=methodName+"/"+(++t);
-                }
-                names.add(name);
+        HashSet<String> fields = new HashSet<String>();
+        for(Field f:clazz.getFields()) fields.add(f.getName());
+        for(Field f:clazz.getDeclaredFields()) fields.add(f.getName());
+        List<Method> methods = Arrays.asList(clazz.getMethods());
+        methods.addAll(Arrays.asList(clazz.getDeclaredMethods()));
+        for(Method m:methods){
+            Class[] params = m.getParameterTypes();
+            if(params.length==0) {
+                fields.add(m.getName()+"()");
+            } else {
+                List<String> args = new ArrayList<String>();
+                for(Class c:params) args.add(c.getName());
+                fields.add(
+                        m.getName() + '(' + StringUtils.join(args, ',') + ')'
+                );
             }
         }
-        for(Field f:clazz.getDeclaredFields()){
-            if(Modifier.isStatic(f.getModifiers())) names.add(f.getName());
-        }
-        for(Field f:clazz.getFields()){
-            if(Modifier.isStatic(f.getModifiers())) names.add(f.getName());
-        }
-        return names;
+        return fields;
     }
 
     @Override public java.lang.Object getField(String key) {
-        int diver = 0;
-        if(key!=null) if (key.contains("/")) {
-            String[] t = key.split("/");
-            if(t.length==2){
-                key=t[0];
+        String name;
+        String[] args = null;
+        if(key.matches("[A-Za-z0-9_\\-/]+")){
+            name = key;
+        } else if (key.matches("[A-Za-z0-9_\\-]+\\([A-Za-z0-9_\\-,\\.]*\\)")){
+            int open = key.indexOf('(');
+            name = key.substring(0,open);
+            String line = key.substring(open+1,key.length()-1);
+            if(line.isEmpty()) args = new String[0];
+            else args = line.split(",");
+        } else {
+            return null;
+        }
+        if(args==null){
+            getField:{
+                Field f;
                 try{
-                    diver = Integer.parseInt(t[1]);
-                } catch (Exception ignored){
+                    f = clazz.getField(name);
+                } catch (Exception e){
+                    try {
+                        f = clazz.getDeclaredField(name);
+                    } catch (Exception ignored) {
+                        break getField;
+                    }
+                }
+                try {
+                    f.setAccessible(true);
+                    return f.get(null);
+                } catch (Exception ignored) {
+                    return additionalFields.get(key);
                 }
             }
-        }
-        Field f = getStaticReflectField(key);
-        if (f!=null) try {
-            f.setAccessible(true);
-            return f.get(null);
-        } catch (Throwable ignored){
-            return null;
-        }
-        ArrayList<Method> methods = staticMethodsByName(clazz, key);
-        try{
-            Method m = methods.get(diver);
-            m.setAccessible(true);
-            return new ReflectRunnable(methods.get(diver),scope,key);
-        } catch (Exception ignored){
-            return null;
+            Method m = null;
+            try {
+                m = clazz.getMethod(name);
+            } catch (NoSuchMethodException e) {
+                try {
+                    m = clazz.getDeclaredMethod(name);
+                } catch (NoSuchMethodException ignored) {
+                }
+            }
+            if (m != null) return new ReflectRunnable(m, scope, name);
+            for (Method t : clazz.getMethods()) {
+                if (t.getName().equals(name)) {
+                    return new ReflectRunnable(t, scope, name);
+                }
+            }
+            for (Method t : clazz.getDeclaredMethods()) {
+                if (t.getName().equals(name)) {
+                    return new ReflectRunnable(t, scope, name);
+                }
+            }
+            return additionalFields.get(key);
+        } else {
+            List<Method> methods = new ArrayList<Method>();
+            methods.addAll(Arrays.asList(clazz.getMethods()));
+            methods.addAll(Arrays.asList(clazz.getDeclaredMethods()));
+            find_method: for(Method m:methods){
+                if(!m.getName().equals(name)) continue;
+                Class[] params = m.getParameterTypes();
+                if(params.length != args.length) continue;
+                for(int i=0;i<params.length;i++){
+                    if(!params[i].getName().endsWith(args[i])) continue find_method;
+                }
+                return new ReflectRunnable(m,scope,name);
+            }
+            return additionalFields.get(key);
         }
     }
 
     @Override public void setField(String key, java.lang.Object value) {
-        Field f = getStaticReflectField(key);
+        Field f = getReflectField(key);
         if (f!=null) try {
             f.setAccessible(true);
             f.set(null,value);
@@ -178,9 +254,35 @@ public class ReflectClass implements Runnable,Fieldable {
     @Override
     public boolean hasField(String key) {
         if(additionalFields.containsKey(key)) return true;
-        //todo: simplify
-        Set<String> names = getAllFields();
-        if (names.contains(key)) return true;
+        try{
+            return (clazz.getDeclaredField(key)!=null);
+        } catch (Exception ignored){
+        }
+        try{
+            String name;
+            String[] args;
+            if (key.matches("[A-Za-z0-9_\\-]+\\([A-Za-z0-9_\\-,\\.]*\\)")){
+                int open = key.indexOf('(');
+                name = key.substring(0,open);
+                String line = key.substring(open+1,key.length()-1);
+                if(line.isEmpty()) args = new String[0];
+                else args = line.split(",");
+            } else {
+                return false;
+            }
+            List<Method> methods = Arrays.asList(clazz.getMethods());
+            methods.addAll(Arrays.asList(clazz.getDeclaredMethods()));
+            find_method: for(Method m:methods){
+                if(!m.getName().equals(name)) continue;
+                Class[] params = m.getParameterTypes();
+                if(params.length != args.length) continue;
+                for(int i=0;i<params.length;i++){
+                    if(!params[i].getName().endsWith(args[i])) continue find_method;
+                }
+                return true;
+            }
+        } catch (Exception ignored){
+        }
         return false;
     }
 
@@ -199,9 +301,9 @@ public class ReflectClass implements Runnable,Fieldable {
         this.proto = proto;
     }
 
-    private Field getStaticReflectField(String key){
+    private Field getReflectField(String key){
         for(Field f: clazz.getDeclaredFields()){
-            if(Modifier.isStatic(f.getModifiers()) && f.getName().equals(key)) {
+            if(f.getName().equals(key)) {
                 try {
                     f.setAccessible(true);
                     return f;
@@ -211,7 +313,7 @@ public class ReflectClass implements Runnable,Fieldable {
             }
         }
         for(Field f: clazz.getFields()){
-            if(Modifier.isStatic(f.getModifiers()) && f.getName().equals(key)) {
+            if(f.getName().equals(key)) {
                 try {
                     f.setAccessible(true);
                     return f;

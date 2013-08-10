@@ -103,8 +103,6 @@ public class VSStringParser {
                                 buffer.append(character);
                                 unicode = new StringBuilder();
                                 mode = CHAR;
-                            } else {
-                                unicode.append(c);
                             }
                             continue parse;
                         }
@@ -116,10 +114,10 @@ public class VSStringParser {
                 case SPACE:{
                     switch (c){
                         case '\t':
-                        case ' ':{
-                            continue parse;
-                        }
                         case '\r':
+                        case ' ':{
+                                continue parse;
+                        }
                         case '\n':{
                             buffer.append(c);
                             continue parse;

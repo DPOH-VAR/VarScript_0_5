@@ -2,11 +2,14 @@ package me.dpohvar.varscript.converter.rule;
 
 import me.dpohvar.powernbt.nbt.NBTTagDatable;
 import me.dpohvar.varscript.converter.NextRule;
+import me.dpohvar.varscript.utils.reflect.ReflectBukkitUtils;
+import me.dpohvar.varscript.utils.reflect.ReflectUtils;
 import me.dpohvar.varscript.vs.Scope;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.v1_6_R2.inventory.CraftItemStack;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -20,6 +23,18 @@ import static org.bukkit.Material.AIR;
  */
 public class RuleItemStack extends ConvertRule<ItemStack>{
 
+    static Class<?> classItemStack = ReflectBukkitUtils.getMinecraftClass("ItemStack");
+    static Class<?> classCraftItemStack = ReflectBukkitUtils.getBukkitClass("inventory.CraftItemStack");
+
+    public static ItemStack newItem(int id,int amount,int dmg){
+        Object m = ReflectUtils.callConstructor(
+                classItemStack,
+                new Class[]{int.class, int.class, int.class},
+                id, amount, dmg
+        );
+        return (ItemStack) ReflectUtils.callConstructor(classCraftItemStack,new Class[]{classItemStack},m);
+    }
+
     public RuleItemStack() {
         super(10);
     }
@@ -27,18 +42,18 @@ public class RuleItemStack extends ConvertRule<ItemStack>{
     @Override
     public <V> ItemStack convert(V object, me.dpohvar.varscript.vs.Thread thread,Scope scope) throws NextRule {
         if (object==null) return new ItemStack(AIR);
-        if (object instanceof Number) return new ItemStack(((Number)object).intValue());
-        if (object instanceof String) return Bukkit.getPlayer(object.toString()).getItemInHand();
+        if (object instanceof Number) return newItem(((Number)object).intValue(),1,0);
+        if (object instanceof String) return Bukkit.getPlayer(((String)object).trim()).getItemInHand();
         if (object instanceof NBTTagDatable) return convert(((NBTTagDatable)object).get(),thread,scope);
         if (object instanceof Inventory) return convert(((Inventory)object).getHolder(),thread,scope);
         if (object instanceof OfflinePlayer) return ((OfflinePlayer)object).getPlayer().getItemInHand();
         if (object instanceof Block) {
             Block b = (Block) object;
-            return new ItemStack(b.getTypeId(),1,b.getData());
+            return newItem(b.getTypeId(),1,b.getData());
         }
         if (object instanceof Location) {
             Block b = ((Location)object).getBlock();
-            return new ItemStack(b.getTypeId(),1,b.getData());
+            return newItem(b.getTypeId(),1,b.getData());
         }
 
         throw nextRule;

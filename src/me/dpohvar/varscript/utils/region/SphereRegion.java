@@ -75,6 +75,22 @@ public class SphereRegion extends Region {
     }
 
     @Override
+    public HashSet<Block> getSolidBlocks() {
+        HashSet<Block> blocks = new HashSet<Block>();
+        int xa = (int) (px - radius - 1), ya = (int) (py - radius - 1), za = (int) (pz - radius - 1);
+        int xb = (int) (px + radius + 1), yb = (int) (py + radius + 1), zb = (int) (pz + radius + 1);
+        for (int x = xa; x < xb; x++)
+            for (int y = ya; y < yb; y++)
+                for (int z = za; z < zb; z++) {
+                    if ((px - x) * (px - x) + (py - y) * (py - y) + (pz - z) * (pz - z) < radius * radius){
+                        Block b = world.getBlockAt(x, y, z);
+                        if(!b.isEmpty()) blocks.add(b);
+                    }
+                }
+        return blocks;
+    }
+
+    @Override
     public HashSet<Block> getOutsideBlocks() {
         HashSet<Block> blocks = new HashSet<Block>();
         int xa = (int) (px - radius - 1), ya = (int) (py - radius - 1), za = (int) (pz - radius - 1);

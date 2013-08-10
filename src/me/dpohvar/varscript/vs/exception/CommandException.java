@@ -44,25 +44,15 @@ public class CommandException extends SourceException {
         String line = lines[row];
         if(col==line.length()) return ChatColor.translateAlternateColorCodes('&',"&e[end of line]&r ")+line;
         if(col>line.length()) return ChatColor.translateAlternateColorCodes('&',"&c[unknown position]&r ")+line;
-        int left,right;
-        left = col-20;
-        // todo: optimize left and right;
-        if(line.length()<40){
-            left=0;
-            right=line.length();
-        } else{
-            if(left<0) left=0;
-            right = left+40;
-            if(right>line.length()) right=line.length();
-        }
-        int len = operand.toString().length();
-        if(col+len>right) len = right-col;
+        String op = operand.toString();
+        if(op.contains("\n")) op=op.substring(0,op.indexOf('\n'));
+        int len = op.length();
         StringBuilder builder = new StringBuilder();
-        builder.append(line.substring(left,col));
+        builder.append(line.substring(0,col));
         builder.append(ChatColor.GOLD);
-        builder.append(line.substring(left+col,left+col+len));
+        builder.append(op);
         builder.append(ChatColor.RESET);
-        builder.append(line.substring(left+col+len,right));
+        builder.append(line.substring(col+len));
         return builder.toString();
     }
 

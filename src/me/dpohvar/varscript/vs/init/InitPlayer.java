@@ -13,9 +13,11 @@ import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scoreboard.*;
+
+import java.util.Date;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,13 +28,13 @@ import org.bukkit.inventory.ItemStack;
 public class InitPlayer {
     public static void load(){
         VSCompiler.addRule(new SimpleCompileRule(
-                "ALLOWFLIGHT",
-                "ALLOWFLIGHT",
+                "ALLOWFLY",
+                "ALLOWFLY AFLY",
                 "Player",
                 "Boolean",
                 "player",
                 "Returns true if player can fly",
-                new SimpleWorker(new int[]{0x5F,0x27}){
+                new SimpleWorker(new int[]{0x5F,0x80}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getAllowFlight());
@@ -40,13 +42,13 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "SETALLOWFLIGHT",
-                "SETALLOWFLIGHT >ALLOWFLIGHT",
+                "SETALLOWFLY",
+                "SETALLOWFLY >AFLY",
                 "Player Boolean",
                 "Player",
                 "player",
-                "Set allow flight for palyer",
-                new SimpleWorker(new int[]{0x5F,0x28}){
+                "Set allow flight for player",
+                new SimpleWorker(new int[]{0x5F,0x81}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean b = v.pop(Boolean.class);
                         Player p = v.peek(Player.class);
@@ -56,12 +58,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "CANSEE",
-                "CANSEE",
-                "Player Player2",
+                "CANSEE SEE",
+                "Player(A) Player(B)",
                 "Boolean",
                 "player",
-                "Returns true if Player can see Player2",
-                new SimpleWorker(new int[]{0x5F,0x29}){
+                "Returns true if Player A can see Player B",
+                new SimpleWorker(new int[]{0x5F,0x82}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p2 = v.pop(Player.class);
                         Player p = v.pop(Player.class);
@@ -72,11 +74,11 @@ public class InitPlayer {
         VSCompiler.addRule(new SimpleCompileRule(
                 "HIDE",
                 "HIDE",
-                "Player Player2",
+                "Player(A) Player(B)",
                 "Player",
                 "player",
-                "Hide Player2 for Player",
-                new SimpleWorker(new int[]{0x5F,0x2A}){
+                "Hide Player B for Player A",
+                new SimpleWorker(new int[]{0x5F,0x83}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p2 = v.pop(Player.class);
                         Player p = v.peek(Player.class);
@@ -85,13 +87,27 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "SHOW",
-                "SHOW",
-                "Player Player2",
+                "HIDEFORALL",
+                "HIDEFORALL HIDEA",
+                "Player",
                 "Player",
                 "player",
-                "Show Player2 for Player",
-                new SimpleWorker(new int[]{0x5F,0x2B}){
+                "Hide Player for all other players",
+                new SimpleWorker(new int[]{0x5F,0x84}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Player h = v.peek(Player.class);
+                        for(Player p:Bukkit.getOnlinePlayers()) p.hidePlayer(h);
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SHOW",
+                "SHOW",
+                "Player(A) Player(B)",
+                "Player",
+                "player",
+                "Show Player B for Player A",
+                new SimpleWorker(new int[]{0x5F,0x85}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p2 = v.pop(Player.class);
                         Player p = v.peek(Player.class);
@@ -105,8 +121,8 @@ public class InitPlayer {
                 "Player String",
                 "Player",
                 "player",
-                "Chat from player",
-                new SimpleWorker(new int[]{0x5F,0x2C}){
+                "Send chat message from player",
+                new SimpleWorker(new int[]{0x5F,0x86}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class);
                         Player p = v.peek(Player.class);
@@ -116,12 +132,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "BEDSPAWN",
-                "BEDSPAWN",
+                "BEDSPAWN BED",
                 "Player",
                 "Location",
                 "player offline",
                 "Get player bed spawn location",
-                new SimpleWorker(new int[]{0x5F,0x2D}){
+                new SimpleWorker(new int[]{0x5F,0x87}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.pop(OfflinePlayer.class);
                         v.push(p.getBedSpawnLocation());
@@ -130,12 +146,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETBEDSPAWN",
-                "SETBEDSPAWN",
+                "SETBEDSPAWN SETBED >BED",
                 "Player Location",
                 "Player",
                 "player",
                 "Set bed spawn location for player",
-                new SimpleWorker(new int[]{0x5F,0x2E}){
+                new SimpleWorker(new int[]{0x5F,0x88}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Location l = v.pop(Location.class);
                         Player p = v.peek(Player.class);
@@ -145,12 +161,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "COMPASSTARGET",
-                "COMPASSTARGET COMTARGET",
+                "COMPASSTARGET COMP",
                 "Player",
                 "Location",
                 "player",
                 "Get player's compass target",
-                new SimpleWorker(new int[]{0x5F,0x2F}){
+                new SimpleWorker(new int[]{0x5F,0x89}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getCompassTarget());
@@ -159,12 +175,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETCOMPASSTARGET",
-                "SETCOMPASSTARGET SETCOMTARGET >COMTARGET",
+                "SETCOMPASSTARGET SETCOMP >COMP",
                 "Player Location",
                 "Player",
                 "player",
                 "Set player's compass target",
-                new SimpleWorker(new int[]{0x5F,0x30}){
+                new SimpleWorker(new int[]{0x5F,0x8A}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Location l = v.pop(Location.class);
                         Player p = v.peek(Player.class);
@@ -179,7 +195,7 @@ public class InitPlayer {
                 "String",
                 "player offline",
                 "Get player name",
-                new SimpleWorker(new int[]{0x5F,0x31}){
+                new SimpleWorker(new int[]{0x5F,0x8B}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.pop(OfflinePlayer.class);
                         v.push(p.getName());
@@ -193,10 +209,25 @@ public class InitPlayer {
                 "Long",
                 "player offline",
                 "Gets the last date and time that this player was witnessed on server",
-                new SimpleWorker(new int[]{0x5F,0x32}){
+                new SimpleWorker(new int[]{0x5F,0x8C}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.pop(OfflinePlayer.class);
                         v.push(p.getLastPlayed());
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "LASTPLAYEDDATE",
+                "LASTPLAYEDDATE",
+                "Player",
+                "Date",
+                "player offline",
+                "Gets the last date that this player was witnessed on server",
+                new SimpleWorker(new int[]{0x5F,0x8D}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        OfflinePlayer p = v.pop(OfflinePlayer.class);
+                        v.push(new Date(p.getLastPlayed()));
                     }
                 }
         ));
@@ -207,7 +238,7 @@ public class InitPlayer {
                 "Boolean",
                 "player offline",
                 "Checks if this player has played on this server before",
-                new SimpleWorker(new int[]{0x5F,0x33}){
+                new SimpleWorker(new int[]{0x5F,0x8E}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.pop(OfflinePlayer.class);
                         v.push(p.hasPlayedBefore());
@@ -221,7 +252,7 @@ public class InitPlayer {
                 "Boolean",
                 "player offline",
                 "Checks if this player is banned or not",
-                new SimpleWorker(new int[]{0x5F,0x34}){
+                new SimpleWorker(new int[]{0x5F,0x8F}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.pop(OfflinePlayer.class);
                         v.push(p.isBanned());
@@ -235,7 +266,7 @@ public class InitPlayer {
                 "Boolean",
                 "player offline",
                 "Checks if this player is currently online",
-                new SimpleWorker(new int[]{0x5F,0x35}){
+                new SimpleWorker(new int[]{0x5F,0x90}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.pop(OfflinePlayer.class);
                         v.push(p.isOnline());
@@ -249,7 +280,7 @@ public class InitPlayer {
                 "Boolean",
                 "player offline",
                 "Checks if this player is whitelisted or not",
-                new SimpleWorker(new int[]{0x5F,0x36}){
+                new SimpleWorker(new int[]{0x5F,0x91}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.pop(OfflinePlayer.class);
                         v.push(p.isWhitelisted());
@@ -263,7 +294,7 @@ public class InitPlayer {
                 "Player",
                 "player offline",
                 "Ban player",
-                new SimpleWorker(new int[]{0x5F,0x37}){
+                new SimpleWorker(new int[]{0x5F,0x92}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.peek(OfflinePlayer.class);
                         p.setBanned(true);
@@ -277,7 +308,7 @@ public class InitPlayer {
                 "Player",
                 "player offline",
                 "UnBan player",
-                new SimpleWorker(new int[]{0x5F,0x38}){
+                new SimpleWorker(new int[]{0x5F,0x93}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.peek(OfflinePlayer.class);
                         p.setBanned(false);
@@ -286,12 +317,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "WHITELISTADD",
-                "WHITELISTADD",
+                "WHITELISTADD WLADD",
                 "Player",
                 "Player",
                 "player offline",
                 "Add player to whitelist",
-                new SimpleWorker(new int[]{0x5F,0x39}){
+                new SimpleWorker(new int[]{0x5F,0x94}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.peek(OfflinePlayer.class);
                         p.setWhitelisted(true);
@@ -300,12 +331,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "WHITELISTREMOVE",
-                "WHITELISTREMOVE WHITELISTREM",
+                "WHITELISTREMOVE WLREM",
                 "Player",
                 "Player",
                 "player offline",
                 "Remove player from whitelist",
-                new SimpleWorker(new int[]{0x5F,0x3A}){
+                new SimpleWorker(new int[]{0x5F,0x95}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.peek(OfflinePlayer.class);
                         p.setWhitelisted(false);
@@ -313,13 +344,13 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "ISOP",
+                "OPPED",
                 "ISOP OPPED",
                 "Player",
                 "Boolean",
                 "player offline",
                 "Returns true if player is op",
-                new SimpleWorker(new int[]{0x5F,0x3B}){
+                new SimpleWorker(new int[]{0x5F,0x96}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.pop(OfflinePlayer.class);
                         v.push(p.isOp());
@@ -328,12 +359,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "OP",
-                "OP",
+                "OP >OP",
                 "Player",
                 "Player",
                 "player offline",
                 "OP player",
-                new SimpleWorker(new int[]{0x5F,0x3C}){
+                new SimpleWorker(new int[]{0x5F,0x97}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.peek(OfflinePlayer.class);
                         p.setOp(true);
@@ -347,7 +378,7 @@ public class InitPlayer {
                 "Player",
                 "player offline",
                 "DEOP player",
-                new SimpleWorker(new int[]{0x5F,0x3D}){
+                new SimpleWorker(new int[]{0x5F,0x98}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.peek(OfflinePlayer.class);
                         p.setOp(false);
@@ -361,7 +392,7 @@ public class InitPlayer {
                 "Player",
                 "player",
                 "Get player's IP",
-                new SimpleWorker(new int[]{0x5F,0x3E}){
+                new SimpleWorker(new int[]{0x5F,0x99}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getAddress().getAddress());
@@ -370,12 +401,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "DISPLAYNAME",
-                "DISPLAYNAME",
+                "DISPLAYNAME DNAME",
                 "Player",
                 "String",
                 "player",
                 "Get player's display name",
-                new SimpleWorker(new int[]{0x5F,0x3F}){
+                new SimpleWorker(new int[]{0x5F,0x9A}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getDisplayName());
@@ -384,12 +415,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "EXHAUSTION",
-                "EXHAUSTION",
+                "EXHAUSTION EXH",
                 "Player",
                 "Float",
                 "player",
                 "Get player's exhaustion level",
-                new SimpleWorker(new int[]{0x5F,0x40}){
+                new SimpleWorker(new int[]{0x5F,0x9B}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getExhaustion());
@@ -403,7 +434,7 @@ public class InitPlayer {
                 "Float",
                 "player",
                 "Get player's experience points",
-                new SimpleWorker(new int[]{0x5F,0x41}){
+                new SimpleWorker(new int[]{0x5F,0x9C}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getExp());
@@ -417,7 +448,7 @@ public class InitPlayer {
                 "Float",
                 "player",
                 "Get player's fly speed",
-                new SimpleWorker(new int[]{0x5F,0x42}){
+                new SimpleWorker(new int[]{0x5F,0x9D}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getFlySpeed());
@@ -431,7 +462,7 @@ public class InitPlayer {
                 "Float",
                 "player",
                 "Get player's food lvl",
-                new SimpleWorker(new int[]{0x5F,0x43}){
+                new SimpleWorker(new int[]{0x5F,0x9E}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getFoodLevel());
@@ -445,7 +476,7 @@ public class InitPlayer {
                 "Integer",
                 "player",
                 "Get player's experience level",
-                new SimpleWorker(new int[]{0x5F,0x44}){
+                new SimpleWorker(new int[]{0x5F,0x9F}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getLevel());
@@ -454,12 +485,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "TABNAME",
-                "TABNAME",
+                "TABNAME TNAME",
                 "Player",
                 "String",
                 "player",
                 "Gets the name that is shown on the player list",
-                new SimpleWorker(new int[]{0x5F,0x45}){
+                new SimpleWorker(new int[]{0x5F,0xA0}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getPlayerListName());
@@ -468,12 +499,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "PLAYERTIME",
-                "PLAYERTIME",
+                "PLAYERTIME PTIME",
                 "Player",
                 "Long",
                 "player",
                 "Returns the player's current timestamp.",
-                new SimpleWorker(new int[]{0x5F,0x46}){
+                new SimpleWorker(new int[]{0x5F,0xA1}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getPlayerTime());
@@ -482,12 +513,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "PLAYERTIMEOFFSET",
-                "PLAYERTIMEOFFSET",
+                "PLAYERTIMEOFFSET PTIMEF",
                 "Player",
                 "Long",
                 "player",
                 "Returns the player's current time offset relative to server time, or the current player's fixed time if the player's time is absolute",
-                new SimpleWorker(new int[]{0x5F,0x47}){
+                new SimpleWorker(new int[]{0x5F,0xA2}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getPlayerTimeOffset());
@@ -496,12 +527,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SATURATION",
-                "SATURATION",
+                "SATURATION SAT",
                 "Player",
                 "String",
                 "player",
                 "Get player's saturation level",
-                new SimpleWorker(new int[]{0x5F,0x48}){
+                new SimpleWorker(new int[]{0x5F,0xA3}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getSaturation());
@@ -510,12 +541,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SCOREBOARD",
-                "SCOREBOARD",
+                "SCOREBOARD SCB",
                 "Player",
                 "ScoreBoard",
-                "player",
-                "Get player's saturation level",
-                new SimpleWorker(new int[]{0x5F,0x49}){
+                "scoreboard",
+                "Get player's scoreboard",
+                new SimpleWorker(new int[]{0x5F,0xA4}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getScoreboard());
@@ -524,12 +555,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "WALKSPEED",
-                "WALKSPEED",
+                "WALKSPEED WSPD",
                 "Player",
                 "Float",
                 "player",
                 "Get player's walk speed",
-                new SimpleWorker(new int[]{0x5F,0x4A}){
+                new SimpleWorker(new int[]{0x5F,0xA5}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getWalkSpeed());
@@ -537,13 +568,13 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "GIVEEXP",
-                "GIVEEXP GIVEXP",
+                "XPADD",
+                "XPADD XP+",
                 "Player Integer",
                 "Player",
                 "player",
                 "Give exp",
-                new SimpleWorker(new int[]{0x5F,0x4B}){
+                new SimpleWorker(new int[]{0x5F,0xA6}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer i = v.pop(Integer.class);
                         Player p = v.peek(Player.class);
@@ -552,13 +583,13 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "GIVEEXPLEVEL",
-                "GIVEEXPLEVEL GIVEEXPLVL GIVEXPLVL",
+                "XPLEVELADD",
+                "XPLEVELADD XPLADD XPL+",
                 "Player Integer",
                 "Player",
                 "player",
                 "Give exp level",
-                new SimpleWorker(new int[]{0x5F,0x4C}){
+                new SimpleWorker(new int[]{0x5F,0xA7}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer i = v.pop(Integer.class);
                         Player p = v.peek(Player.class);
@@ -568,12 +599,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "ISFLYING",
-                "ISFLY ISFLYING",
+                "ISFLYING FLY",
                 "Player",
                 "Boolean",
                 "player",
                 "Returns true if player fly",
-                new SimpleWorker(new int[]{0x5F,0x4D}){
+                new SimpleWorker(new int[]{0x5F,0xA8}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.isFlying());
@@ -582,12 +613,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "ONGROUND",
-                "ONGROUND",
+                "ONGROUND GND",
                 "Entity",
                 "Boolean",
                 "entity",
                 "Returns true if entity on ground",
-                new SimpleWorker(new int[]{0x5F,0x4E}){
+                new SimpleWorker(new int[]{0x5F,0xA9}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Entity p = v.pop(Entity.class);
                         v.push(p.isOnGround());
@@ -596,12 +627,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "ISSCALEDHEALTH",
-                "ISSCALEDHEALTH",
+                "ISSCALEDHEALTH SCHP",
                 "Player",
                 "Boolean",
                 "player",
                 "Gets if the client is displayed a 'scaled' health, that is, health on a scale from 0-20.",
-                new SimpleWorker(new int[]{0x5F,0x4F}){
+                new SimpleWorker(new int[]{0x5F,0xAA}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.isScaledHealth());
@@ -615,7 +646,7 @@ public class InitPlayer {
                 "Boolean",
                 "player",
                 "Returns whether the player is sleeping ignored.",
-                new SimpleWorker(new int[]{0x5F,0x50}){
+                new SimpleWorker(new int[]{0x5F,0xAB}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.isSleepingIgnored());
@@ -623,13 +654,13 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "SNEAKING",
-                "SNEAKING",
+                "SNEAK",
+                "SNEAK SNK",
                 "Player",
                 "Boolean",
                 "player",
                 "Returns true if player in sneak mode",
-                new SimpleWorker(new int[]{0x5F,0x51}){
+                new SimpleWorker(new int[]{0x5F,0xAC}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.isSneaking());
@@ -638,12 +669,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SPRINTING",
-                "SPRINTING",
+                "SPRINTING SPRT",
                 "Player",
                 "Boolean",
                 "player",
                 "Returns true if player in sprint mode",
-                new SimpleWorker(new int[]{0x5F,0x52}){
+                new SimpleWorker(new int[]{0x5F,0xAD}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.isSprinting());
@@ -657,7 +688,7 @@ public class InitPlayer {
                 "Player",
                 "player",
                 "Kick player",
-                new SimpleWorker(new int[]{0x5F,0x53}){
+                new SimpleWorker(new int[]{0x5F,0xAE}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class);
                         Player p = v.peek(Player.class);
@@ -672,7 +703,7 @@ public class InitPlayer {
                 "Player",
                 "player",
                 "Makes the player perform the given command",
-                new SimpleWorker(new int[]{0x5F,0x54}){
+                new SimpleWorker(new int[]{0x5F,0xAF}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class);
                         Player p = v.peek(Player.class);
@@ -681,13 +712,13 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "EFFECT",
-                "EFFECT",
-                "Player Location Effect",
+                "SENDEFFECT",
+                "SENDEFFECT SEF",
+                "Player Location #Effect",
                 "Player",
-                "player",
+                "player effect",
                 "Play effect for player",
-                new SimpleWorker(new int[]{0x5F,0x55}){
+                new SimpleWorker(new int[]{0x5F,0xB0}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Effect ef = v.pop(Effect.values());
                         Location l = v.pop(Location.class);
@@ -697,13 +728,13 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "XEFFECT",
-                "XEFFECT",
-                "Player Location Effect Integer(data)",
+                "SENDCEFFECT",
+                "SENDCEFFECT SCEF",
+                "Player Location #Effect Integer(data)",
                 "Player",
-                "player",
-                "Play effect for player",
-                new SimpleWorker(new int[]{0x5F,0x56}){
+                "player effect",
+                "Play custom effect for player",
+                new SimpleWorker(new int[]{0x5F,0xB1}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer data = v.pop(Integer.class);
                         Effect ef = v.pop(Effect.values());
@@ -715,14 +746,14 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "PLAYNOTE",
-                "PLAYNOTE NOTE",
-                "Player Location Instrument Note",
+                "PLAYNOTE PLNOTE",
+                "Player Location #Instrument Integer(note)",
                 "Player",
                 "player",
                 "Play note for player",
-                new SimpleWorker(new int[]{0x5F,0x57}){
+                new SimpleWorker(new int[]{0x5F,0xB2}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Note note = v.pop(Note.class);
+                        Note note = new Note(v.pop(Integer.class));
                         Instrument ins = v.pop(Instrument.values());
                         Location l = v.pop(Location.class);
                         Player p = v.peek(Player.class);
@@ -731,13 +762,13 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "PLAYSOUND",
-                "PLAYSOUND SOUND",
-                "Player Location Sound Float(volume) Float(pitch)",
+                "SENDSOUND",
+                "SENDSOUND SSND",
+                "Player Location #Sound Float(volume) Float(pitch)",
                 "Player",
-                "player",
+                "player sound",
                 "Play sound for player",
-                new SimpleWorker(new int[]{0x5F,0x58}){
+                new SimpleWorker(new int[]{0x5F,0xB3}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Float pitch = v.pop(Float.class);
                         Float volume = v.pop(Float.class);
@@ -750,12 +781,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "RESETPLAYERTIME",
-                "RESETPLAYERTIME",
+                "RESETPLAYERTIME RSTPTIME",
                 "Player",
                 "Player",
                 "player",
                 "Reset player's time",
-                new SimpleWorker(new int[]{0x5F,0x59}){
+                new SimpleWorker(new int[]{0x5F,0xB4}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.peek(Player.class);
                         p.resetPlayerTime();
@@ -764,12 +795,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "RESETPLAYERWEATHER",
-                "RESETPLAYERWEATHER",
+                "RESETPLAYERWEATHER RSTPWTR",
                 "Player",
                 "Player",
                 "player",
                 "Reset player's weather",
-                new SimpleWorker(new int[]{0x5F,0x5A}){
+                new SimpleWorker(new int[]{0x5F,0xB5}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.peek(Player.class);
                         p.resetPlayerWeather();
@@ -778,12 +809,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SENDBLOCK",
-                "SBLOCK SBL",
+                "SENDBLOCK SBL",
                 "Player Block ItemStack",
                 "Player",
                 "player",
                 "Send a block change",
-                new SimpleWorker(new int[]{0x5F,0x5B}){
+                new SimpleWorker(new int[]{0x5F,0xB6}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         ItemStack item = v.pop(ItemStack.class);
                         Block l = v.pop(Block.class);
@@ -795,11 +826,11 @@ public class InitPlayer {
         VSCompiler.addRule(new SimpleCompileRule(
                 "MESSAGE",
                 "MESSAGE MSG",
-                "Player String",
+                "Player String(message)",
                 "Player",
                 "player",
-                "Send msg to player",
-                new SimpleWorker(new int[]{0x5F,0x5C}){
+                "Send message to player",
+                new SimpleWorker(new int[]{0x5F,0xB7}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class);
                         Player p = v.peek(Player.class);
@@ -807,29 +838,17 @@ public class InitPlayer {
                     }
                 }
         ));
-        VSCompiler.addRule(new SimpleCompileRule(
-                "SETALLOWFLY",
-                "SETALLOWFLY",
-                "Player Boolean",
-                "Player",
-                "player",
-                "Sets if the Player is allowed to fly via jump key double-tap like in creative mode.",
-                new SimpleWorker(new int[]{0x5F,0x5D}){
-                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Boolean b = v.pop(Boolean.class);
-                        Player p = v.peek(Player.class);
-                        p.setAllowFlight(b);
-                    }
-                }
-        ));
+
+        // here todo: insert command 0x5F,0xB8
+
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETDISPLAYNAME",
-                "SETDISPLAYNAME",
-                "Player String",
+                "SETDISPLAYNAME >DNAME",
+                "Player String(name)",
                 "Player",
                 "player",
-                "Set displayname",
-                new SimpleWorker(new int[]{0x5F,0x5E}){
+                "Set display name for player",
+                new SimpleWorker(new int[]{0x5F,0xB9}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class) ;
                         Player p = v.peek(Player.class);
@@ -839,12 +858,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETEXHAUSTION",
-                "SETEXHAUSTION",
+                "SETEXHAUSTION >EXH",
                 "Player Float",
                 "Player",
                 "player",
                 "Set Exhaustion lvl",
-                new SimpleWorker(new int[]{0x5F,0x5F}){
+                new SimpleWorker(new int[]{0x5F,0xBA}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Float s = v.pop(Float.class) ;
                         Player p = v.peek(Player.class);
@@ -853,13 +872,13 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "SETEXP",
-                "SETEXP SETXP >XP >EXP",
-                "Player Float",
+                "SETXP",
+                "SETXP >XP",
+                "Player Float(level)",
                 "Player",
                 "player",
-                "Set experience lvl",
-                new SimpleWorker(new int[]{0x5F,0x60}){
+                "Set experience level",
+                new SimpleWorker(new int[]{0x5F,0xBB}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Float s = v.pop(Float.class) ;
                         Player p = v.peek(Player.class);
@@ -869,12 +888,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETFLYING",
-                "SETFLYING",
-                "Player Boolean",
+                "SETFLYING >FLY",
+                "Player Boolean(start/stop)",
                 "Player",
                 "player",
                 "Makes this player start or stop flying",
-                new SimpleWorker(new int[]{0x5F,0x61}){
+                new SimpleWorker(new int[]{0x5F,0xBC}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean s = v.pop(Boolean.class) ;
                         Player p = v.peek(Player.class);
@@ -884,12 +903,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETFLYSPEED",
-                "SETFLYSPEED >FLYSPEED FSPD",
+                "SETFLYSPEED >FLYSPEED >FSPD",
                 "Player Float",
                 "Player",
                 "player",
                 "Set fly speed",
-                new SimpleWorker(new int[]{0x5F,0x62}){
+                new SimpleWorker(new int[]{0x5F,0xBD}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Float s = v.pop(Float.class) ;
                         Player p = v.peek(Player.class);
@@ -903,8 +922,8 @@ public class InitPlayer {
                 "Player Integer",
                 "Player",
                 "player",
-                "Set fly speed",
-                new SimpleWorker(new int[]{0x5F,0x63}){
+                "Set food level for player",
+                new SimpleWorker(new int[]{0x5F,0xBE}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer s = v.pop(Integer.class) ;
                         Player p = v.peek(Player.class);
@@ -919,7 +938,7 @@ public class InitPlayer {
                 "Player",
                 "player",
                 "Set exp level for player",
-                new SimpleWorker(new int[]{0x5F,0x64}){
+                new SimpleWorker(new int[]{0x5F,0xBF}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer s = v.pop(Integer.class) ;
                         Player p = v.peek(Player.class);
@@ -929,12 +948,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETTABNAME",
-                "SETTABNAME >TABNAME",
+                "SETTABNAME SETTNAME >TNAME",
                 "Player String",
                 "Player",
                 "player",
                 "Set list name for player",
-                new SimpleWorker(new int[]{0x5F,0x65}){
+                new SimpleWorker(new int[]{0x5F,0xC0}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class) ;
                         Player p = v.peek(Player.class);
@@ -944,12 +963,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETPLAYERTIME",
-                "SETPLAYERTIME",
+                "SETPLAYERTIME SETPTIME >PTIME",
                 "Player Long Boolean",
                 "Player",
                 "player",
-                "Set time for palyer",
-                new SimpleWorker(new int[]{0x5F,0x66}){
+                "Set time for player",
+                new SimpleWorker(new int[]{0x5F,0xC1}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean s2 = v.pop(Boolean.class);
                         Long s = v.pop(Long.class) ;
@@ -960,12 +979,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETPLAYERWEATHER",
-                "SETPLAYERWEATHER",
-                "Player WeatherType",
+                "SETPLAYERWEATHER SETPWTR >PWTR",
+                "Player #WeatherType",
                 "Player",
                 "player",
-                "Set weather for palyer",
-                new SimpleWorker(new int[]{0x5F,0x67}){
+                "Set weather for player",
+                new SimpleWorker(new int[]{0x5F,0xC2}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         WeatherType s = v.pop(WeatherType.values());
                         Player p = v.peek(Player.class);
@@ -975,12 +994,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETSATURATION",
-                "SETSATURATION",
+                "SETSATURATION >SAT",
                 "Player Float",
                 "Player",
                 "player",
-                "Set saturation level for palyer",
-                new SimpleWorker(new int[]{0x5F,0x68}){
+                "Set saturation level for player",
+                new SimpleWorker(new int[]{0x5F,0xC3}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Float s = v.pop(Float.class);
                         Player p = v.peek(Player.class);
@@ -990,12 +1009,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETSCALEHEALTH",
-                "SETSCALEHEALTH",
+                "SETSCALEHEALTH SETSCHP SCHP",
                 "Player Boolean",
                 "Player",
                 "player",
                 "Sets if the client is displayed a 'scaled' health, that is, health on a scale from 0-20",
-                new SimpleWorker(new int[]{0x5F,0x69}){
+                new SimpleWorker(new int[]{0x5F,0xC4}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean s = v.pop(Boolean.class);
                         Player p = v.peek(Player.class);
@@ -1010,7 +1029,7 @@ public class InitPlayer {
                 "Player",
                 "player",
                 "Sets whether the player is ignored as not sleeping",
-                new SimpleWorker(new int[]{0x5F,0x6A}){
+                new SimpleWorker(new int[]{0x5F,0xC5}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean s = v.pop(Boolean.class);
                         Player p = v.peek(Player.class);
@@ -1019,13 +1038,13 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "SETSNEAKING",
-                "SETSNEAKING SETSNEAK >SNEAK",
+                "SETSNEAK",
+                "SETSNEAK SETSNK >SNK",
                 "Player Boolean",
                 "Player",
                 "player",
                 "Sets the sneak mode the player",
-                new SimpleWorker(new int[]{0x5F,0x6B}){
+                new SimpleWorker(new int[]{0x5F,0xC6}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean s = v.pop(Boolean.class);
                         Player p = v.peek(Player.class);
@@ -1035,12 +1054,12 @@ public class InitPlayer {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETSPRINTING",
-                "SETSPRINTING SETSPRINT >SPRINT",
+                "SETSPRINTING SETSPRT >SPRT",
                 "Player Boolean",
                 "Player",
                 "player",
                 "Sets whether the player is sprinting or not",
-                new SimpleWorker(new int[]{0x5F,0x6C}){
+                new SimpleWorker(new int[]{0x5F,0xC7}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Boolean s = v.pop(Boolean.class);
                         Player p = v.peek(Player.class);
@@ -1055,7 +1074,7 @@ public class InitPlayer {
                 "Player",
                 "player",
                 "Request that the player's client download and switch texture packs",
-                new SimpleWorker(new int[]{0x5F,0x6D}){
+                new SimpleWorker(new int[]{0x5F,0xC8}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         String s = v.pop(String.class);
                         Player p = v.peek(Player.class);
@@ -1070,21 +1089,36 @@ public class InitPlayer {
                 "Long",
                 "player",
                 "Gets the first date and time that this player was witnessed on server",
-                new SimpleWorker(new int[]{0x5F,0x6E}){
+                new SimpleWorker(new int[]{0x5F,0xC9}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         OfflinePlayer p = v.pop(OfflinePlayer.class);
                         v.push(p.getFirstPlayed());
                     }
                 }
         ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "FIRSTPLAYEDDATE",
+                "FIRSTPLAYEDDATE",
+                "Player",
+                "Date",
+                "player",
+                "Gets the first date that this player was witnessed on server",
+                new SimpleWorker(new int[]{0x5F,0xCA}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        OfflinePlayer p = v.pop(OfflinePlayer.class);
+                        v.push(new Date(p.getFirstPlayed()));
+                    }
+                }
+        ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "PLAYERWEATHER",
-                "PLAYERWEATHER",
+                "PLAYERWEATHER PWTR",
                 "Player",
                 "String",
                 "player",
                 "Get player's weather type",
-                new SimpleWorker(new int[]{0x5F,0x6F}){
+                new SimpleWorker(new int[]{0x5F,0xCB}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.pop(Player.class);
                         v.push(p.getPlayerWeather());
@@ -1098,7 +1132,7 @@ public class InitPlayer {
                 "Player",
                 "player",
                 "Sets the players current experience level",
-                new SimpleWorker(new int[]{0x5F,0x70}){
+                new SimpleWorker(new int[]{0x5F,0xCC}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer s = v.pop(Integer.class);
                         Player p = v.peek(Player.class);
@@ -1113,25 +1147,11 @@ public class InitPlayer {
                 "Player",
                 "player",
                 "Sets the speed at which a client will walk",
-                new SimpleWorker(new int[]{0x5F,0x71}){
+                new SimpleWorker(new int[]{0x5F,0xCD}){
                     @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Float s = v.pop(Float.class);
                         Player p = v.peek(Player.class);
                         p.setWalkSpeed(s);
-                    }
-                }
-        ));
-
-        VSCompiler.addRule(new SimpleCompileRule(
-                "EQUIPMENT",
-                "EQUIPMENT EQP",
-                "LivingEntity",
-                "Equipment",
-                "entity equipment",
-                "Get equipment",
-                new SimpleWorker(new int[]{0x5F,0x72}){
-                    @Override public void run(ThreadRunner r, me.dpohvar.varscript.vs.Thread v, Context f, Void d) throws ConvertException {
-                        v.push(v.pop(LivingEntity.class).getEquipment());
                     }
                 }
         ));
@@ -1142,8 +1162,8 @@ public class InitPlayer {
                 "Player",
                 "Player",
                 "player",
-                "Respawn player. Works only with died players",
-                new SimpleWorker(new int[]{0x5F,0x73}){
+                "Respawn player. Works only if player has 0 hp",
+                new SimpleWorker(new int[]{0x5F,0xCE}){
                     @Override public void run(ThreadRunner r, me.dpohvar.varscript.vs.Thread v, Context f, Void d) throws ConvertException {
                         Player p = v.peek(Player.class);
                         try{
@@ -1159,6 +1179,690 @@ public class InitPlayer {
                 }
         ));
 
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETSCOREBOARD",
+                "SETSCOREBOARD SETSCB >SCB",
+                "Player Scoreboard",
+                "Player",
+                "scoreboard",
+                "Set player's scoreboard",
+                new SimpleWorker(new int[]{0x5F,0xCF}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Scoreboard sc = v.pop(Scoreboard.class);
+                        v.peek(Player.class)
+                                .setScoreboard(sc);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "NEWSCOREBOARD",
+                "NEWSCOREBOARD NSCB",
+                "",
+                "Scoreboard",
+                "scoreboard",
+                "Create new scoreboard",
+                new SimpleWorker(new int[]{0x5F,0xD0}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                Bukkit.getScoreboardManager().getNewScoreboard()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "MAINSCOREBOARD",
+                "MAINSCOREBOARD MSCB",
+                "",
+                "Scoreboard",
+                "scoreboard",
+                "Get main server scoreboard",
+                new SimpleWorker(new int[]{0x5F,0xD1}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                Bukkit.getScoreboardManager().getMainScoreboard()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "PLAYERSCORES",
+                "PLAYERSCORES",
+                "Scoreboard OfflinePlayer",
+                "Set(Score)",
+                "scoreboard",
+                "Get all player scores",
+                new SimpleWorker(new int[]{0x5F,0xD2}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        OfflinePlayer p = v.pop(OfflinePlayer.class);
+                        v.push(
+                                v.pop(Scoreboard.class).getScores(p)
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SCBPLAYERS",
+                "SCBPLAYERS",
+                "Scoreboard",
+                "Set(OfflinePlayer)",
+                "scoreboard",
+                "Get all players in scoreboard",
+                new SimpleWorker(new int[]{0x5F,0xD3}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Scoreboard.class).getPlayers()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "TEAMS",
+                "TEAMS",
+                "Scoreboard",
+                "Set(Team)",
+                "scoreboard",
+                "Get all teams in scoreboard",
+                new SimpleWorker(new int[]{0x5F,0xD4}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Scoreboard.class).getTeams()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "TEAM",
+                "TEAM",
+                "Scoreboard String(team)",
+                "Team",
+                "scoreboard",
+                "Get scoreboard team",
+                new SimpleWorker(new int[]{0x5F,0xD5}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        String team = v.pop(String.class);
+                        v.push(
+                                v.pop(Scoreboard.class).getTeam(team)
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "OBJECTIVES",
+                "OBJECTIVES",
+                "Scoreboard",
+                "Set(Objectives)",
+                "scoreboard",
+                "Get all objectives of scoreboard",
+                new SimpleWorker(new int[]{0x5F,0xD6}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Scoreboard.class).getObjectives()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "OBJECTIVESLOT",
+                "OBJECTIVESLOT",
+                "Scoreboard #DisplaySlot",
+                "Objective",
+                "scoreboard",
+                "get objective in special slot",
+                new SimpleWorker(new int[]{0x5F,0xD7}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        DisplaySlot slot = v.pop(DisplaySlot.values());
+                        v.push(
+                                v.pop(Scoreboard.class).getObjective(slot)
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "OBJECTIVE",
+                "OBJECTIVE",
+                "Scoreboard #DisplaySlot",
+                "Objective",
+                "scoreboard",
+                "get objective by name",
+                new SimpleWorker(new int[]{0x5F,0xD8}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        String name = v.pop(String.class);
+                        v.push(
+                                v.pop(Scoreboard.class).getObjective(name)
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "OBJECTIVECRIT",
+                "OBJECTIVECRIT",
+                "Scoreboard #DisplaySlot",
+                "Objective",
+                "scoreboard",
+                "get objective by criteria",
+                new SimpleWorker(new int[]{0x5F,0xD9}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        String name = v.pop(String.class);
+                        v.push(
+                                v.pop(Scoreboard.class).getObjectivesByCriteria(name)
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "BPLAYERTEAM",
+                "BPLAYERTEAM",
+                "Scoreboard OfflinePlayer",
+                "Team",
+                "scoreboard",
+                "get player's team",
+                new SimpleWorker(new int[]{0x5F,0xDA}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        OfflinePlayer p = v.pop(OfflinePlayer.class);
+                        v.push(
+                                v.pop(Scoreboard.class).getPlayerTeam(p)
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "RESETPLAYERSCORES",
+                "RESETPLAYERSCORES",
+                "Scoreboard OfflinePlayer",
+                "Scoreboard",
+                "scoreboard",
+                "reset player's scores",
+                new SimpleWorker(new int[]{0x5F,0xDB}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        OfflinePlayer p = v.pop(OfflinePlayer.class);
+                        v.peek(Scoreboard.class)
+                                .resetScores(p);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CLEARSLOT",
+                "CLEARSLOT",
+                "Scoreboard #DisplaySlot",
+                "Scoreboard",
+                "scoreboard",
+                "clear display slot",
+                new SimpleWorker(new int[]{0x5F,0xDC}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        DisplaySlot s = v.pop(DisplaySlot.values());
+                        v.peek(Scoreboard.class).clearSlot(s);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "REGTEAM",
+                "REGTEAM",
+                "Scoreboard String(team)",
+                "Scoreboard",
+                "scoreboard",
+                "register new team for scoreboard",
+                new SimpleWorker(new int[]{0x5F,0xDD}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        String val = v.pop(String.class);
+                        v.peek(Scoreboard.class).registerNewTeam(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "REGOBJECTIVE",
+                "REGOBJECTIVE",
+                "Scoreboard String(name) String(criteria)",
+                "Scoreboard",
+                "scoreboard",
+                "register new objective for scoreboard",
+                new SimpleWorker(new int[]{0x5F,0xDE}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        String cr = v.pop(String.class);
+                        String name = v.pop(String.class);
+                        v.peek(Scoreboard.class).registerNewObjective(name,cr);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "ADDTOTEAM",
+                "ADDTOTEAM TEAM+",
+                "Team OfflinePlayer",
+                "Team",
+                "scoreboard",
+                "add player to team",
+                new SimpleWorker(new int[]{0x5F,0xDF}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        OfflinePlayer val = v.pop(OfflinePlayer.class);
+                        v.peek(Team.class).addPlayer(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "REMFROMTEAM",
+                "REMFROMTEAM TEAM-",
+                "Team OfflinePlayer",
+                "Team",
+                "scoreboard",
+                "remove player from team",
+                new SimpleWorker(new int[]{0x5F,0xE0}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        OfflinePlayer val = v.pop(OfflinePlayer.class);
+                        v.peek(Team.class).removePlayer(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "REMOVETEAM",
+                "REMOVETEAM RMTEAM",
+                "Team",
+                "",
+                "scoreboard",
+                "unregister team",
+                new SimpleWorker(new int[]{0x5F,0xE1}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.pop(Team.class).unregister();
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "FRIENDLYFIRE",
+                "FRIENDLYFIRE FFIRE",
+                "Team",
+                "Boolean",
+                "scoreboard",
+                "get friendlyfire state",
+                new SimpleWorker(new int[]{0x5F,0xE2}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Team.class).allowFriendlyFire()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "TEAMNAME",
+                "TEAMNAME",
+                "Team",
+                "String",
+                "scoreboard",
+                "get team name",
+                new SimpleWorker(new int[]{0x5F,0xE3}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Team.class).getName()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "FRIENDLYSEE",
+                "FRIENDLYSEE FSEE",
+                "Team",
+                "Boolean",
+                "scoreboard",
+                "Gets the team's ability to see invisible teammates",
+                new SimpleWorker(new int[]{0x5F,0xE4}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Team.class).canSeeFriendlyInvisibles()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "TEAMDISPLAYNAME",
+                "TEAMDISPLAYNAME TEAMDNAME",
+                "Team",
+                "String",
+                "scoreboard",
+                "Gets the name displayed to players for this team",
+                new SimpleWorker(new int[]{0x5F,0xE5}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Team.class).getDisplayName()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "TEAMPLAYERS",
+                "TEAMPLAYERS",
+                "Team",
+                "Set(OfflinePlayer)",
+                "scoreboard",
+                "Gets the Set of players on the team",
+                new SimpleWorker(new int[]{0x5F,0xE6}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Team.class).getPlayers()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "TEAMPREFIX",
+                "TEAMPREFIX",
+                "Team",
+                "String",
+                "scoreboard",
+                "Gets the prefix prepended to the display of players on this team.",
+                new SimpleWorker(new int[]{0x5F,0xE7}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Team.class).getPrefix()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "TEAMSUFFIX",
+                "TEAMSUFFIX",
+                "Team",
+                "String",
+                "scoreboard",
+                "Gets the suffix appended to the display of players on this team",
+                new SimpleWorker(new int[]{0x5F,0xE8}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Team.class).getSuffix()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "TEAMSIZE",
+                "TEAMSIZE",
+                "Team",
+                "Integer",
+                "scoreboard",
+                "get team size",
+                new SimpleWorker(new int[]{0x5F,0xE9}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Team.class).getSize()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETFRIENDLYFIRE",
+                "SETFRIENDLYFIRE SETFFIRE >FFIRE",
+                "Team Boolean",
+                "Team",
+                "scoreboard",
+                "Sets the team friendly fire state",
+                new SimpleWorker(new int[]{0x5F,0xEA}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Boolean val = v.pop(Boolean.class);
+                        v.peek(Team.class).setAllowFriendlyFire(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETFRIENDLYSEE",
+                "SETFRIENDLYSEE SETFSEE >FSEE",
+                "Team Boolean",
+                "Team",
+                "scoreboard",
+                "sets the team's ability to see invisible invisible teammates",
+                new SimpleWorker(new int[]{0x5F,0xEB}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        Boolean val = v.pop(Boolean.class);
+                        v.peek(Team.class).setCanSeeFriendlyInvisibles(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETTEAMDISPLAYNAME",
+                "SETTEAMDISPLAYNAME SETTEAMDNAME >TEAMDNAME",
+                "Team String(name)",
+                "Team",
+                "scoreboard",
+                "Sets the name displayed to players for this team",
+                new SimpleWorker(new int[]{0x5F,0xEC}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        String val = v.pop(String.class);
+                        v.peek(Team.class).setDisplayName(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETTEAMPREFIX",
+                "SETTEAMPREFIX >TEAMPREFIX",
+                "Team String(prefix)",
+                "Team",
+                "scoreboard",
+                "Sets the prefix prepended to the display of players on this team",
+                new SimpleWorker(new int[]{0x5F,0xED}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        String val = v.pop(String.class);
+                        v.peek(Team.class).setPrefix(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETTEAMSUFFIX",
+                "SETTEAMSUFFIX >TEAMSUFFIX",
+                "Team String(suffix)",
+                "Team",
+                "scoreboard",
+                "Sets the suffix appended to the display of players on this team",
+                new SimpleWorker(new int[]{0x5F,0xEE}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        String val = v.pop(String.class);
+                        v.peek(Team.class).setSuffix(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "HASPLAYER",
+                "HASPLAYER",
+                "Team OfflinePlayer",
+                "Boolean",
+                "scoreboard",
+                "Checks to see if the specified player is a member of team",
+                new SimpleWorker(new int[]{0x5F,0xEF}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        OfflinePlayer val = v.pop(OfflinePlayer.class);
+                        v.push(
+                                v.pop(Team.class)
+                                        .hasPlayer(val)
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CRITERIA",
+                "CRITERIA",
+                "Objective",
+                "String",
+                "scoreboard",
+                "Gets the criteria objective tracks",
+                new SimpleWorker(new int[]{0x5F,0xF0}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Objective.class)
+                                        .getCriteria()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "OBJDISPLAYNAME",
+                "OBJDISPLAYNAME OBJDNAME",
+                "Objective",
+                "String",
+                "scoreboard",
+                "Gets the name displayed to players for objective",
+                new SimpleWorker(new int[]{0x5F,0xF1}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Objective.class)
+                                        .getDisplayName()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "OBJSLOT",
+                "OBJSLOT",
+                "Objective",
+                "#DisplaySlot",
+                "scoreboard",
+                "Gets the display slot objective is displayed at",
+                new SimpleWorker(new int[]{0x5F,0xF2}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Objective.class)
+                                        .getDisplaySlot()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "OBJNAME",
+                "OBJNAME",
+                "Objective",
+                "String(name)",
+                "scoreboard",
+                "get name of objective",
+                new SimpleWorker(new int[]{0x5F,0xF3}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Objective.class)
+                                        .getName()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "OBJMODIFIABLE",
+                "OBJMODIFIABLE",
+                "Objective",
+                "Boolean",
+                "scoreboard",
+                "gets if the objective's scores can be modified directly",
+                new SimpleWorker(new int[]{0x5F,0xF4}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Objective.class)
+                                        .isModifiable()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETOBJDISPLAYNAME",
+                "SETOBJDISPLAYNAME >OBJDNAME",
+                "Objective String(name)",
+                "Objective",
+                "scoreboard",
+                "Sets the name displayed to players for this objective",
+                new SimpleWorker(new int[]{0x5F,0xF5}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        String val = v.pop(String.class);
+                        v.peek(Objective.class).setDisplayName(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETOBJSLOT",
+                "SETOBJSLOT >OBJSLOT",
+                "Objective #DisplaySlot",
+                "Objective",
+                "scoreboard",
+                "sets this objective to display on the specified slot for the scoreboard, removing it from any other display slot",
+                new SimpleWorker(new int[]{0x5F,0xF6}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        DisplaySlot val = v.pop(DisplaySlot.values());
+                        v.peek(Objective.class).setDisplaySlot(val);
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "REMOVEOBJ",
+                "REMOVEOBJ",
+                "Objective",
+                "",
+                "scoreboard",
+                "Unregister this objective",
+                new SimpleWorker(new int[]{0x5F,0xF7}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.pop(Objective.class).unregister();
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SCORE",
+                "SCORE",
+                "Score",
+                "Integer",
+                "scoreboard",
+                "Get score value",
+                new SimpleWorker(new int[]{0x5F,0xF8}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(
+                                v.pop(Score.class).getScore()
+                        );
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETSCORE",
+                "SETSCORE >SCORE",
+                "Score Integer",
+                "Score",
+                "scoreboard",
+                "Set score value",
+                new SimpleWorker(new int[]{0x5F,0xF9}){
+                    @Override public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        int val = v.pop(Integer.class);
+                        v.peek(Score.class).setScore(val);
+                    }
+                }
+        ));
 
 
 

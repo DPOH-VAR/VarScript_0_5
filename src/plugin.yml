@@ -1,9 +1,8 @@
 name: VarScript
 description: More more more in-game scripting!
-author: DPOH-VAR
 authors: [DPOH-VAR, MYXOMOPX]
-main: me.dpohvar.varscript.VarScript
-version: 0.5.3
+main: org.dpohvar.varscript.VarScript
+version: 0.5.5
 softdepend: [PowerNBT]
 commands:
     "task":
@@ -15,10 +14,6 @@ commands:
         usage: /scheduler [enable|disable|reload]
         permission: varscript.command.scheduler
         aliases: ">s"
-    "vs":
-        description: manage varscript
-        usage: /vs <varscript>
-        permission: varscript.command.vs
     "js":
         description: manage javascript
         usage: /js <varscript>
@@ -28,23 +23,25 @@ commands:
         usage: /vs> <varscript>
         permission: varscript.command.vsrun
         aliases: ">"
-    "vs>file":
-        description: run varscript file
-        usage: /vs <filename>
-        permission: varscript.command.vsfile
-        aliases: ">file"
     "js>":
         description: run javascript code
         usage: /js <javascript>
         permission: varscript.command.jsrun
+    "script>":
+        description: run javascript code
+        usage: /script> <Language> <script>
+        permission: varscript.command.script
+        aliases: "->"
+    "script>file":
+        description: run javascript code
+        usage: /script> <Language> <script>
+        permission: varscript.command.script
+        aliases: "->f"
     "js>file":
         description: run javascript file
         usage: /js>file <filename>
         permission: varscript.command.jsfile
-    "vsbin>file":
-        description: run varscript binary file
-        usage: /vsbin>file <filename>
-        permission: varscript.command.vsbinfile
+        aliases: "js>f"
     "vs>tag":
         description: list commands for tag or list all tags
         usage: /vs>tag [tag]

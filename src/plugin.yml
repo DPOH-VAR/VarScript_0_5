@@ -1,7 +1,7 @@
 name: VarScript
 description: More more more in-game scripting!
 authors: [DPOH-VAR, MYXOMOPX]
-main: org.dpohvar.varscript.VarScript
+main: me.dpohvar.varscript.VarScript
 version: 0.5.5
 softdepend: [PowerNBT]
 commands:

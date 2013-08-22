@@ -26,7 +26,7 @@ public class RuleVector extends ConvertRule<Vector> {
 
     @Override
     public <V> Vector convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule {
-        if (object == null) return new Vector();
+        if (object == null) return null;
         if (object instanceof Number) return new Vector(0, ((Number) object).doubleValue(), 0);
         if (object instanceof String)
             return convert(Bukkit.getPlayer(((String) object).trim()).getLocation(), thread, scope);

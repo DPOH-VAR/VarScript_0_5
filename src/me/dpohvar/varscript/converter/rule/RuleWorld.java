@@ -27,7 +27,7 @@ public class RuleWorld extends ConvertRule<World> {
 
     @Override
     public <V> World convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule {
-        if (object == null) return thread.getProgram().getCaller().getLocation().getWorld();
+        if (object == null) return null;
         if (object instanceof Number) return Bukkit.getWorlds().get(((Number) object).intValue());
         if (object instanceof String) return Bukkit.getWorld((String) object);
         if (object instanceof Entity) return ((Entity) object).getWorld();

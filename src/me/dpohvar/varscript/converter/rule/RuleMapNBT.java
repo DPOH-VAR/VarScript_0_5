@@ -28,6 +28,7 @@ public class RuleMapNBT extends ConvertRule<Map> {
 
     @Override
     public <V> Map convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule {
+        if (object == null) return null;
         if (object instanceof Block) return new NBTContainerBlock((Block) object).getTag().asMap();
         if (object instanceof BlockState)
             return new NBTContainerBlock(((BlockState) object).getBlock()).getTag().asMap();

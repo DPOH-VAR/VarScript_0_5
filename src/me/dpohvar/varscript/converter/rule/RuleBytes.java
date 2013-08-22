@@ -31,7 +31,7 @@ public class RuleBytes extends ConvertRule<byte[]> {
 
     @Override
     public <V> byte[] convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule, ConvertException {
-        if (object == null) return new byte[0];
+        if (object == null) return null;
         if (object instanceof Byte) {
             return ByteBuffer.allocate(1).put((Byte) object).array();
         }

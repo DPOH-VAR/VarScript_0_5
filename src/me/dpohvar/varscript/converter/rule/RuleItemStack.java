@@ -12,8 +12,6 @@ import org.bukkit.block.Block;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import static org.bukkit.Material.AIR;
-
 /**
  * Created with IntelliJ IDEA.
  * User: DPOH-VAR
@@ -40,7 +38,7 @@ public class RuleItemStack extends ConvertRule<ItemStack> {
 
     @Override
     public <V> ItemStack convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule {
-        if (object == null) return new ItemStack(AIR);
+        if (object == null) return null;
         if (object instanceof Number) return newItem(((Number) object).intValue(), 1, 0);
         if (object instanceof String) return Bukkit.getPlayer(((String) object).trim()).getItemInHand();
         try {

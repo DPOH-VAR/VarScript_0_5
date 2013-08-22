@@ -25,6 +25,7 @@ public class RuleOfflinePlayer extends ConvertRule<OfflinePlayer> {
 
     @Override
     public <V> OfflinePlayer convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule {
+        if (object == null) return null;
         if (object instanceof Number) {
             int id = ((Number) object).intValue();
             for (World w : Bukkit.getWorlds()) {

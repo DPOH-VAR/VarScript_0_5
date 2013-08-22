@@ -35,7 +35,7 @@ public class RuleString extends ConvertRule<String> {
 
     @Override
     public <V> String convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule {
-        if (object == null) return "";
+        if (object == null) return null;
         if (object instanceof Number) return object.toString();
         if (object instanceof Character) return object.toString();
         if (object instanceof Player) return ((Player) object).getName();

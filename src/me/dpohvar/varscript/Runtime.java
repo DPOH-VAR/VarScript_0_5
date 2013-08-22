@@ -4,6 +4,7 @@ import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.converter.Converter;
 import me.dpohvar.varscript.converter.rule.*;
 import me.dpohvar.varscript.scheduler.Scheduler;
+import me.dpohvar.varscript.se.SECallerProgram;
 import me.dpohvar.varscript.se.SEFileProgram;
 import me.dpohvar.varscript.utils.ScriptManager;
 import me.dpohvar.varscript.utils.VarScriptIOUtils;
@@ -13,6 +14,7 @@ import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
@@ -55,6 +57,58 @@ public class Runtime implements Fieldable, Scope {
         return engine;
     }
 
+    public void startScript(Object caller, String script, String lang) {
+        startScript(Caller.getCallerFor(caller), script, lang);
+    }
+
+    public void startScript(Caller caller, String script, String lang) {
+        try {
+            if (lang.equalsIgnoreCase("varscript")) {
+                CommandList cmd = VSCompiler.compile(script);
+                VarscriptProgram program = new VarscriptProgram(this, caller);
+                me.dpohvar.varscript.vs.Thread thread = new Thread(program);
+                thread.pushFunction(cmd.build(program.getScope()), program);
+                new ThreadRunner(thread).runThreads();
+                return;
+            }
+            ScriptEngine engine = getScriptEngine(lang);
+            if (engine == null) {
+                caller.send(ChatColor.RED + "no script engine with name: " + ChatColor.YELLOW + lang);
+                return;
+            }
+            SECallerProgram program = new SECallerProgram(this, caller, engine);
+            program.runScript(script);
+        } catch (Throwable e) {
+            caller.handleException(e);
+        }
+    }
+
+    public Object runScript(Object caller, String script, String lang) {
+        return runScript(Caller.getCallerFor(caller), script, lang);
+    }
+
+    public Object runScript(Caller caller, String script, String lang) {
+        try {
+            if (lang.equalsIgnoreCase("varscript")) {
+                CommandList cmd = VSCompiler.compile(script);
+                VarscriptProgram program = new VarscriptProgram(this, caller);
+                me.dpohvar.varscript.vs.Thread thread = new Thread(program);
+                thread.pushFunction(cmd.build(program.getScope()), program);
+                new ThreadRunner(thread).runThreads();
+                return thread.pop();
+            }
+            ScriptEngine engine = getScriptEngine(lang);
+            if (engine == null) {
+                caller.send(ChatColor.RED + "no script engine with name: " + ChatColor.YELLOW + lang);
+                return null;
+            }
+            SECallerProgram program = new SECallerProgram(this, caller, engine);
+            return program.runScript(script);
+        } catch (Throwable e) {
+            caller.handleException(e);
+            return null;
+        }
+    }
 
     private final Bindings bindings = new Bindings() {
         @Override

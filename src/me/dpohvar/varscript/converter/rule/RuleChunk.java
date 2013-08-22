@@ -28,7 +28,7 @@ public class RuleChunk extends ConvertRule<Chunk> {
 
     @Override
     public <V> Chunk convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule {
-        if (object == null) return thread.getProgram().getCaller().getLocation().getChunk();
+        if (object == null) return null;
         if (object instanceof Number)
             return thread.getProgram().getCaller().getLocation().add(0.0, ((Number) object).doubleValue(), 0).getChunk();
         if (object instanceof Character)

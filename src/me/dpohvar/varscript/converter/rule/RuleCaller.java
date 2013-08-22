@@ -18,6 +18,7 @@ public class RuleCaller extends ConvertRule<Caller> {
 
     @Override
     public <V> Caller convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule {
+        if (object == null) return null;
         return Caller.getCallerFor(object);
     }
 

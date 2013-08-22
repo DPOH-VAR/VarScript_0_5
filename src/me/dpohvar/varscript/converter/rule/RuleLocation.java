@@ -27,7 +27,7 @@ public class RuleLocation extends ConvertRule<Location> {
 
     @Override
     public <V> Location convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule {
-        if (object == null) return thread.getProgram().getCaller().getLocation();
+        if (object == null) return null;
         if (object instanceof Number)
             return thread.getProgram().getCaller().getLocation().add(0.0, ((Number) object).doubleValue(), 0);
         if (object instanceof Character)

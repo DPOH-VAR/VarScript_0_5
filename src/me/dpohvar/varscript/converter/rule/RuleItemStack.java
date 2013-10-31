@@ -20,8 +20,8 @@ import org.bukkit.inventory.ItemStack;
  */
 public class RuleItemStack extends ConvertRule<ItemStack> {
 
-    static Class<?> classItemStack = ReflectBukkitUtils.getMinecraftClass("ItemStack");
-    static Class<?> classCraftItemStack = ReflectBukkitUtils.getBukkitClass("inventory.CraftItemStack");
+    static Class<?> classItemStack = ReflectBukkitUtils.getClass("<nms>ItemStack", "net.minecraft.item.ItemStack");
+    static Class<?> classCraftItemStack = ReflectBukkitUtils.getClass("<cb>inventory.CraftItemStack", "<cb>inventory.CraftItemStack");
 
     public static ItemStack newItem(int id, int amount, int dmg) {
         Object m = ReflectUtils.callConstructor(

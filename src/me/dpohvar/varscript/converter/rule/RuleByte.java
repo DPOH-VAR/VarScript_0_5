@@ -37,6 +37,7 @@ public class RuleByte extends ConvertRule<Byte> {
     public <V> Byte convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule {
         if (object == null) return 0;
         if (object instanceof Number) return ((Number) object).byteValue();
+        if (object instanceof Enum) return (byte) ((Enum) object).ordinal();
         if (object instanceof Character) return (byte) ((Character) object).charValue();
         if (object instanceof Location) return (byte) ((Location) object).getY();
         if (object instanceof String) return new Byte((String) object);

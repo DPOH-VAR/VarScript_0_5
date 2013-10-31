@@ -18,11 +18,11 @@ import org.bukkit.command.CommandSender;
  * Date: 12.07.13
  * Time: 6:14
  */
-public class CommandRunVS implements CommandExecutor {
+public class CommandPrintVS implements CommandExecutor {
 
     private final Runtime runtime;
 
-    public CommandRunVS(Runtime runtime) {
+    public CommandPrintVS(Runtime runtime) {
         this.runtime = runtime;
     }
 
@@ -33,9 +33,10 @@ public class CommandRunVS implements CommandExecutor {
             String source = StringUtils.join(strings, ' ');
             CommandList cmd = VSCompiler.compile(source);
             VarscriptProgram program = new VarscriptProgram(runtime, caller, null);
-            me.dpohvar.varscript.vs.Thread thread = new Thread(program);
+            Thread thread = new Thread(program);
             thread.pushFunction(cmd.build(program.getScope()), program);
             new ThreadRunner(thread).runThreads();
+            caller.send(thread.pop());
         } catch (Throwable e) {
             caller.handleException(e);
         }

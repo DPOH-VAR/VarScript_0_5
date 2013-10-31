@@ -39,6 +39,7 @@ public class RuleDouble extends ConvertRule<Double> {
         if (object instanceof Location) return ((Location) object).getY();
         if (object instanceof Character) return (double) ((Character) object).charValue();
         if (object instanceof String) return new Double((String) object);
+        if (object instanceof Enum) return (double) ((Enum) object).ordinal();
         if (object instanceof Entity) return (double) ((Entity) object).getEntityId();
         if (object instanceof Vector) return ((Vector) object).length();
         if (object instanceof Block) return (double) ((Block) object).getTypeId();

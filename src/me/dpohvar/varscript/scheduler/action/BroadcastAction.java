@@ -1,5 +1,6 @@
 package me.dpohvar.varscript.scheduler.action;
 
+import me.dpohvar.powernbt.utils.StringParser;
 import me.dpohvar.varscript.scheduler.Task;
 import me.dpohvar.varscript.scheduler.TaskAction;
 import org.bukkit.Bukkit;
@@ -15,7 +16,7 @@ import java.util.Map;
 public class BroadcastAction extends TaskAction {
 
     final String param;
-    private String broadcast;
+    private String message;
 
     public BroadcastAction(Task task, String param) {
         super(task);
@@ -24,24 +25,23 @@ public class BroadcastAction extends TaskAction {
 
     @Override
     public void run(Map<String, Object> environment) {
-        if (broadcast != null) Bukkit.broadcastMessage(param);
+        if (message != null) Bukkit.broadcastMessage(message);
     }
 
     @Override
     protected boolean register() {
         try {
-            broadcast = param;
-            error = false;
+            message = StringParser.parse(param);
             return true;
         } catch (Exception ignored) {
-            return true;
+            return false;
         }
     }
 
     @Override
     protected boolean unregister() {
-        if (broadcast == null) return false;
-        broadcast = null;
+        if (message == null) return false;
+        message = null;
         return true;
     }
 

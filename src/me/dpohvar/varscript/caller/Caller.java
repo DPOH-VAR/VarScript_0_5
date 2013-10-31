@@ -11,9 +11,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import javax.script.Bindings;
-import javax.script.SimpleBindings;
 import java.io.PrintStream;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.security.PrivilegedActionException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,14 +29,8 @@ public abstract class Caller implements Fieldable {
 
     private static HashMap<Object, Caller> callers = new HashMap<Object, Caller>();
     private Throwable lastException;
-    private Bindings bindings;
 
     protected Caller() {
-        bindings = new SimpleBindings(fields);
-    }
-
-    public Bindings getBindings() {
-        return bindings;
     }
 
     @Override
@@ -126,6 +120,15 @@ public abstract class Caller implements Fieldable {
     }
 
     final public void handleException(Throwable exception) {
+        try {
+            if (exception instanceof UndeclaredThrowableException) {
+                exception = exception.getCause();
+            }
+            if (exception instanceof PrivilegedActionException) {
+                exception = exception.getCause();
+            }
+        } catch (Exception ignored) {
+        }
         lastException = exception;
         onHandleException(exception);
     }

@@ -3,11 +3,11 @@ package me.dpohvar.varscript.vs;
 import me.dpohvar.varscript.Program;
 import me.dpohvar.varscript.Runtime;
 import me.dpohvar.varscript.caller.Caller;
+import me.dpohvar.varscript.utils.Module;
+import me.dpohvar.varscript.utils.ModuleManager;
+import me.dpohvar.varscript.utils.ScopeBindings;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,8 +22,40 @@ public class VarscriptProgram implements Program, Iterable<Thread>, Fieldable {
     private int pid = -1;
     private boolean finished = false;
     private Scope scope;
+    private HashMap<String, Object> programEnvironment = new HashMap<String, Object>();
     Fieldable proto;
     Runnable constructor;
+    private HashSet<Runnable> onFinishRun = new HashSet<Runnable>();
+
+    public void onFinish(Runnable runnable) {
+        if (isFinished()) {
+            if (this.isFinished()) {
+                startNewThread(runnable);
+            }
+        } else {
+            onFinishRun.add(runnable);
+        }
+    }
+
+    public Object require(String moduleName) {
+        ModuleManager manager = runtime.getModuleManager();
+        Module module = manager.getModule(null, moduleName);
+        if (module == null) module = manager.reload(null, moduleName);
+        if (module == null) return null;
+        if (!module.isLoaded()) return null;
+        return module.getLangModule();
+    }
+
+    public void onFinishRemove(Runnable runnable) {
+        onFinishRun.remove(runnable);
+    }
+
+    private void startNewThread(Runnable runnable) {
+        Thread t = new Thread(this);
+        t.pushFunction(runnable, this);
+        new ThreadRunner(t).runThreads();
+        t.setFinished();
+    }
 
     public Scope getScope() {
         return scope;
@@ -34,27 +66,34 @@ public class VarscriptProgram implements Program, Iterable<Thread>, Fieldable {
         return "Program{" + caller.getInstance().toString() + "}";
     }
 
-    public VarscriptProgram(Runtime runtime, final Caller caller) {
+    public VarscriptProgram(Runtime runtime, final Caller caller, Map<String, Object> bindings) {
         this.caller = caller;
         this.runtime = runtime;
+        if (bindings == null) bindings = caller.getFields();
         runtime.registerProgram(this);
-        FinalScope finalScope = new FinalScope(runtime, caller.getFields());
-        this.scope = new SimpleScope(finalScope);
+        ScopeBindings scopeBindings = new ScopeBindings(bindings)
+                .listen(runtime.getGlobalBindings())
+                .listen(programEnvironment)
+                .listen(runtime.getModuleBindings(null))
+                .listen(bindings)
+                .listen(runtime.getEngineBindings(null))
+                .listen(runtime.getRuntimeBindings());
+        this.scope = new SimpleScope(scopeBindings);
         Runnable function = new Function(null, "Function", scope);
         Runnable object = new Function(null, "FieldableObject", scope);
         Runnable thread = new Function(null, "FieldableObject", scope);
         Runnable reflect = new Function(null, "Reflect", scope);
         this.constructor = new Function(null, "Program", scope);
         this.proto = constructor.getPrototype();
-        scope.defineVar("Function", function);
-        scope.defineVar("FieldableObject", object);
-        scope.defineVar("Location", caller.getLocation());
-        scope.defineVar("Caller", caller);
-        scope.defineVar("Me", caller.getInstance());
-        scope.defineConst("[[Function]]", function);
-        scope.defineConst("[[FieldableObject]]", object);
-        scope.defineConst("[[Thread]]", thread);
-        scope.defineConst("[[Reflect]]", reflect);
+        programEnvironment.put("Function", function);
+        programEnvironment.put("FieldableObject", object);
+        programEnvironment.put("Location", caller.getLocation());
+        programEnvironment.put("Caller", caller);
+        programEnvironment.put("Me", caller.getInstance());
+        programEnvironment.put("[[Function]]", function);
+        programEnvironment.put("[[FieldableObject]]", object);
+        programEnvironment.put("[[Thread]]", thread);
+        programEnvironment.put("[[Reflect]]", reflect);
     }
 
     @Override
@@ -94,6 +133,11 @@ public class VarscriptProgram implements Program, Iterable<Thread>, Fieldable {
     @Override
     public void setFinished() {
         finished = true;
+        while (!onFinishRun.isEmpty()) {
+            Runnable r = onFinishRun.iterator().next();
+            onFinishRun.remove(r);
+            startNewThread(r);
+        }
         for (Thread thread : threads) {
             thread.finished = true;
             thread.clearTriggers();

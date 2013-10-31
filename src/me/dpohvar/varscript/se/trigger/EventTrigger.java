@@ -15,30 +15,32 @@ import java.lang.reflect.Method;
  * Date: 21.08.13
  * Time: 14:33
  */
-public class EventTrigger implements Trigger {
+public class EventTrigger extends Trigger {
 
-    final SEProgram program;
     private RegisteredListener registeredListener;
     private HandlerList handlerList;
     boolean registered = true;
 
 
-    public EventTrigger(SEProgram program, final Class<? extends Event> clazz, EventPriority priority, final SERunnable runner) {
-        this.program = program;
+    public EventTrigger(final SEProgram program, final Class<? extends Event> clazz, EventPriority priority, final SERunnable runner, boolean ignoreCancelled) {
+        super(program);
         EventExecutor executor = new EventExecutor() {
             public void execute(Listener listener, Event event) throws EventException {
-                runner.run(event);
+                try {
+                    runner.run(event);
+                } catch (Exception e) {
+                    program.getCaller().handleException(e);
+                }
             }
         };
-        registeredListener = new RegisteredListener(null, executor, priority, VarScript.instance, false);
+        registeredListener = new RegisteredListener(null, executor, priority, VarScript.instance, ignoreCancelled);
         handlerList = getEventListeners(getRegistrationClass(clazz));
         handlerList.register(registeredListener);
     }
 
-    public void unregister() {
+    public void setUnregistered() {
         handlerList.unregister(registeredListener);
         registered = false;
-        program.removeTrigger(this);
     }
 
     public boolean isRegistered() {
@@ -91,13 +93,13 @@ public class EventTrigger implements Trigger {
     public static Class<? extends Event> getEventClass(String className) {
         Class<? extends Event> eventClass = null;
         try {
-            return (Class<? extends Event>) Class.forName(className);
+            return (Class<? extends Event>) me.dpohvar.varscript.Runtime.libLoader.loadClass(className);
         } catch (Exception ignored) {
         }
         if (eventClass == null) for (String prefix : classPrefix)
             try {
                 try {
-                    return (Class<? extends Event>) Class.forName(prefix + className);
+                    return (Class<? extends Event>) me.dpohvar.varscript.Runtime.libLoader.loadClass(prefix + className);
                 } catch (Exception ignored) {
                 }
             } catch (Exception ignored) {

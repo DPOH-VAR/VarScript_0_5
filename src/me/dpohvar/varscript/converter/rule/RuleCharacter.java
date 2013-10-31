@@ -29,6 +29,7 @@ public class RuleCharacter extends ConvertRule<Character> {
             if (object instanceof Score) return (char) ((Score) object).getScore();
         } catch (NoClassDefFoundError ignored) {
         }
+        if (object instanceof Enum) return (char) ((Enum) object).ordinal();
         if (object instanceof byte[]) {
             byte[] bytes = (byte[]) object;
             if (bytes.length == 0) return 0;

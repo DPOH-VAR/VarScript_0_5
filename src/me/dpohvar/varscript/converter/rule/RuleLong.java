@@ -39,6 +39,7 @@ public class RuleLong extends ConvertRule<Long> {
         if (object instanceof Character) return (long) ((Character) object).charValue();
         if (object instanceof Location) return (long) ((Location) object).getY();
         if (object instanceof String) return new Long((String) object);
+        if (object instanceof Enum) return (long) ((Enum) object).ordinal();
         if (object instanceof Entity) return (long) ((Entity) object).getEntityId();
         if (object instanceof Vector) return (long) ((Vector) object).length();
         if (object instanceof Block) return (long) ((Block) object).getTypeId();

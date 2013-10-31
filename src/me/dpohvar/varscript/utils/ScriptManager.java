@@ -1,10 +1,12 @@
 package me.dpohvar.varscript.utils;
 
 import me.dpohvar.varscript.VarScript;
-import org.apache.commons.io.IOUtils;
 
+import javax.annotation.Nullable;
+import javax.script.ScriptEngineFactory;
 import java.io.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -15,10 +17,12 @@ import java.util.Map;
  */
 public class ScriptManager {
     private File home;
+    public static final String autorunFolder = "autorun";
+    public static final String moduleFolder = "modules";
+
     HashMap<String, String> langExtensions = new HashMap<String, String>() {{
         put("vs", ".vs");
         put("vsbin", ".bin");
-        put("js", ".js");
     }};
 
     public ScriptManager(File home) {
@@ -39,22 +43,33 @@ public class ScriptManager {
         return file;
     }
 
-    public File getModuleFile(String lang, String module, String name) {
+    public File getModuleFile(String lang, String name) {
         if (!langExtensions.containsKey(lang)) return null;
         File folder = new File(home, lang);
         if (!folder.isDirectory()) return null;
-        File mod = new File(folder, module);
+        File mod = new File(folder, moduleFolder);
         if (!mod.isDirectory()) return null;
         File file = new File(mod, name + langExtensions.get(lang));
         if (!file.isFile()) return null;
         return file;
     }
 
-    public Map<String, File> getModuleFiles(String lang, String module) {
+    public File getAutorunFile(String lang, String name) {
         if (!langExtensions.containsKey(lang)) return null;
         File folder = new File(home, lang);
         if (!folder.isDirectory()) return null;
-        File mod = new File(folder, module);
+        File mod = new File(folder, autorunFolder);
+        if (!mod.isDirectory()) return null;
+        File file = new File(mod, name + langExtensions.get(lang));
+        if (!file.isFile()) return null;
+        return file;
+    }
+
+    public Map<String, File> getModuleFiles(String lang) {
+        if (!langExtensions.containsKey(lang)) return null;
+        File folder = new File(home, lang);
+        if (!folder.isDirectory()) return null;
+        File mod = new File(folder, moduleFolder);
         if (!mod.isDirectory()) return null;
         HashMap<String, File> files = new HashMap<String, File>();
         File[] innerFiles = mod.listFiles();
@@ -115,16 +130,14 @@ public class ScriptManager {
 
     public byte[] readBytesScriptFile(String lang, String name) {
         try {
-            return IOUtils.toByteArray(openScriptFile(lang, name));
+            return VarScriptIOUtils.getBytes(getScriptFile(lang, name));
         } catch (Exception e) {
             return null;
         }
     }
 
     public String readScriptFile(String lang, String name) {
-        byte[] bytes = readBytesScriptFile(lang, name);
-        if (bytes == null) return null;
-        return new String(bytes, VarScript.UTF8);
+        return VarScriptIOUtils.readFile(getScriptFile(lang, name));
     }
 
     public boolean saveScriptFile(String lang, String name, String data) {
@@ -203,6 +216,142 @@ public class ScriptManager {
             return false;
         }
         return true;
+    }
+
+    @Nullable
+    public String readScriptFile(ScriptEngineFactory factory, String fileName) {
+        File scriptDir = new File(home, factory.getLanguageName());
+        if (!scriptDir.isDirectory()) return null;
+        File file = null;
+        for (String ex : factory.getExtensions()) {
+            file = new File(scriptDir, fileName + "." + ex);
+            if (file.isFile()) break;
+        }
+        if (file == null) file = new File(scriptDir, fileName);
+        if (!file.isFile()) return null;
+        return VarScriptIOUtils.readFile(file);
+    }
+
+    public Map<String, File> getScriptFiles(ScriptEngineFactory factory) {
+        HashMap<String, File> map = new HashMap<String, File>();
+        File scriptDir = new File(home, factory.getLanguageName());
+        File[] files = scriptDir.listFiles();
+        if (files == null) return map;
+        List<String> extensions = factory.getExtensions();
+        if (extensions.isEmpty()) {
+            for (File f : files) {
+                map.put(f.getName(), f);
+            }
+            return map;
+        }
+        for (File f : files) {
+            String name = f.getName();
+            int dotpos = name.lastIndexOf('.');
+            if (dotpos == -1) continue;
+            String ex = name.substring(dotpos + 1, name.length());
+            name = name.substring(0, dotpos);
+            for (String e : factory.getExtensions()) {
+                if (e.equals(ex)) {
+                    map.put(name, f);
+                    break;
+                }
+            }
+        }
+        return map;
+    }
+
+
+    @Nullable
+    public String readScriptAutorun(ScriptEngineFactory factory, String fileName) {
+        File scriptDir = new File(home, factory.getLanguageName());
+        if (!scriptDir.isDirectory()) return null;
+        File targetDir = new File(scriptDir, autorunFolder);
+        File file = null;
+        for (String ex : factory.getExtensions()) {
+            file = new File(targetDir, fileName + "." + ex);
+            if (file.isFile()) break;
+        }
+        if (file == null) file = new File(targetDir, fileName);
+        if (!file.isFile()) return null;
+        return VarScriptIOUtils.readFile(file);
+    }
+
+    public Map<String, File> getScriptAutoruns(ScriptEngineFactory factory) {
+        HashMap<String, File> map = new HashMap<String, File>();
+        File tDir = new File(home, factory.getLanguageName());
+        File scriptDir = new File(tDir, autorunFolder);
+        File[] files = scriptDir.listFiles();
+        if (files == null) return map;
+        List<String> extensions = factory.getExtensions();
+        if (extensions.isEmpty()) {
+            for (File f : files) {
+                map.put(f.getName(), f);
+            }
+            return map;
+        }
+        for (File f : files) {
+            String name = f.getName();
+            int dotpos = name.lastIndexOf('.');
+            if (dotpos == -1) continue;
+            String ex = name.substring(dotpos + 1, name.length());
+            name = name.substring(0, dotpos);
+            for (String e : factory.getExtensions()) {
+                if (e.equals(ex)) {
+                    map.put(name, f);
+                    break;
+                }
+            }
+        }
+        return map;
+    }
+
+    @Nullable
+    public String readScriptModule(ScriptEngineFactory factory, String fileName) {
+        File scriptDir = new File(home, factory.getLanguageName());
+        if (!scriptDir.isDirectory()) return null;
+        File targetDir = new File(scriptDir, moduleFolder);
+        File file = null;
+        for (String ex : factory.getExtensions()) {
+            file = new File(targetDir, fileName + "." + ex);
+            if (file.isFile()) break;
+        }
+        if (file == null) file = new File(targetDir, fileName);
+        if (!file.isFile()) return null;
+        return VarScriptIOUtils.readFile(file);
+    }
+
+    public Map<String, File> getScriptModules(ScriptEngineFactory factory) {
+        HashMap<String, File> map = new HashMap<String, File>();
+        File tDir = new File(home, factory.getLanguageName());
+        File scriptDir = new File(tDir, moduleFolder);
+        File[] files = scriptDir.listFiles();
+        if (files == null) return map;
+        List<String> extensions = factory.getExtensions();
+        if (extensions.isEmpty()) {
+            for (File f : files) {
+                map.put(f.getName(), f);
+            }
+            return map;
+        }
+        for (File f : files) {
+            String name = f.getName();
+            int dotpos = name.lastIndexOf('.');
+            if (dotpos == -1) continue;
+            String ex = name.substring(dotpos + 1, name.length());
+            name = name.substring(0, dotpos);
+            for (String e : factory.getExtensions()) {
+                if (e.equals(ex)) {
+                    map.put(name, f);
+                    break;
+                }
+            }
+        }
+        return map;
+    }
+
+    public void createEnginesFolder(ScriptEngineFactory factory) {
+        File scriptsFolder = new File(home, factory.getLanguageName());
+        if (!scriptsFolder.isDirectory()) scriptsFolder.mkdirs();
     }
 
 }

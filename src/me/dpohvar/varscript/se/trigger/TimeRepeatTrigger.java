@@ -8,18 +8,17 @@ import me.dpohvar.varscript.se.SEProgram;
  * Date: 21.08.13
  * Time: 14:33
  */
-public class TimeRepeatTrigger implements Trigger {
+public class TimeRepeatTrigger extends Trigger {
 
     boolean registered = true;
     final Runnable runnable;
-    final SEProgram program;
 
     public TimeRepeatTrigger(SEProgram program, final long delay, final Runnable runner) {
-        this.program = program;
+        super(program);
         runnable = new Runnable() {
             @Override
             public void run() {
-                if (delay == 0) synchronized (this) {
+                if (delay != 0) synchronized (this) {
                     try {
                         this.wait(delay);
                     } catch (InterruptedException e) {
@@ -27,7 +26,11 @@ public class TimeRepeatTrigger implements Trigger {
                     }
                 }
                 if (registered) {
-                    runner.run();
+                    try {
+                        runner.run();
+                    } catch (Exception e) {
+                        getProgram().getCaller().handleException(e);
+                    }
                     run();
                 }
             }
@@ -35,12 +38,11 @@ public class TimeRepeatTrigger implements Trigger {
         new Thread(runnable).start();
     }
 
-    public void unregister() {
+    public void setUnregistered() {
         registered = false;
         synchronized (runnable) {
             runnable.notify();
         }
-        program.removeTrigger(this);
     }
 
     public boolean isRegistered() {

@@ -3,7 +3,8 @@ package me.dpohvar.varscript.scheduler.action;
 import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.scheduler.Task;
 import me.dpohvar.varscript.scheduler.TaskAction;
-import me.dpohvar.varscript.se.SECallerProgram;
+import me.dpohvar.varscript.se.SEFileProgram;
+import me.dpohvar.varscript.se.SEProgram;
 
 import javax.script.ScriptEngine;
 import java.util.Map;
@@ -14,13 +15,15 @@ import java.util.Map;
  * Date: 20.07.13
  * Time: 9:38
  */
-public class JSAction extends TaskAction {
+public class JSFileAction extends TaskAction {
 
     final String param;
+    private String file;
+    private String[] params;
     ScriptEngine engine;
     private me.dpohvar.varscript.Runtime runtime;
 
-    public JSAction(Task task, String param) {
+    public JSFileAction(Task task, String param) {
         super(task);
         this.param = param;
     }
@@ -29,12 +32,12 @@ public class JSAction extends TaskAction {
     public void run(Map<String, Object> environment) {
         if (engine == null) return;
         Caller caller = Caller.getCallerFor(getTask());
-        SECallerProgram program = new SECallerProgram(runtime, caller, engine, null);
+        SEProgram program = new SEFileProgram(runtime, caller, engine, params);
         for (Map.Entry<String, Object> e : environment.entrySet()) {
             program.putToEnvironment(e.getKey(), e.getValue());
         }
         try {
-            program.runScript(param);
+            program.runScript(runtime.scriptManager.readScriptFile(engine.getFactory().getLanguageName(), file));
         } catch (Exception e) {
             caller.handleException(e);
         }
@@ -43,8 +46,14 @@ public class JSAction extends TaskAction {
     @Override
     protected boolean register() {
         runtime = task.getScheduler().runtime;
+        String[] pp = param.split(" ");
+        if (pp.length < 1) return false;
+        file = pp[0];
+        if (!file.matches("[a-zA-Z][a-zA-Z0-9_]*")) return false;
+        params = new String[pp.length - 1];
+        System.arraycopy(pp, 1, params, 0, params.length);
         engine = runtime.getEngine("js");
-        if (param == null || param.isEmpty() || engine == null) return false;
+        if (engine == null) return false;
         return true;
     }
 
@@ -56,12 +65,12 @@ public class JSAction extends TaskAction {
     }
 
     public static String getType() {
-        return "JS";
+        return "JSFILE";
     }
 
     @Override
     public String toString() {
-        return "JS" + (param == null || param.isEmpty() ? "" : " " + param);
+        return "JSFILE" + (param == null || param.isEmpty() ? "" : " " + param);
     }
 
 }

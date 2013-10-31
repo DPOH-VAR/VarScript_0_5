@@ -30,8 +30,8 @@ import java.util.List;
  */
 public class InitInventory {
 
-    static Class<?> classItemStack = ReflectBukkitUtils.getMinecraftClass("ItemStack");
-    static Class<?> classCraftItemStack = ReflectBukkitUtils.getBukkitClass("inventory.CraftItemStack");
+    static Class<?> classItemStack = ReflectBukkitUtils.getClass("<nms>ItemStack", "net.minecraft.item.ItemStack");
+    static Class<?> classCraftItemStack = ReflectBukkitUtils.getClass("<cb>inventory.CraftItemStack", "<cb>inventory.CraftItemStack");
 
     public static ItemStack newItem(int id, int amount, int dmg) {
         Object m = ReflectUtils.callConstructor(
@@ -565,6 +565,25 @@ public class InitInventory {
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Integer val = v.pop(Integer.class);
                         v.peek(PlayerInventory.class).setHeldItemSlot(val);
+                    }
+                }
+        ));
+        VSCompiler.addRule(new SimpleCompileRule(
+                "SETALL",
+                "SETALL",
+                "Inventory List(ItemStack)",
+                "Inventory",
+                "inventory",
+                "set all items in inventory",
+                new SimpleWorker(new int[]{0xBF, 0x11}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        List list = v.pop(List.class);
+                        Inventory inv = v.peek(Inventory.class);
+                        ItemStack[] items = new ItemStack[list.size()];
+                        int i = 0;
+                        for (Object o : list) items[i++] = v.convert(ItemStack.class, o);
+                        inv.setContents(items);
                     }
                 }
         ));

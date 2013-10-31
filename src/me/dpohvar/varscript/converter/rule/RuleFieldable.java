@@ -5,6 +5,7 @@ import me.dpohvar.powernbt.nbt.NBTTagCompound;
 import me.dpohvar.powernbt.nbt.NBTTagList;
 import me.dpohvar.varscript.converter.NextRule;
 import me.dpohvar.varscript.utils.reflect.NBTTagWrapper;
+import me.dpohvar.varscript.utils.reflect.ReflectClass;
 import me.dpohvar.varscript.utils.reflect.ReflectObject;
 import me.dpohvar.varscript.vs.Fieldable;
 import me.dpohvar.varscript.vs.FieldableObject;
@@ -28,6 +29,7 @@ public class RuleFieldable extends ConvertRule<Fieldable> {
     public <V> Fieldable convert(V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws NextRule {
         if (object == null) return null;
         if (object instanceof Map) return new FieldableObject(scope, (Map) object);
+        if (object instanceof Class) return new ReflectClass((Class) object, scope);
         try {
             if (object instanceof NBTTagCompound) return new NBTTagWrapper((NBTBase) object);
             if (object instanceof NBTTagList) return new NBTTagWrapper((NBTBase) object);

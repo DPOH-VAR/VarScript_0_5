@@ -124,11 +124,41 @@ public class VarScriptIOUtils {
         out.write(value);
     }
 
-    public static byte[] getBytes(InputStream input) throws IOException {
+    public static byte[] getArrayBytes(InputStream input) throws IOException {
         int size = getInt(input);
         byte[] buffer = new byte[size];
         if (input.read(buffer) != buffer.length) throw exception;
         return buffer;
+    }
+
+    public static byte[] getBytes(File file) {
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(file);
+            return getAllBytes(fis);
+        } catch (IOException e) {
+            return null;
+        } finally {
+            if (fis != null) try {
+                fis.close();
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+    public static byte[] getAllBytes(InputStream input) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] tmp = new byte[4096];
+        int ret;
+        try {
+            while ((ret = input.read(tmp)) > 0) {
+                bos.write(tmp, 0, ret);
+            }
+        } catch (IOException e) {
+            if (VarScript.instance.isDebug()) e.printStackTrace();
+            return null;
+        }
+        return bos.toByteArray();
     }
 
     public static void put(OutputStream out, String value) throws IOException {
@@ -136,7 +166,7 @@ public class VarScriptIOUtils {
     }
 
     public static String getString(InputStream input) throws IOException {
-        return new String(getBytes(input), VarScript.UTF8);
+        return new String(getArrayBytes(input), VarScript.UTF8);
     }
 
     public static void putBytes(OutputStream out, String value) throws IOException {

@@ -8,14 +8,13 @@ import me.dpohvar.varscript.se.SEProgram;
  * Date: 21.08.13
  * Time: 14:33
  */
-public class TimeTrigger implements Trigger {
+public class TimeTrigger extends Trigger {
 
     boolean registered = true;
     final Runnable runnable;
-    final SEProgram program;
 
     public TimeTrigger(SEProgram program, final long delay, final Runnable runner) {
-        this.program = program;
+        super(program);
         runnable = new Runnable() {
             @Override
             public void run() {
@@ -27,20 +26,23 @@ public class TimeTrigger implements Trigger {
                     }
                 }
                 if (registered) {
-                    runner.run();
-                    unregister();
+                    try {
+                        runner.run();
+                    } catch (Exception e) {
+                        getProgram().getCaller().handleException(e);
+                    }
+                    stop();
                 }
             }
         };
         new Thread(runnable).start();
     }
 
-    public void unregister() {
+    public void setUnregistered() {
         registered = false;
         synchronized (runnable) {
             runnable.notify();
         }
-        program.removeTrigger(this);
     }
 
     public boolean isRegistered() {

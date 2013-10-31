@@ -42,10 +42,10 @@ public class VarScript extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        instance = this;
-        configManager = new ConfigManager(this);
         scriptHome = new File(this.getDataFolder(), "scripts");
         schedulerHome = new File(this.getDataFolder(), "tasks");
+        instance = this;
+        configManager = new ConfigManager(this);
     }
 
     @Override
@@ -54,11 +54,18 @@ public class VarScript extends JavaPlugin {
         getServer().getPluginCommand("scheduler").setExecutor(new CommandScheduler(runtime));
         getServer().getPluginCommand("task").setExecutor(new CommandTask(runtime));
         getServer().getPluginCommand("vs>").setExecutor(new CommandRunVS(runtime));
-        getServer().getPluginCommand("script>").setExecutor(new CommandRun(runtime));
-        getServer().getPluginCommand("js>").setExecutor(new CommandRunBindEngine(runtime, "JavaScript"));
-        getServer().getPluginCommand("js>file").setExecutor(new CommandFileBindEngine(runtime, "JavaScript", "js"));
         getServer().getPluginCommand("vs>tag").setExecutor(new CommandTagVS());
         getServer().getPluginCommand("vs>cmd").setExecutor(new CommandCommandVS());
+        getServer().getPluginCommand("js>").setExecutor(new CommandRunBindEngine(runtime, "js"));
+        getServer().getPluginCommand("script>").setExecutor(new CommandRun(runtime));
+        getServer().getPluginCommand("groovy>").setExecutor(new CommandRunBindEngine(runtime, "groovy"));
+        getServer().getPluginCommand("js>file").setExecutor(new CommandFileBindEngine(runtime, "js"));
+        getServer().getPluginCommand("groovy>file").setExecutor(new CommandFileBindEngine(runtime, "groovy"));
+        getServer().getPluginCommand("script>file").setExecutor(new CommandFile(runtime));
+        getServer().getPluginCommand("vs>>").setExecutor(new CommandPrintVS(runtime));
+        getServer().getPluginCommand("js>>").setExecutor(new CommandPrintBindEngine(runtime, "js"));
+        getServer().getPluginCommand("groovy>>").setExecutor(new CommandPrintBindEngine(runtime, "groovy"));
+        getServer().getPluginCommand("script>>").setExecutor(new CommandPrint(runtime));
     }
 
     @Override
@@ -70,4 +77,9 @@ public class VarScript extends JavaPlugin {
     public boolean isDebug() {
         return configManager.<Boolean>get(ConfigKey.DEBUG);
     }
+
+    public ClassLoader getVarscriptClassLoader() {
+        return this.getClassLoader();
+    }
+
 }

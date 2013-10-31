@@ -33,7 +33,7 @@ public class VSFileAction extends TaskAction {
     public void run(Map<String, Object> environment) {
         InputStream input = null;
         try {
-            VarscriptProgram program = new VarscriptProgram(runtime, Caller.getCallerFor(getTask()));
+            VarscriptProgram program = new VarscriptProgram(runtime, Caller.getCallerFor(getTask()), null);
             Scope scope = program.getScope();
             Function function = null;
             input = manager.openScriptFile("vsbin", param);

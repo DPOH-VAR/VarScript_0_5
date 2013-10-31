@@ -30,7 +30,7 @@ public class VSAction extends TaskAction {
     @Override
     public void run(Map<String, Object> environment) {
         if (commandList != null) {
-            VarscriptProgram program = new VarscriptProgram(runtime, Caller.getCallerFor(getTask()));
+            VarscriptProgram program = new VarscriptProgram(runtime, Caller.getCallerFor(getTask()), null);
             me.dpohvar.varscript.vs.Thread thread = new Thread(program);
             Scope scope = thread.pushFunction(commandList.build(program.getScope()), program).getScope();
             for (Map.Entry<String, Object> e : environment.entrySet()) {

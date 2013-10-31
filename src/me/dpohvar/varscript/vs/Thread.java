@@ -3,11 +3,13 @@ package me.dpohvar.varscript.vs;
 import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.converter.Converter;
 import me.dpohvar.varscript.trigger.Trigger;
+import me.dpohvar.varscript.utils.reflect.ReflectClass;
 import me.dpohvar.varscript.vs.exception.InterruptFunction;
 import me.dpohvar.varscript.vs.exception.RuntimeControl;
 import me.dpohvar.varscript.vs.exception.StopThread;
 import me.dpohvar.varscript.vs.exception.ThreadTrace;
 
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,6 +31,28 @@ public class Thread implements Fieldable {
     private boolean sleeping = false;
     Fieldable proto;
     Runnable constructor;
+    private HashSet<Runnable> onFinishRun = new HashSet<Runnable>();
+
+    public void onFinish(Runnable runnable) {
+        if (isFinished()) {
+            if (program.isFinished()) {
+                startNewThread(runnable);
+            }
+        } else {
+            onFinishRun.add(runnable);
+        }
+    }
+
+    public void onFinishRemove(Runnable runnable) {
+        onFinishRun.remove(runnable);
+    }
+
+    private void startNewThread(Runnable runnable) {
+        Thread t = new Thread(program);
+        t.pushFunction(runnable, this);
+        new ThreadRunner(t).runThreads();
+    }
+
 
     public Thread(VarscriptProgram program) {
         this.program = program;
@@ -81,6 +105,11 @@ public class Thread implements Fieldable {
 
     public void setFinished() {
         finished = true;
+        while (!onFinishRun.isEmpty()) {
+            Runnable r = onFinishRun.iterator().next();
+            onFinishRun.remove(r);
+            startNewThread(r);
+        }
         clearTriggers();
         program.threads.remove(this);
         program.checkFinished();
@@ -125,6 +154,17 @@ public class Thread implements Fieldable {
 
     public Runnable pop(Scope scope) throws ConvertException {
         java.lang.Object t = stack.pop();
+        if (t instanceof Class) {
+            Class<?> c = (Class) t;
+            Constructor con = null;
+            try {
+                con = c.getDeclaredConstructor();
+            } catch (NoSuchMethodException e) {
+                Constructor[] cons = c.getConstructors();
+                if (cons.length > 0) con = c.getConstructors()[0];
+            }
+            return new ReflectClass(con, scope);
+        }
         try {
             return convert(Runnable.class, t);
         } catch (ConvertException e) {
@@ -143,6 +183,17 @@ public class Thread implements Fieldable {
     }
 
     public Runnable convert(Scope scope, Object a) throws ConvertException {
+        if (a instanceof Class) {
+            Class<?> c = (Class) a;
+            Constructor con = null;
+            try {
+                con = c.getDeclaredConstructor();
+            } catch (NoSuchMethodException e) {
+                Constructor[] cons = c.getConstructors();
+                if (cons.length > 0) con = c.getConstructors()[0];
+            }
+            return new ReflectClass(con, scope);
+        }
         try {
             return convert(Runnable.class, a);
         } catch (ConvertException e) {

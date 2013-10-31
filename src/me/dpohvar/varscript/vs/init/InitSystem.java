@@ -6,6 +6,7 @@ import me.dpohvar.varscript.vs.Thread;
 import me.dpohvar.varscript.vs.ThreadRunner;
 import me.dpohvar.varscript.vs.compiler.SimpleCompileRule;
 import me.dpohvar.varscript.vs.compiler.VSCompiler;
+import org.bukkit.permissions.Permissible;
 
 import java.util.Date;
 
@@ -59,6 +60,43 @@ public class InitSystem {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) {
                         v.push(System.nanoTime());
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "HASPERM",
+                "HASPERM",
+                "Permissible String(permission)",
+                "Boolean(result)",
+                "permission",
+                "check permission of permissible object",
+                new SimpleWorker(new int[]{0x0F, 0x83}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+                        String val = v.pop(String.class);
+                        v.push(
+                                v.pop(Permissible.class).hasPermission(val)
+                        );
+                    }
+                }
+        ));
+
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "ISPERM",
+                "ISPERM",
+                "Permissible String(permission)",
+                "Boolean(result)",
+                "permission",
+                "checks if permissible object contains an override for the specified permission, by fully qualified name",
+                new SimpleWorker(new int[]{0x0F, 0x84}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws Exception {
+                        String val = v.pop(String.class);
+                        v.push(
+                                v.pop(Permissible.class).isPermissionSet(val)
+                        );
                     }
                 }
         ));

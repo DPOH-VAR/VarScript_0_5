@@ -15,6 +15,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.lang.reflect.Method;
 import java.util.Collection;
 
 /**
@@ -24,6 +25,42 @@ import java.util.Collection;
  * Time: 1:28
  */
 public class InitLiving {
+
+    public static Method dmg_getHealth = null;
+    public static Method dmg_setHealth = null;
+    public static Method dmg_getMaxHealth = null;
+    public static Method dmg_setMaxHealth = null;
+    public static Method dmg_damage = null;
+    public static Method dmg_damage_entiy = null;
+    public static Method le_last_damage = null;
+    public static Class hp_class = Double.class;
+
+    //public static Object hp_class_max = Double.MAX_VALUE;
+    static {
+        try {
+            le_last_damage = LivingEntity.class.getMethod("getLastDamage");
+            try {
+                dmg_setHealth = Damageable.class.getMethod("setHealth", double.class);
+                dmg_getHealth = Damageable.class.getMethod("getHealth");
+                dmg_getMaxHealth = Damageable.class.getMethod("getMaxHealth");
+                dmg_setMaxHealth = Damageable.class.getMethod("setMaxHealth", double.class);
+                dmg_damage = Damageable.class.getMethod("damage", double.class);
+                dmg_damage_entiy = Damageable.class.getMethod("damage", double.class, Entity.class);
+            } catch (Exception ignored) {
+                dmg_getHealth = Damageable.class.getMethod("getHealth");
+                dmg_setHealth = Damageable.class.getMethod("setHealth", int.class);
+                dmg_getMaxHealth = Damageable.class.getMethod("getMaxHealth");
+                dmg_setMaxHealth = Damageable.class.getMethod("setMaxHealth", int.class);
+                dmg_damage = Damageable.class.getMethod("damage", int.class);
+                dmg_damage_entiy = Damageable.class.getMethod("damage", int.class, Entity.class);
+                hp_class = Integer.class;
+                //hp_class_max = Integer.MAX_VALUE-1;
+            }
+        } catch (Exception ignored) {
+
+        }
+    }
+
     public static void load() {
         VSCompiler.addRule(new SimpleCompileRule(
                 "CUSTOMNAME",
@@ -50,7 +87,12 @@ public class InitLiving {
                 new SimpleWorker(new int[]{0x5F, 0x41}) {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        v.push(v.pop(LivingEntity.class).getLastDamage());
+                        LivingEntity le = v.pop(LivingEntity.class);
+                        try {
+                            v.push(le_last_damage.invoke(le));
+                        } catch (Exception e) {
+                            v.push(null);
+                        }
                     }
                 }
         ));
@@ -65,7 +107,11 @@ public class InitLiving {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Damageable e = v.pop(Damageable.class);
-                        v.push(e.getHealth());
+                        try {
+                            v.push(dmg_getHealth.invoke(e));
+                        } catch (Exception ex) {
+                            v.push(null);
+                        }
                     }
                 }
         ));
@@ -80,7 +126,11 @@ public class InitLiving {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Damageable e = v.pop(Damageable.class);
-                        v.push(e.getMaxHealth());
+                        try {
+                            v.push(dmg_getMaxHealth.invoke(e));
+                        } catch (Exception ex) {
+                            v.push(null);
+                        }
                     }
                 }
         ));
@@ -142,9 +192,12 @@ public class InitLiving {
                 new SimpleWorker(new int[]{0x5F, 0x47}) {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Double hp = v.pop(Double.class);
+                        Object hp = v.pop(hp_class);
                         Damageable e = v.peek(Damageable.class);
-                        e.setHealth(hp);
+                        try {
+                            dmg_setHealth.invoke(e, hp);
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
         ));
@@ -288,7 +341,7 @@ public class InitLiving {
         ));
         VSCompiler.addRule(new SimpleCompileRule(
                 "SETMAXHEALTH",
-                "SETMAXHEALTH SETMXHP >MXHP",
+                "SETMAXHEALTH SETMXHP SETMAXHP >MXHP >MAXHP",
                 "Entity Double",
                 "Entity",
                 "entity living damage",
@@ -296,9 +349,12 @@ public class InitLiving {
                 new SimpleWorker(new int[]{0x5F, 0x51}) {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Double hp = v.pop(Double.class);
+                        Object hp = v.pop(hp_class);
                         Damageable e = v.peek(Damageable.class);
-                        e.setMaxHealth(hp);
+                        try {
+                            dmg_setMaxHealth.invoke(e, hp);
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
         ));
@@ -409,7 +465,11 @@ public class InitLiving {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Damageable t = v.peek(Damageable.class);
-                        t.damage(Double.MAX_VALUE);
+                        try {
+                            Object hp = dmg_getHealth.invoke(t);
+                            dmg_damage.invoke(t, hp);
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
         ));
@@ -426,7 +486,11 @@ public class InitLiving {
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Entity e = v.peek(Entity.class);
                         Damageable t = v.peek(Damageable.class);
-                        t.damage(Double.MAX_VALUE, e);
+                        try {
+                            Object hp = dmg_getHealth.invoke(t);
+                            dmg_damage.invoke(t, hp, e);
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
         ));

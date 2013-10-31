@@ -47,7 +47,7 @@ public class ReflectClass implements Runnable, Fieldable {
             if (line.isEmpty()) args = new String[0];
             else args = line.split(",");
         }
-        clazz = Class.forName(name);
+        clazz = me.dpohvar.varscript.Runtime.libLoader.loadClass(name);
         Constructor<?> tConstructor = null;
         if (args == null) {
             try {
@@ -93,6 +93,20 @@ public class ReflectClass implements Runnable, Fieldable {
     public ReflectClass(Constructor con, Scope scope) {
         this.scope = scope;
         this.clazz = con.getDeclaringClass();
+        this.con = con;
+        con.setAccessible(true);
+    }
+
+    public ReflectClass(Class clazz, Scope scope) {
+        Constructor<?> con = null;
+        try {
+            con = clazz.getDeclaredConstructor();
+        } catch (NoSuchMethodException e) {
+            Constructor[] cons = clazz.getConstructors();
+            if (cons.length > 0) con = clazz.getConstructors()[0];
+        }
+        this.scope = scope;
+        this.clazz = clazz;
         this.con = con;
         con.setAccessible(true);
     }

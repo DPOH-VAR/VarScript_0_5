@@ -1,9 +1,6 @@
 package me.dpohvar.varscript.scheduler;
 
-import me.dpohvar.varscript.scheduler.condition.ChanceCondition;
-import me.dpohvar.varscript.scheduler.condition.EventStatusCondition;
-import me.dpohvar.varscript.scheduler.condition.JSCondition;
-import me.dpohvar.varscript.scheduler.condition.VSCondition;
+import me.dpohvar.varscript.scheduler.condition.*;
 
 import java.util.Map;
 
@@ -41,6 +38,10 @@ public abstract class TaskCondition extends TaskEntry {
             return new VSCondition(task, argument);
         } else if ("JS".equals(type)) {
             return new JSCondition(task, argument);
+        } else if ("G".equals(type)) {
+            return new GroovyCondition(task, argument);
+        } else if ("SCRIPT".equals(type)) {
+            return new ScriptCondition(task, argument);
         }
         return new TaskConditionError(task, s);
     }

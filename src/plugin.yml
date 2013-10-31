@@ -2,7 +2,7 @@ name: VarScript
 description: More more more in-game scripting!
 authors: [DPOH-VAR, MYXOMOPX]
 main: me.dpohvar.varscript.VarScript
-version: 0.5.5
+version: 0.5.7
 softdepend: [PowerNBT]
 commands:
     "task":
@@ -14,28 +14,24 @@ commands:
         usage: /scheduler [enable|disable|reload]
         permission: varscript.command.scheduler
         aliases: ">s"
-    "js":
-        description: manage javascript
-        usage: /js <varscript>
-        permission: varscript.command.js
     "vs>":
         description: run varscript code
         usage: /vs> <varscript>
-        permission: varscript.command.vsrun
+        permission: varscript.command.vs
         aliases: ">"
     "js>":
         description: run javascript code
         usage: /js <javascript>
-        permission: varscript.command.jsrun
+        permission: varscript.command.js
     "script>":
-        description: run javascript code
+        description: run sustom script code
         usage: /script> <Language> <script>
         permission: varscript.command.script
         aliases: "->"
     "script>file":
-        description: run javascript code
-        usage: /script> <Language> <script>
-        permission: varscript.command.script
+        description: run custom script code
+        usage: /script> <Language> <file> <args>
+        permission: varscript.command.scriptfile
         aliases: "->f"
     "js>file":
         description: run javascript file
@@ -45,10 +41,39 @@ commands:
     "vs>tag":
         description: list commands for tag or list all tags
         usage: /vs>tag [tag]
-        permission: varscript.command.jsfile
+        permission: varscript.command.vstag
         aliases: ">t"
     "vs>cmd":
         description: view help about command
         usage: /vs>cmd [command]
-        permission: varscript.command.jsfile
+        permission: varscript.command.vscmd
         aliases: ">c"
+    "groovy>":
+        description: run groovy code
+        usage: /groovy> <script>
+        permission: varscript.command.groovy
+        aliases: "g>"
+    "groovy>file":
+        description: run groovy code from file
+        usage: /groovy> <file> <args>
+        permission: varscript.command.groovyfile
+        aliases: "g>f"
+    "vs>>":
+        description: run varscript code and print result
+        usage: /vs>> <varscript>
+        permission: varscript.command.vs
+        aliases: ">>"
+    "js>>":
+        description: run javascript code and print result
+        usage: /js>> <script>
+        permission: varscript.command.js
+    "groovy>>":
+        description: run groovy script and print result
+        usage: /groovy>> <script>
+        permission: varscript.command.groovy
+        aliases: "g>>"
+    "script>>":
+        description: run script and print result
+        usage: /script>> <lang> <script>
+        permission: varscript.command.script
+        aliases: "->>"

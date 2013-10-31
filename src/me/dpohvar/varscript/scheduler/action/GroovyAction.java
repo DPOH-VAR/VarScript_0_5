@@ -14,13 +14,13 @@ import java.util.Map;
  * Date: 20.07.13
  * Time: 9:38
  */
-public class JSAction extends TaskAction {
+public class GroovyAction extends TaskAction {
 
     final String param;
     ScriptEngine engine;
     private me.dpohvar.varscript.Runtime runtime;
 
-    public JSAction(Task task, String param) {
+    public GroovyAction(Task task, String param) {
         super(task);
         this.param = param;
     }
@@ -43,7 +43,7 @@ public class JSAction extends TaskAction {
     @Override
     protected boolean register() {
         runtime = task.getScheduler().runtime;
-        engine = runtime.getEngine("js");
+        engine = runtime.getEngine("groovy");
         if (param == null || param.isEmpty() || engine == null) return false;
         return true;
     }
@@ -56,12 +56,12 @@ public class JSAction extends TaskAction {
     }
 
     public static String getType() {
-        return "JS";
+        return "G";
     }
 
     @Override
     public String toString() {
-        return "JS" + (param == null || param.isEmpty() ? "" : " " + param);
+        return "G" + (param == null || param.isEmpty() ? "" : " " + param);
     }
 
 }

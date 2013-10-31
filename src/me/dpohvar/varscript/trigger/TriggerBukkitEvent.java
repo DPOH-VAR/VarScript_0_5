@@ -6,7 +6,6 @@ import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.entity.EntityEvent;
 import org.bukkit.event.hanging.HangingEvent;
 import org.bukkit.event.inventory.InventoryEvent;
-import org.bukkit.event.inventory.InventoryInteractEvent;
 import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.server.PluginEvent;
 import org.bukkit.event.vehicle.VehicleEvent;
@@ -113,9 +112,6 @@ public class TriggerBukkitEvent<T extends Event> implements Trigger<T> {
         } else if (event instanceof InventoryEvent) {
             environment.put("Inventory", ((InventoryEvent) event).getInventory());
             environment.put("Viewers", ((InventoryEvent) event).getViewers());
-            if (event instanceof InventoryInteractEvent) {
-                environment.put("Entity", ((InventoryInteractEvent) event).getWhoClicked());
-            }
         } else if (event instanceof EntityEvent) {
             environment.put("Entity", ((EntityEvent) event).getEntity());
             environment.put("EntityType", ((EntityEvent) event).getEntityType());
@@ -138,13 +134,13 @@ public class TriggerBukkitEvent<T extends Event> implements Trigger<T> {
     public static Class<? extends Event> getEventClass(String className) {
         Class<? extends Event> eventClass = null;
         try {
-            return (Class<? extends Event>) Class.forName(className);
+            return (Class<? extends Event>) me.dpohvar.varscript.Runtime.libLoader.loadClass(className);
         } catch (Exception ignored) {
         }
         if (eventClass == null) for (String prefix : classPrefix)
             try {
                 try {
-                    return (Class<? extends Event>) Class.forName(prefix + className);
+                    return (Class<? extends Event>) me.dpohvar.varscript.Runtime.libLoader.loadClass(prefix + className);
                 } catch (Exception ignored) {
                     //return (Class<? extends Event>) Class.forName(prefix+className+"TaskEvent");
                 }

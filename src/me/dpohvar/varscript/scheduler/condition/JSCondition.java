@@ -28,7 +28,7 @@ public class JSCondition extends TaskCondition {
     @Override
     public boolean check(Map<String, Object> environment) {
         Caller caller = Caller.getCallerFor(getTask());
-        SECallerProgram program = new SECallerProgram(runtime, caller, engine);
+        SECallerProgram program = new SECallerProgram(runtime, caller, engine, null);
         for (Map.Entry<String, Object> e : environment.entrySet()) {
             program.putToEnvironment(e.getKey(), e.getValue());
         }
@@ -45,7 +45,7 @@ public class JSCondition extends TaskCondition {
     @Override
     protected boolean register() {
         runtime = task.getScheduler().runtime;
-        engine = runtime.getScriptEngine("JavaScript");
+        engine = runtime.getEngine("js");
         if (param == null || engine == null || param.isEmpty()) return false;
         return true;
     }

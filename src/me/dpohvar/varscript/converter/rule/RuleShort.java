@@ -39,6 +39,7 @@ public class RuleShort extends ConvertRule<Short> {
         if (object instanceof Character) return (short) ((Character) object).charValue();
         if (object instanceof Location) return (short) ((Location) object).getY();
         if (object instanceof String) return new Short((String) object);
+        if (object instanceof Enum) return (short) ((Enum) object).ordinal();
         if (object instanceof Entity) return (short) ((Entity) object).getEntityId();
         if (object instanceof Vector) return (short) ((Vector) object).length();
         if (object instanceof Block) return (short) ((Block) object).getTypeId();

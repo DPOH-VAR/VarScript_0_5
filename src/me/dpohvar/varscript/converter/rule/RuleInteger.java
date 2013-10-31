@@ -18,6 +18,7 @@ import org.bukkit.util.Vector;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -39,8 +40,10 @@ public class RuleInteger extends ConvertRule<Integer> {
         if (object instanceof Character) return (int) ((Character) object).charValue();
         if (object instanceof Location) return (int) ((Location) object).getY();
         if (object instanceof String) return new Integer((String) object);
+        if (object instanceof Enum) return ((Enum) object).ordinal();
         if (object instanceof Entity) return ((Entity) object).getEntityId();
         if (object instanceof Vector) return (int) ((Vector) object).length();
+        if (object instanceof Date) return (int) ((Date) object).getTime();
         if (object instanceof Block) return ((Block) object).getTypeId();
         if (object instanceof BlockState) return ((BlockState) object).getTypeId();
         if (object instanceof Inventory) return ((Inventory) object).getSize();

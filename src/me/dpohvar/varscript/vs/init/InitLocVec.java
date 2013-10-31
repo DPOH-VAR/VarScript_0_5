@@ -720,7 +720,7 @@ public class InitLocVec {
 
         VSCompiler.addRule(new SimpleCompileRule(
                 "REGIONHAS",
-                "REGIONHASR RHAS",
+                "REGIONHAS RHAS",
                 "Region(A) Location(B)",
                 "Boolean",
                 "region",

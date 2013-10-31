@@ -51,7 +51,7 @@ public class Converter {
 
     public Class getClassForName(String name) {
         try {
-            return Class.forName(name);
+            return me.dpohvar.varscript.Runtime.libLoader.loadClass(name);
         } catch (ClassNotFoundException ignored) {
         }
         if (classes.containsKey(name)) return classes.get(name);
@@ -101,7 +101,6 @@ public class Converter {
     }
 
     public <V, T> T convert(Class<T> classTo, V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws ConvertException {
-
         if (classTo == boolean.class) classTo = (Class<T>) Boolean.class; // try to boxing
         if (classTo == byte.class) classTo = (Class<T>) Byte.class; // try to boxing
         if (classTo == short.class) classTo = (Class<T>) Short.class; // try to boxing
@@ -111,6 +110,11 @@ public class Converter {
         if (classTo == double.class) classTo = (Class<T>) Double.class; // try to boxing
         if (classTo == char.class) classTo = (Class<T>) Character.class; // try to boxing
         if (classTo.isInstance(object)) return (T) object;
+        return converts(classTo, object, thread, scope);
+
+    }
+
+    public <V, T> T converts(Class<T> classTo, V object, me.dpohvar.varscript.vs.Thread thread, Scope scope) throws ConvertException {
         Collection<ConvertRule> rules = classRules.get(classTo);
         if (rules != null) for (ConvertRule rule : rules) {
             try {
@@ -118,6 +122,7 @@ public class Converter {
             } catch (NextRule ignored) {
             }
         }
+        if (object == null) return null;
         if (object instanceof ReflectObject) {
             return convert(classTo, ((ReflectObject) object).getObject(), thread, scope);
         }

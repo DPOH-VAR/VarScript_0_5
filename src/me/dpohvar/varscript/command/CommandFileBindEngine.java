@@ -20,12 +20,10 @@ public class CommandFileBindEngine implements CommandExecutor {
 
     private final Runtime runtime;
     private final ScriptEngine engine;
-    private final String alias;
 
-    public CommandFileBindEngine(Runtime runtime, String language, String alias) {
+    public CommandFileBindEngine(Runtime runtime, String language) {
         this.runtime = runtime;
-        this.alias = alias;
-        engine = runtime.getScriptEngine(language);
+        engine = runtime.getEngine(language);
     }
 
     @Override
@@ -33,7 +31,7 @@ public class CommandFileBindEngine implements CommandExecutor {
         Caller caller = Caller.getCallerFor(commandSender);
         try {
             if (strings.length == 0) return false;
-            String script = runtime.scriptManager.readScriptFile(alias, strings[0]);
+            String script = runtime.scriptManager.readScriptFile(engine.getFactory(), strings[0]);
             if (script == null) {
                 caller.send(ChatColor.RED + "no script file with name: " + ChatColor.YELLOW + strings[0]);
                 return true;

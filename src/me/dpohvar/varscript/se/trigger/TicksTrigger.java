@@ -11,27 +11,29 @@ import org.bukkit.scheduler.BukkitTask;
  * Date: 21.08.13
  * Time: 14:33
  */
-public class TicksTrigger implements Trigger {
+public class TicksTrigger extends Trigger {
 
     private BukkitTask task;
     boolean registered = true;
-    final SEProgram program;
 
     public TicksTrigger(SEProgram program, long ticks, final Runnable runner) {
-        this.program = program;
+        super(program);
         task = Bukkit.getScheduler().runTaskLater(VarScript.instance, new Runnable() {
             @Override
             public void run() {
-                runner.run();
-                unregister();
+                try {
+                    runner.run();
+                } catch (Exception e) {
+                    getProgram().getCaller().handleException(e);
+                }
+                stop();
             }
         }, ticks);
     }
 
-    public void unregister() {
+    public void setUnregistered() {
         task.cancel();
         registered = false;
-        program.removeTrigger(this);
     }
 
     public boolean isRegistered() {

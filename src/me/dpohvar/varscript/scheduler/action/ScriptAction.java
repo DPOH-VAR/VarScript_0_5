@@ -14,13 +14,14 @@ import java.util.Map;
  * Date: 20.07.13
  * Time: 9:38
  */
-public class JSAction extends TaskAction {
+public class ScriptAction extends TaskAction {
 
     final String param;
     ScriptEngine engine;
     private me.dpohvar.varscript.Runtime runtime;
+    private String script;
 
-    public JSAction(Task task, String param) {
+    public ScriptAction(Task task, String param) {
         super(task);
         this.param = param;
     }
@@ -34,7 +35,7 @@ public class JSAction extends TaskAction {
             program.putToEnvironment(e.getKey(), e.getValue());
         }
         try {
-            program.runScript(param);
+            program.runScript(script);
         } catch (Exception e) {
             caller.handleException(e);
         }
@@ -43,8 +44,13 @@ public class JSAction extends TaskAction {
     @Override
     protected boolean register() {
         runtime = task.getScheduler().runtime;
-        engine = runtime.getEngine("js");
-        if (param == null || param.isEmpty() || engine == null) return false;
+        if (param == null || param.isEmpty() || !param.contains(" ")) return false;
+        int pos = param.indexOf(' ');
+        String lang = param.substring(0, pos);
+        String script = param.substring(pos + 1, param.length());
+        engine = runtime.getEngine(lang);
+        if (engine == null) return false;
+        this.script = script;
         return true;
     }
 
@@ -56,12 +62,12 @@ public class JSAction extends TaskAction {
     }
 
     public static String getType() {
-        return "JS";
+        return "SCRIPT";
     }
 
     @Override
     public String toString() {
-        return "JS" + (param == null || param.isEmpty() ? "" : " " + param);
+        return "SCRIPT" + (param == null || param.isEmpty() ? "" : " " + param);
     }
 
 }

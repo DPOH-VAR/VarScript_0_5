@@ -2,15 +2,14 @@ package me.dpohvar.varscript.command;
 
 import me.dpohvar.varscript.Runtime;
 import me.dpohvar.varscript.caller.Caller;
-import me.dpohvar.varscript.vs.CommandList;
-import me.dpohvar.varscript.vs.Thread;
-import me.dpohvar.varscript.vs.ThreadRunner;
-import me.dpohvar.varscript.vs.VarscriptProgram;
-import me.dpohvar.varscript.vs.compiler.VSCompiler;
+import me.dpohvar.varscript.se.SECallerProgram;
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+
+import javax.script.ScriptEngine;
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,24 +17,29 @@ import org.bukkit.command.CommandSender;
  * Date: 12.07.13
  * Time: 6:14
  */
-public class CommandRunVS implements CommandExecutor {
+public class CommandPrintBindEngine implements CommandExecutor {
 
     private final Runtime runtime;
+    private final ScriptEngine engine;
+    private final String language;
 
-    public CommandRunVS(Runtime runtime) {
+    public CommandPrintBindEngine(Runtime runtime, String language) {
         this.runtime = runtime;
+        this.language = language;
+        engine = runtime.getEngine(language);
     }
 
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         Caller caller = Caller.getCallerFor(commandSender);
+        if (engine == null) {
+            caller.send(ChatColor.RED + "no script engine with name: " + ChatColor.YELLOW + language);
+            return true;
+        }
         try {
             String source = StringUtils.join(strings, ' ');
-            CommandList cmd = VSCompiler.compile(source);
-            VarscriptProgram program = new VarscriptProgram(runtime, caller, null);
-            me.dpohvar.varscript.vs.Thread thread = new Thread(program);
-            thread.pushFunction(cmd.build(program.getScope()), program);
-            new ThreadRunner(thread).runThreads();
+            SECallerProgram program = new SECallerProgram(runtime, caller, engine, null);
+            caller.send(program.runScript(source));
         } catch (Throwable e) {
             caller.handleException(e);
         }

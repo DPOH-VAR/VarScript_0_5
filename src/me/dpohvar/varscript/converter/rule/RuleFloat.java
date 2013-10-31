@@ -40,6 +40,7 @@ public class RuleFloat extends ConvertRule<Float> {
         if (object instanceof Location) return (float) ((Location) object).getY();
         if (object instanceof String) return new Float((String) object);
         if (object instanceof Entity) return (float) ((Entity) object).getEntityId();
+        if (object instanceof Enum) return (float) ((Enum) object).ordinal();
         if (object instanceof Vector) return (float) ((Vector) object).length();
         if (object instanceof Block) return (float) ((Block) object).getTypeId();
         if (object instanceof BlockState) return (float) ((BlockState) object).getTypeId();

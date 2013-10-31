@@ -277,12 +277,43 @@ public class InitStack {
                 "RUNTIME",
                 "",
                 "Runtime",
-                "stack",
+                "runtime",
                 "get current runtime",
                 new SimpleWorker(new int[]{0x0F, 0x01}) {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         v.push(v.getProgram().getRuntime());
+                    }
+                }
+        ));
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "GLOBALSCOPE",
+                "GLOBALSCOPE",
+                "",
+                "Map",
+                "runtime",
+                "get global varscript scope",
+                new SimpleWorker(new int[]{0x0F, 0x02}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(v.getProgram().getRuntime().getEngineBindings(null));
+                    }
+                }
+        ));
+
+
+        VSCompiler.addRule(new SimpleCompileRule(
+                "CONTEXT",
+                "CONTEXT",
+                "",
+                "Fieldable",
+                "runtime",
+                "get current context",
+                new SimpleWorker(new int[]{0x0F, 0x03}) {
+                    @Override
+                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
+                        v.push(f);
                     }
                 }
         ));

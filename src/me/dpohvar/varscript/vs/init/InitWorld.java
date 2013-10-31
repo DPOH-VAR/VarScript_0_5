@@ -975,7 +975,7 @@ public class InitWorld {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Effect ef = v.pop(Effect.values());
-                        Location l = v.pop(Location.class);
+                        Location l = v.peek(Location.class);
                         l.getWorld().playEffect(l, ef, 0);
                     }
                 }

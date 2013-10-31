@@ -28,11 +28,11 @@ public class RuleClass extends ConvertRule<Class> {
         if (object instanceof String) {
             if (Converter.classes.containsKey(object)) return Converter.classes.get(object);
             try {
-                return Class.forName((String) object);
+                return me.dpohvar.varscript.Runtime.libLoader.loadClass((String) object);
             } catch (ClassNotFoundException ignored) {
             }
             try {
-                return Class.forName("java.util." + object);
+                return me.dpohvar.varscript.Runtime.libLoader.loadClass("java.util." + object);
             } catch (ClassNotFoundException ignored) {
             }
         }

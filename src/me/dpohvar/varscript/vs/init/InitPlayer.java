@@ -668,21 +668,6 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "ISSCALEDHEALTH",
-                "ISSCALEDHEALTH SCHP",
-                "Player",
-                "Boolean",
-                "player",
-                "Gets if the client is displayed a 'scaled' health, that is, health on a scale from 0-20.",
-                new SimpleWorker(new int[]{0x5F, 0xAA}) {
-                    @Override
-                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Player p = v.pop(Player.class);
-                        v.push(p.isScaledHealth());
-                    }
-                }
-        ));
-        VSCompiler.addRule(new SimpleCompileRule(
                 "SLEEPIGNORED",
                 "SLEEPIGNORED",
                 "Player",
@@ -1079,22 +1064,6 @@ public class InitPlayer {
                 }
         ));
         VSCompiler.addRule(new SimpleCompileRule(
-                "SETSCALEHEALTH",
-                "SETSCALEHEALTH SETSCHP SCHP",
-                "Player Boolean",
-                "Player",
-                "player",
-                "Sets if the client is displayed a 'scaled' health, that is, health on a scale from 0-20",
-                new SimpleWorker(new int[]{0x5F, 0xC4}) {
-                    @Override
-                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Boolean s = v.pop(Boolean.class);
-                        Player p = v.peek(Player.class);
-                        p.setScaleHealth(s);
-                    }
-                }
-        ));
-        VSCompiler.addRule(new SimpleCompileRule(
                 "SETSLEEPIGNORED",
                 "SETSLEEPIGNORED",
                 "Player Boolean",
@@ -1250,7 +1219,7 @@ public class InitPlayer {
                         Player p = v.peek(Player.class);
                         try {
                             Object ph = ReflectUtils.callMethod(p, "getHandle", null);
-                            Class classPacket = ReflectBukkitUtils.getMinecraftClass("Packet205ClientCommand");
+                            Class classPacket = ReflectBukkitUtils.getClass("<nms>Packet205ClientCommand", "net.minecraft.network.packet.Packet205ClientCommand");
                             Object packet = ReflectUtils.callConstructor(classPacket, null);
                             ReflectUtils.setField(packet, "a", 1);
                             Object connection = ReflectUtils.getField(ph, "playerConnection");

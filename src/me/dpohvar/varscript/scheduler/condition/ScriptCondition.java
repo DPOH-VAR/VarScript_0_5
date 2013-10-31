@@ -1,8 +1,8 @@
-package me.dpohvar.varscript.scheduler.action;
+package me.dpohvar.varscript.scheduler.condition;
 
 import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.scheduler.Task;
-import me.dpohvar.varscript.scheduler.TaskAction;
+import me.dpohvar.varscript.scheduler.TaskCondition;
 import me.dpohvar.varscript.se.SECallerProgram;
 
 import javax.script.ScriptEngine;
@@ -14,37 +14,45 @@ import java.util.Map;
  * Date: 20.07.13
  * Time: 9:38
  */
-public class JSAction extends TaskAction {
+public class ScriptCondition extends TaskCondition {
 
     final String param;
-    ScriptEngine engine;
+    private ScriptEngine engine;
+    private String script;
     private me.dpohvar.varscript.Runtime runtime;
 
-    public JSAction(Task task, String param) {
+    public ScriptCondition(Task task, String param) {
         super(task);
         this.param = param;
     }
 
     @Override
-    public void run(Map<String, Object> environment) {
-        if (engine == null) return;
+    public boolean check(Map<String, Object> environment) {
         Caller caller = Caller.getCallerFor(getTask());
         SECallerProgram program = new SECallerProgram(runtime, caller, engine, null);
         for (Map.Entry<String, Object> e : environment.entrySet()) {
             program.putToEnvironment(e.getKey(), e.getValue());
         }
         try {
-            program.runScript(param);
+            Object result = program.runScript(script);
+            if (result == null || result.equals(false)) return false;
+            return true;
         } catch (Exception e) {
             caller.handleException(e);
+            return false;
         }
     }
 
     @Override
     protected boolean register() {
         runtime = task.getScheduler().runtime;
-        engine = runtime.getEngine("js");
-        if (param == null || param.isEmpty() || engine == null) return false;
+        if (param == null || param.isEmpty() || !param.contains(" ")) return false;
+        int pos = param.indexOf(' ');
+        String lang = param.substring(0, pos);
+        String script = param.substring(pos + 1, param.length());
+        engine = runtime.getEngine(lang);
+        if (engine == null) return false;
+        this.script = script;
         return true;
     }
 
@@ -56,12 +64,12 @@ public class JSAction extends TaskAction {
     }
 
     public static String getType() {
-        return "JS";
+        return "SCRIPT";
     }
 
     @Override
     public String toString() {
-        return "JS" + (param == null || param.isEmpty() ? "" : " " + param);
+        return "SCRIPT" + (param == null || param.isEmpty() ? "" : " " + param);
     }
 
 }

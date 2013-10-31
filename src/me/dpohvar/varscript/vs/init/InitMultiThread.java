@@ -31,6 +31,7 @@ public class InitMultiThread {
                 new SimpleWorker(new int[]{0xF0}) {
                     @Override
                     public void run(ThreadRunner r, final me.dpohvar.varscript.vs.Thread v, Context f, Void d) throws Exception {
+                        if (v.isFinished()) throw stopThread;
                         final Long delay = v.pop(Long.class);
                         TriggerRunner<Trigger> runner = new TriggerRunner<Trigger>() {
                             @Override
@@ -91,6 +92,7 @@ public class InitMultiThread {
                 new SimpleWorker(new int[]{0xF2}) {
                     @Override
                     public void run(ThreadRunner r, final Thread v, Context f, Void d) throws Exception {
+                        if (v.isFinished()) throw stopThread;
                         final Double delay = v.pop(Double.class);
                         TriggerRunner<Trigger> runner = new TriggerRunner<Trigger>() {
                             @Override
@@ -190,7 +192,7 @@ public class InitMultiThread {
                     @Override
                     public void run(ThreadRunner r, final Thread v, final Context f, Void d) throws Exception {
                         String eventName = v.pop(String.class);
-
+                        if (v.isFinished()) throw stopThread;
                         Class<? extends Event> eventClass = TriggerBukkitEvent.getEventClass(eventName);
 
                         TriggerRunner<TriggerWaitFor.Container> runner = new TriggerRunner<TriggerWaitFor.Container>() {
@@ -250,6 +252,7 @@ public class InitMultiThread {
                 new SimpleWorker(new int[]{0xF9}) {
                     @Override
                     public void run(ThreadRunner r, final Thread v, Context f, Void d) throws Exception {
+                        if (v.isFinished()) throw stopThread;
                         v.setSleep();
                         throw stopThread;
                     }

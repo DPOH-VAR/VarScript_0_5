@@ -1,16 +1,15 @@
 package me.dpohvar.varscript.converter.rule;
 
-import com.google.common.io.Files;
 import me.dpohvar.powernbt.nbt.NBTBase;
 import me.dpohvar.powernbt.nbt.NBTContainer;
 import me.dpohvar.varscript.VarScript;
 import me.dpohvar.varscript.converter.ConvertException;
 import me.dpohvar.varscript.converter.NextRule;
+import me.dpohvar.varscript.utils.VarScriptIOUtils;
 import me.dpohvar.varscript.vs.CommandList;
 import me.dpohvar.varscript.vs.Scope;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,10 +74,7 @@ public class RuleBytes extends ConvertRule<byte[]> {
             return bytes;
         }
         if (object instanceof File) {
-            try {
-                return Files.toByteArray((File) object);
-            } catch (IOException ignored) {
-            }
+            return VarScriptIOUtils.getBytes((File) object);
         }
         try {
             if (object instanceof NBTBase) return ((NBTBase) object).toBytes();

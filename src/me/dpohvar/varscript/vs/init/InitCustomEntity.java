@@ -15,6 +15,8 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
+import java.lang.reflect.Method;
+
 /**
  * Created with IntelliJ IDEA.
  * User: DPOH-VAR
@@ -22,8 +24,27 @@ import org.bukkit.util.Vector;
  * Time: 1:28
  */
 public class InitCustomEntity {
-    public static void load() {
 
+    public static Method dmg_damage = null;
+    public static Method dmg_damage_entity = null;
+    public static Class hp_class = Double.class;
+
+    static {
+        try {
+            try {
+                dmg_damage = Damageable.class.getMethod("damage", double.class);
+                dmg_damage_entity = Damageable.class.getMethod("damage", double.class, Entity.class);
+            } catch (Exception ignored) {
+                dmg_damage = Damageable.class.getMethod("damage", int.class);
+                dmg_damage_entity = Damageable.class.getMethod("damage", int.class, Entity.class);
+                hp_class = Integer.class;
+            }
+        } catch (Exception ignored) {
+
+        }
+    }
+
+    public static void load() {
 
         /** AGEABLE */
 
@@ -397,9 +418,12 @@ public class InitCustomEntity {
                 new SimpleWorker(new int[]{0x8F, 0x07}) {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Double count = v.pop(Double.class);
+                        Object count = v.pop(hp_class);
                         Damageable e = v.peek(Damageable.class);
-                        e.damage(count);
+                        try {
+                            dmg_damage.invoke(e, count);
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
         ));
@@ -414,9 +438,12 @@ public class InitCustomEntity {
                     @Override
                     public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
                         Entity e2 = v.pop(Entity.class);
-                        Double count = v.pop(Double.class);
+                        Object count = v.pop(hp_class);
                         Damageable e = v.peek(Damageable.class);
-                        e.damage(count, e2);
+                        try {
+                            dmg_damage_entity.invoke(e, count, e2);
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
         ));
@@ -737,279 +764,6 @@ public class InitCustomEntity {
                     }
                 }
         ));
-
-
-        /** Horse **/
-
-
-        VSCompiler.addRule(new SimpleCompileRule(
-                "HORSECOLOR",
-                "HORSECOLOR",
-                "Horse",
-                "#HorseColor",
-                "horse",
-                "Gets the horse's color",
-                new SimpleWorker(new int[]{0x8F, 0x1B}) {
-                    @Override
-                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Horse h = v.pop(Horse.class);
-                        v.push(h.getColor());
-
-                    }
-                }
-        ));
-        VSCompiler.addRule(new SimpleCompileRule(
-                "HORSETAME",
-                "HORSETAME HORSEDOMESTICATION",
-                "Horse",
-                "Integer",
-                "horse",
-                "Gets the domestication level of this horse",
-                new SimpleWorker(new int[]{0x8F, 0x1C}) {
-                    @Override
-                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Horse h = v.pop(Horse.class);
-                        v.push(h.getDomestication());
-
-                    }
-                }
-        ));
-        VSCompiler.addRule(new SimpleCompileRule(
-                "HORSEINVENTORY",
-                "HORSEINVENTORY HORSEINV HINV",
-                "Horse",
-                "HorseInventory",
-                "horse",
-                "Get horse inventory",
-                new SimpleWorker(new int[]{0x8F, 0x1D}) {
-                    @Override
-                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Horse h = v.pop(Horse.class);
-                        v.push(h.getInventory());
-
-                    }
-                }
-        ));
-        VSCompiler.addRule(new SimpleCompileRule(
-                "HORSEJUMPSTRENGTH",
-                "HORSEJUMPSTRENGTH HORSEJUMP HJUMP",
-                "Horse",
-                "Double",
-                "horse",
-                "Gets the jump strength of this horse",
-                new SimpleWorker(new int[]{0x8F, 0x1E}) {
-                    @Override
-                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Horse h = v.pop(Horse.class);
-                        v.push(h.getJumpStrength());
-
-                    }
-                }
-        ));
-        VSCompiler.addRule(new SimpleCompileRule(
-                "MAXHORSETAME",
-                "MAXHORSETAME MAXHORSEDOMESTICATION",
-                "Horse",
-                "Integer",
-                "horse",
-                "Gets the maximum domestication level of this horse",
-                new SimpleWorker(new int[]{0x8F, 0x1F}) {
-                    @Override
-                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Horse h = v.pop(Horse.class);
-                        v.push(h.getMaxDomestication());
-
-                    }
-                }
-        ));
-        VSCompiler.addRule(new SimpleCompileRule(
-                "HORSESTYLE",
-                "HORSESTYLE HSTYLE",
-                "Horse",
-                "String",
-                "horse",
-                "Get horse style",
-                new SimpleWorker(new int[]{0x8F, 0x20}) {
-                    @Override
-                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Horse h = v.pop(Horse.class);
-                        v.push(h.getStyle());
-
-                    }
-                }
-        ));
-        VSCompiler.addRule(new SimpleCompileRule(
-                "HORSEVARIANT",
-                "HORSEVARIANT HVARIANT",
-                "Horse",
-                "String",
-                "horse",
-                "Gets the horse's variant",
-                new SimpleWorker(new int[]{0x8F, 0x21}) {
-                    @Override
-                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Horse h = v.pop(Horse.class);
-                        v.push(h.getVariant());
-
-                    }
-                }
-        ));
-        VSCompiler.addRule(new SimpleCompileRule(
-                "HORSECHEST",
-                "HORSECHEST CARRYINGCHEST",
-                "Horse",
-                "Boolean",
-                "horse",
-                "Gets whether the horse has a chest equipped",
-                new SimpleWorker(new int[]{0x8F, 0x22}) {
-                    @Override
-                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Horse h = v.pop(Horse.class);
-                        v.push(h.isCarryingChest());
-
-                    }
-                }
-        ));
-        VSCompiler.addRule(new SimpleCompileRule(
-                "SETHORSECHEST",
-                "SETHORSECHEST SETCARRYINGCHEST",
-                "Horse Boolean",
-                "Horse",
-                "horse",
-                "Set whether the horse has a chest equipped",
-                new SimpleWorker(new int[]{0x8F, 0x23}) {
-                    @Override
-                    public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                        Boolean b = v.pop(Boolean.class);
-                        Horse h = v.peek(Horse.class);
-                        h.setCarryingChest(b);
-
-
-                    }
-                }
-        ));
-        try {
-            VSCompiler.addRule(new SimpleCompileRule(
-                    "SETHORSECOLOR",
-                    "SETHORSECOLOR >HCOLOR",
-                    "Horse #HorseColor",
-                    "Horse",
-                    "horse",
-                    "Sets the horse's color",
-                    new SimpleWorker(new int[]{0x8F, 0x24}) {
-                        @Override
-                        public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                            Horse.Color b = v.pop(Horse.Color.values());
-                            Horse h = v.peek(Horse.class);
-                            h.setColor(b);
-
-
-                        }
-                    }
-            ));
-        } catch (NoClassDefFoundError ignored) {
-        }
-
-        try {
-            VSCompiler.addRule(new SimpleCompileRule(
-                    "SETHORETAME",
-                    "SETHORETAME >HTAME SETDOMESTICATION",
-                    "Horse Integer",
-                    "Horse",
-                    "horse",
-                    "Sets the domestication level of this horse",
-                    new SimpleWorker(new int[]{0x8F, 0x25}) {
-                        @Override
-                        public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                            Integer b = v.pop(Integer.class);
-                            Horse h = v.peek(Horse.class);
-                            h.setDomestication(b);
-                        }
-                    }
-            ));
-        } catch (NoClassDefFoundError ignored) {
-        }
-
-        try {
-            VSCompiler.addRule(new SimpleCompileRule(
-                    "SETHORSEJUMPSTRENGTH",
-                    "SETHORSEJUMPSTRENGTH >HJUMP SETHORSEJUMP >HORSEJUMP",
-                    "Horse Double",
-                    "Horse",
-                    "horse",
-                    "Sets the domestication level of this horse",
-                    new SimpleWorker(new int[]{0x8F, 0x26}) {
-                        @Override
-                        public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                            Double b = v.pop(Double.class);
-                            Horse h = v.peek(Horse.class);
-                            h.setJumpStrength(b);
-                        }
-                    }
-            ));
-        } catch (NoClassDefFoundError ignored) {
-        }
-
-        try {
-            VSCompiler.addRule(new SimpleCompileRule(
-                    "SETHORSEMAXTAME",
-                    "SETHORSEMAXTAME >HMAXTAME >HORSEMAXTAME SETMAXDOMESTICATION",
-                    "Horse Double",
-                    "Horse",
-                    "horse",
-                    "Sets the domestication level of this horse",
-                    new SimpleWorker(new int[]{0x8F, 0x27}) {
-                        @Override
-                        public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                            Integer b = v.pop(Integer.class);
-                            Horse h = v.peek(Horse.class);
-                            h.setMaxDomestication(b);
-                        }
-                    }
-            ));
-        } catch (NoClassDefFoundError ignored) {
-        }
-
-        try {
-            VSCompiler.addRule(new SimpleCompileRule(
-                    "SETHORSESTYLE",
-                    "SETHORSESTYLE >HORSESTYLE >HSTYLE",
-                    "Horse #HorseStyle",
-                    "Horse",
-                    "horse",
-                    "Set horse style",
-                    new SimpleWorker(new int[]{0x8F, 0x28}) {
-                        @Override
-                        public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                            Horse.Style b = v.pop(Horse.Style.values());
-                            Horse h = v.peek(Horse.class);
-                            h.setStyle(b);
-                        }
-                    }
-            ));
-        } catch (NoClassDefFoundError ignored) {
-        }
-
-        try {
-            VSCompiler.addRule(new SimpleCompileRule(
-                    "SETHORSEVARIANT",
-                    "SETHORSEVARIANT >HORSEVARIANT >HVARIANT",
-                    "Horse #HorseVariant",
-                    "Horse",
-                    "horse",
-                    "Set horse variant",
-                    new SimpleWorker(new int[]{0x8F, 0x29}) {
-                        @Override
-                        public void run(ThreadRunner r, Thread v, Context f, Void d) throws ConvertException {
-                            Horse.Variant b = v.pop(Horse.Variant.values());
-                            Horse h = v.peek(Horse.class);
-                            h.setVariant(b);
-                        }
-                    }
-            ));
-        } catch (NoClassDefFoundError ignored) {
-        }
-
 
         /** IronGolem **/
 

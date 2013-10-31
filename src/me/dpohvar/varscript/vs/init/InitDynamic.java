@@ -671,7 +671,7 @@ public class InitDynamic {
             input.read(bytes);
             String name = new String(bytes, VarScript.UTF8);
             try {
-                return Class.forName(name);
+                return me.dpohvar.varscript.Runtime.libLoader.loadClass(name);
             } catch (ClassNotFoundException e) {
                 throw new IOException("can't read class " + name, e);
             }
@@ -1108,7 +1108,7 @@ public class InitDynamic {
             }
         });
 
-        VSCompiler.addRule(new ComplexCompileRule("Short", "stack integer", "", "Short", "put short to stack.\nExample: 123456789012345S") { //0x13
+        VSCompiler.addRule(new ComplexCompileRule("Short", "stack integer", "", "Short", "put short to stack.\nExample: 335S") { //0x13
             @Override
             public boolean checkCondition(String string) {
                 return string.matches("-?[0-9]+S");
@@ -1118,7 +1118,7 @@ public class InitDynamic {
             public void apply(VSSmartParser.ParsedOperand operand, VSCompiler.FunctionSession functionSession, VSCompiler.CompileSession compileSession) {
                 String op = operand.toString();
                 String val = op.substring(0, op.length() - 1);
-                functionSession.addCommand(wPutObject, Long.parseLong(val), operand);
+                functionSession.addCommand(wPutObject, Short.parseShort(val), operand);
             }
 
             @Override
@@ -2186,7 +2186,7 @@ public class InitDynamic {
                     public void run(final ThreadRunner r, final Thread v, final Context f, Void d) throws Exception {
                         Caller caller = v.pop(Caller.class);
                         Runnable runnable = v.pop(f.getScope());
-                        VarscriptProgram program = new VarscriptProgram(v.getProgram().getRuntime(), caller);
+                        VarscriptProgram program = new VarscriptProgram(v.getProgram().getRuntime(), caller, null);
                         Thread thread = new Thread(program);
                         thread.pushFunction(runnable, null);
                         new ThreadRunner(thread).runThreads();

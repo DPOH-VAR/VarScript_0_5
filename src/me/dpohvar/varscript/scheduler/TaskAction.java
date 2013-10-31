@@ -34,6 +34,8 @@ public abstract class TaskAction extends TaskEntry {
             return new VSAction(task, argument);
         } else if ("JS".equals(type)) {
             return new JSAction(task, argument);
+        } else if ("G".equals(type)) {
+            return new GroovyAction(task, argument);
         } else if ("LOG".equals(type)) {
             return new LogAction(task, argument);
         } else if ("BROADCAST".equals(type)) {
@@ -42,8 +44,16 @@ public abstract class TaskAction extends TaskEntry {
             return new TaskOperateAction(task, argument);
         } else if ("VSFILE".equals(type)) {
             return new VSFileAction(task, argument);
+        } else if ("JSFILE".equals(type)) {
+            return new JSFileAction(task, argument);
+        } else if ("GFILE".equals(type)) {
+            return new GroovyFileAction(task, argument);
         } else if ("EVENT".equals(type)) {
             return new EventSomeAction(task, argument);
+        } else if ("SCRIPT".equals(type)) {
+            return new ScriptAction(task, argument);
+        } else if ("SCRIPTFILE".equals(type)) {
+            return new ScriptFileAction(task, argument);
         }
         return new TaskActionError(task, s);
     }

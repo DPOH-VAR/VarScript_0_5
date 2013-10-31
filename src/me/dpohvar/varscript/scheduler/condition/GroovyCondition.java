@@ -1,8 +1,8 @@
-package me.dpohvar.varscript.scheduler.action;
+package me.dpohvar.varscript.scheduler.condition;
 
 import me.dpohvar.varscript.caller.Caller;
 import me.dpohvar.varscript.scheduler.Task;
-import me.dpohvar.varscript.scheduler.TaskAction;
+import me.dpohvar.varscript.scheduler.TaskCondition;
 import me.dpohvar.varscript.se.SECallerProgram;
 
 import javax.script.ScriptEngine;
@@ -14,38 +14,39 @@ import java.util.Map;
  * Date: 20.07.13
  * Time: 9:38
  */
-public class JSAction extends TaskAction {
+public class GroovyCondition extends TaskCondition {
 
     final String param;
-    ScriptEngine engine;
+    private ScriptEngine engine;
     private me.dpohvar.varscript.Runtime runtime;
 
-    public JSAction(Task task, String param) {
+    public GroovyCondition(Task task, String param) {
         super(task);
         this.param = param;
     }
 
     @Override
-    public void run(Map<String, Object> environment) {
-        if (engine == null) return;
+    public boolean check(Map<String, Object> environment) {
         Caller caller = Caller.getCallerFor(getTask());
         SECallerProgram program = new SECallerProgram(runtime, caller, engine, null);
         for (Map.Entry<String, Object> e : environment.entrySet()) {
             program.putToEnvironment(e.getKey(), e.getValue());
         }
         try {
-            program.runScript(param);
+            Object result = program.runScript(param);
+            if (result == null || result.equals(false)) return false;
+            return true;
         } catch (Exception e) {
             caller.handleException(e);
+            return false;
         }
     }
 
     @Override
     protected boolean register() {
         runtime = task.getScheduler().runtime;
-        engine = runtime.getEngine("js");
-        if (param == null || param.isEmpty() || engine == null) return false;
-        return true;
+        engine = runtime.getEngine("groovy");
+        return !(param == null || engine == null || param.isEmpty());
     }
 
     @Override
@@ -56,12 +57,12 @@ public class JSAction extends TaskAction {
     }
 
     public static String getType() {
-        return "JS";
+        return "G";
     }
 
     @Override
     public String toString() {
-        return "JS" + (param == null || param.isEmpty() ? "" : " " + param);
+        return "G" + (param == null || param.isEmpty() ? "" : " " + param);
     }
 
 }

@@ -1,4 +1,4 @@
-package me.dpohvar.varscript.task;
+package me.dpohvar.varscript.scheduler;
 
 import java.util.*;
 

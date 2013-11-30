@@ -1,5 +1,5 @@
-import me.dpohvar.varscript.task.Action;
-import me.dpohvar.varscript.task.Task;
+import me.dpohvar.varscript.scheduler.Action;
+import me.dpohvar.varscript.scheduler.Task;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
@@ -12,9 +12,10 @@ public class BROADCAST extends Action {
     }
 
     @Override
-    protected void run(Map<String, Object> environment) {
+    public void run(Map<String, Object> environment) {
         Object v = task.parseObject(getParams(), environment);
-        Bukkit.broadcastMessage(v.toString());
+        if (v == null) Bukkit.broadcastMessage("");
+        else Bukkit.broadcastMessage(v.toString());
     }
 
     public boolean register() {
@@ -22,5 +23,17 @@ public class BROADCAST extends Action {
     }
 
     public void unregister() {
+    }
+
+    public static String help() {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("format: BROADCAST {$message}\n");
+        buffer.append("send a broadcast message\n");
+        buffer.append("arguments: message");
+        return buffer.toString();
+    }
+
+    public static String description() {
+        return "broadcast message";
     }
 }

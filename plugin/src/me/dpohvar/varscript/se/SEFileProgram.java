@@ -16,7 +16,7 @@ import java.util.Map;
 public class SEFileProgram extends SEProgram {
 
     public SEFileProgram(Runtime runtime, Caller caller, ScriptEngine engine, String[] args) {
-        super(runtime, caller, engine, newScope(args));
+        super(runtime, caller, engine, null, newScope(args));
     }
 
     private static Map<String, Object> newScope(String[] args) {

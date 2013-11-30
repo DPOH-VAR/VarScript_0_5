@@ -1,4 +1,4 @@
-package me.dpohvar.varscript.task;
+package me.dpohvar.varscript.scheduler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +41,7 @@ public abstract class Event extends Entry {
         task.run(environment);
     }
 
-    public final void call() {
+    protected final void call() {
         call(new HashMap<String, Object>());
     }
 

@@ -282,7 +282,7 @@ public class Runtime implements Fieldable, Scope {
     public Runtime(VarScript plugin) {
         this.plugin = plugin;
         this.plugin.runtime = this;
-        this.scheduler = new Scheduler(this, plugin.getSchedulerHome());
+        this.scheduler = new Scheduler(this);
         PluginManager pm = Bukkit.getPluginManager();
 
         RuleByte ruleByte = new RuleByte();

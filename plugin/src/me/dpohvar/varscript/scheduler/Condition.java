@@ -1,4 +1,4 @@
-package me.dpohvar.varscript.task;
+package me.dpohvar.varscript.scheduler;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -27,18 +27,29 @@ public abstract class Condition extends Entry {
         }
 
         @Override
-        protected boolean check(Map<String, Object> environment) {
+        public boolean check(Map<String, Object> environment) {
             return false;
         }
     }
 
+    private boolean inverse = false;
+
     public Condition(@Nonnull Task task, @Nonnull String type, String params) {
         super(task, type, params);
+        if (type.startsWith("~")) inverse = true;
+    }
+
+    public boolean isInverse() {
+        return inverse;
     }
 
     public Condition(@Nonnull Task task, @Nonnull String type) {
         super(task, type);
     }
 
-    abstract boolean check(Map<String, Object> environment);
+    public boolean test(Map<String, Object> environment) {
+        return check(environment) != inverse;
+    }
+
+    abstract protected boolean check(Map<String, Object> environment);
 }

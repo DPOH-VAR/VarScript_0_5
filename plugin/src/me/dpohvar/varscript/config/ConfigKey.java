@@ -9,6 +9,7 @@ package me.dpohvar.varscript.config;
 public enum ConfigKey {
     DEBUG("debug", ConfigType.BOOLEAN),
     SCHEDULER_ENABLED("scheduler.enabled", ConfigType.BOOLEAN),;
+
     public final String configPath;
     public final ConfigType configType;
 

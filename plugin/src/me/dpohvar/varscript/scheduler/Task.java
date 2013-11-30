@@ -1,377 +1,482 @@
 package me.dpohvar.varscript.scheduler;
 
+import me.dpohvar.varscript.vs.compiler.VSStringParser;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.command.CommandSender;
+import org.bukkit.util.Vector;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.annotation.Nonnull;
+import javax.script.Bindings;
 import java.io.*;
 import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
- * User: DPOH-VAR
- * Date: 17.07.13
- * Time: 0:31
+ * User: DPOH-VAR                                                                                                [fak]
+ * Date: 03.11.13
+ * Time: 0:50
  */
 public class Task {
 
-    boolean enabled = false;
-    String description = "";
-    ArrayList<TaskAction> init = new ArrayList<TaskAction>();
-    ArrayList<TaskEvent> events = new ArrayList<TaskEvent>();
-    ArrayList<TaskCondition> conditions = new ArrayList<TaskCondition>();
-    ArrayList<TaskAction> actions = new ArrayList<TaskAction>();
-    ArrayList<TaskAction> reactions = new ArrayList<TaskAction>();
-    final Scheduler scheduler;
-    String name;
-    private File file;
-    private boolean markRemove = false;
+    public final class TaskBinding implements Bindings {
+        public final Task task;
+        private final HashMap<String, Object> fields = new HashMap<String, Object>();
+        private List<String> parents = new ArrayList<String>(4);
 
-    public boolean isEnabled() {
-        return enabled;
+        public TaskBinding(Task task) {
+            this.task = task;
+            String name = task.name;
+            while (name.contains(".")) {
+                int point = name.lastIndexOf('.');
+                name = name.substring(0, point);
+                parents.add(name);
+            }
+        }
+
+        @Override
+        public Object put(String name, Object value) {
+            return fields.put(name, value);
+        }
+
+        @Override
+        public void putAll(Map<? extends String, ? extends Object> toMerge) {
+            fields.putAll(toMerge);
+        }
+
+        @Override
+        public void clear() {
+            fields.clear();
+        }
+
+        @Override
+        public Set<String> keySet() {
+            return fields.keySet();
+        }
+
+        @Override
+        public Collection<Object> values() {
+            return fields.values();
+        }
+
+        @Override
+        public Set<Entry<String, Object>> entrySet() {
+            return fields.entrySet();
+        }
+
+        @Override
+        public int size() {
+            return -1;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            if (!fields.isEmpty()) return false;
+            for (String s : parents) {
+                Task t = task.scheduler.getTask(s);
+                if (t != null) if (!t.bindings.fields.isEmpty()) return false;
+            }
+            return true;
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            if (fields.containsKey(key)) return true;
+            for (String s : parents) {
+                Task t = task.scheduler.getTask(s);
+                if (t != null) if (t.bindings.fields.containsKey(key)) return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean containsValue(Object value) {
+            return fields.containsValue(value);
+        }
+
+        @Override
+        public Object get(Object key) {
+            if (fields.containsKey(key)) return fields.get(key);
+            for (String s : parents) {
+                Task t = task.scheduler.getTask(s);
+                if (t != null && t.bindings.fields.containsKey(key)) {
+                    return t.bindings.fields.get(key);
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public Object remove(Object key) {
+            return fields.remove(key);
+        }
     }
+
+    public static final String prefixUnactiveEnabledValid = ChatColor.GRAY.toString();
+    public static final String prefixUnactiveDisabledValid = ChatColor.DARK_GRAY.toString();
+    public static final String prefixActiveEnabledValid = ChatColor.GREEN.toString();
+    public static final String prefixActiveDisabledValid = ChatColor.DARK_GRAY.toString();
+    public static final String prefixUnactiveEnabledError = ChatColor.GRAY.toString() + ChatColor.STRIKETHROUGH.toString();
+    public static final String prefixUnactiveDisabledError = ChatColor.DARK_GRAY.toString() + ChatColor.STRIKETHROUGH.toString();
+    public static final String prefixActiveEnabledError = ChatColor.RED.toString();
+    public static final String prefixActiveDisabledError = ChatColor.DARK_GRAY.toString() + ChatColor.STRIKETHROUGH.toString();
+    public static final String prefixDisabled = "<disabled>";
+
+    public final TaskBinding bindings;
+    public final String name;
+    public final Scheduler scheduler;
+
+    private File file;
 
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
-        if (description == null) this.description = "";
-        else this.description = description;
+        this.description = description;
     }
 
-    public boolean isRemoved() {
-        return markRemove;
+    private String description;
+
+    private List<Action> init = new ArrayList<Action>();
+    private List<Event> events = new ArrayList<Event>();
+    private List<Condition> conditions = new ArrayList<Condition>();
+    private List<Action> actions = new ArrayList<Action>();
+    private List<Action> reactions = new ArrayList<Action>();
+
+    private boolean removed;
+    private boolean enabled = false;
+
+    Task(Scheduler scheduler, String name, File file) {
+        this.scheduler = scheduler;
+        this.name = name;
+        this.file = file;
+        this.bindings = new TaskBinding(this);
+        load(file);
     }
 
     public String getName() {
         return name;
     }
 
-    public boolean remove() {
-        if (markRemove) return false;
-        try {
-            if (!file.exists() || file.delete()) {
-                unregister();
-                scheduler.tasks.remove(name);
-                return true;
-            } else {
-                return false;
-            }
-        } catch (Exception ignored) {
-            return false;
-        }
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public boolean rename(String toName) {
-        if (!toName.matches("[a-zA-Z0-9\\.\\-_&%]+")) return false;
-        if (markRemove) return false;
-        File toFile = new File(scheduler.home, toName + ".yml");
-        if (toFile.exists()) return false;
-        if (scheduler.tasks.containsKey(toName)) return false;
-        try {
-            if (file.renameTo(toFile)) {
-                file = toFile;
-                scheduler.tasks.remove(name);
-                name = toName;
-                scheduler.tasks.put(name, this);
-                return true;
-            } else {
-                return false;
-            }
-        } catch (Exception ignored) {
-            return false;
-        }
-    }
-
-    public Task copy(String toName) {
-        File toFile = new File(scheduler.home, toName + ".yml");
-        try {
-            if (toFile.exists()) if (!toFile.delete()) return null;
-            Task newTask = scheduler.tasks.get(toName);
-            if (newTask != null) newTask.free();
-            newTask = new Task(scheduler, toName);
-            newTask.description = description;
-            for (TaskEvent t : events) {
-                newTask.events.add(TaskEvent.fromString(newTask, t.toString()));
-            }
-            for (TaskCondition t : conditions) {
-                newTask.conditions.add(TaskCondition.fromString(newTask, t.toString()));
-            }
-            for (TaskAction t : actions) {
-                newTask.actions.add(TaskAction.fromString(newTask, t.toString()));
-            }
-            scheduler.tasks.put(toName, newTask);
-            return newTask;
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
-
-    void free() {
-        for (TaskEvent e : events) e.unregister();
-        events = null;
-        conditions = null;
-        actions = null;
-        markRemove = true;
-    }
-
-    Task(Scheduler scheduler, String name) {
-        this.scheduler = scheduler;
-        this.name = name;
-        this.file = new File(scheduler.home, name + ".yml");
-        boolean needRead = true;
-        if (!file.isFile()) {
-            try {
-                if (!file.createNewFile()) throw new IOException("can't create file " + file);
-                needRead = false;
-            } catch (IOException e) {
-                throw new RuntimeException("can't create file", e);
-            }
-        }
-
-        if (needRead) try {
-            List<String> ymlInit = new ArrayList<String>();
-            List<String> ymlEvents = new ArrayList<String>();
-            List<String> ymlConditions = new ArrayList<String>();
-            List<String> ymlActions = new ArrayList<String>();
-            List<String> ymlReactions = new ArrayList<String>();
-
-            InputStream in = new FileInputStream(file);
-            Yaml yaml = new Yaml();
-            Map<String, Object> map = (Map<String, Object>) yaml.load(in);
-            in.close();
-            if (map == null) throw new RuntimeException("task file " + file + " is empty");
-            if (map.containsKey("enabled")) enabled = (Boolean) map.get("enabled");
-            if (map.containsKey("description")) description = (String) map.get("description");
-
-            if (map.containsKey("init")) ymlInit = (List<String>) map.get("init");
-            if (map.containsKey("events")) ymlEvents = (List<String>) map.get("events");
-            if (map.containsKey("conditions")) ymlConditions = (List<String>) map.get("conditions");
-            if (map.containsKey("actions")) ymlActions = (List<String>) map.get("actions");
-            if (map.containsKey("reactions")) ymlReactions = (List<String>) map.get("reactions");
-
-            Collection<TaskEntry> toEnable = new ArrayList<TaskEntry>();
-
-            if (ymlInit != null) for (String s : ymlInit) {
-                if (s != null) {
-                    boolean currentEnabled = true;
-                    if (s.startsWith("<disabled> ")) {
-                        currentEnabled = false;
-                        s = s.substring(11);
-                    }
-                    TaskAction t = TaskAction.fromString(this, s);
-                    init.add(t);
-                    if (currentEnabled) toEnable.add(t);
-                }
-            }
-            if (ymlEvents != null) for (String s : ymlEvents) {
-                if (s != null) {
-                    boolean currentEnabled = true;
-                    if (s.startsWith("<disabled> ")) {
-                        currentEnabled = false;
-                        s = s.substring(11);
-                    }
-                    TaskEvent t = TaskEvent.fromString(this, s);
-                    events.add(t);
-                    if (currentEnabled) toEnable.add(t);
-                }
-            }
-            if (ymlConditions != null) for (String s : ymlConditions) {
-                if (s != null) {
-                    boolean currentEnabled = true;
-                    if (s.startsWith("<disabled> ")) {
-                        currentEnabled = false;
-                        s = s.substring(11);
-                    }
-                    TaskCondition t = TaskCondition.fromString(this, s);
-                    conditions.add(t);
-                    if (currentEnabled) toEnable.add(t);
-                }
-            }
-            if (ymlActions != null) for (String s : ymlActions) {
-                if (s != null) {
-                    boolean currentEnabled = true;
-                    if (s.startsWith("<disabled> ")) {
-                        currentEnabled = false;
-                        s = s.substring(11);
-                    }
-                    TaskAction t = TaskAction.fromString(this, s);
-                    actions.add(t);
-                    if (currentEnabled) toEnable.add(t);
-                }
-            }
-            if (ymlReactions != null) for (String s : ymlReactions) {
-                if (s != null) {
-                    boolean currentEnabled = true;
-                    if (s.startsWith("<disabled> ")) {
-                        currentEnabled = false;
-                        s = s.substring(11);
-                    }
-                    TaskAction t = TaskAction.fromString(this, s);
-                    actions.add(t);
-                    if (currentEnabled) toEnable.add(t);
-                }
-            }
-            for (TaskEntry t : toEnable) t.setEnabled(true);
-            if (enabled && scheduler.enabled) {
-                HashMap<String, Object> environment = new HashMap<String, Object>();
-                environment.put("Task", this);
-                for (TaskAction t : init) { // инициализация
-                    environment.put("TaskAction", t);
-                    if (!t.enabled) continue;
-                    if (t.error) continue;
-                    t.run(environment);
-                }
-            }
-
-        } catch (Exception e) {
-            free();
-            throw new RuntimeException("can't read yaml file " + file, e);
-        }
-        else {
-            save();
-        }
-    }
-
-    public Status getStatus() {
-        if (!enabled) return Status.DISABLED;
-        if (!scheduler.enabled) return Status.HOLD;
-        boolean error = false;
-        boolean has = false;
-        for (TaskEntry e : init) {
-            if (e.getStatus() == Status.INVALID) error = true;
-            else has = true;
-        }
-        for (TaskEntry e : events) {
-            if (e.getStatus() == Status.INVALID) error = true;
-            else has = true;
-        }
-        for (TaskEntry e : conditions) {
-            if (e.getStatus() == Status.INVALID) error = true;
-        }
-        for (TaskEntry e : actions) {
-            if (e.getStatus() == Status.INVALID) error = true;
-        }
-        for (TaskEntry e : reactions) {
-            if (e.getStatus() == Status.INVALID) error = true;
-        }
-        if (!has) return Status.INVALID;
-        if (error) return Status.ERROR;
-        return Status.RUN;
-    }
-
-    public boolean setEnabled(boolean enabled) {
-        if (this.enabled == enabled) return false;
+    public void setEnabled(boolean enabled) {
+        if (this.enabled == enabled) return;
         this.enabled = enabled;
-        if (enabled) {
-            if (scheduler.enabled) register();
+        if (enabled) register();
+        else unregister();
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public boolean remove() {
+        if (this.removed) return true;
+        if (this.enabled) unregister();
+        this.removed = true;
+        scheduler.deleteTask(this.name);
+        return file.delete();
+    }
+
+    //@SuppressWarnings("unchecked")
+    public Entry addEntry(EntrySlot slot, String constructor, CommandSender sender) {
+        if (this.removed) return null;
+        boolean currentEnabled = true;
+        if (constructor == null) return null;
+        if (constructor.startsWith(prefixDisabled + " ")) {
+            currentEnabled = false;
+            constructor = constructor.substring(prefixDisabled.length() + 1);
+        }
+        String name, param = null;
+        int index = constructor.indexOf(' ');
+        if (index == -1) {
+            name = constructor;
         } else {
-            unregister();
+            name = constructor.substring(0, index);
+            param = constructor.substring(index + 1);
+        }
+        Entry e = createEntry(slot, name, param, sender);
+        List entries = (List) getEntries(slot);
+        entries.add(e);
+        if (this.enabled) {
+            if (currentEnabled) e.setEnabled(true);
+        } else {
+            e.enabled = currentEnabled;
+        }
+        return e;
+    }
+
+    @SuppressWarnings("unchcked")
+    public Entry editEntry(EntrySlot slot, int pos, String constructor, CommandSender sender) {
+        if (this.removed) return null;
+        boolean currentEnabled = true;
+        if (constructor == null) return null;
+        if (constructor.startsWith(prefixDisabled + " ")) {
+            currentEnabled = false;
+            constructor = constructor.substring(prefixDisabled.length() + 1);
+        }
+        List<Entry> entries = (List<Entry>) getEntries(slot);
+        if (pos >= entries.size()) return null;
+        String name, param = null;
+        int index = constructor.indexOf(' ');
+        if (index == -1) {
+            name = constructor;
+        } else {
+            name = constructor.substring(0, index);
+            param = constructor.substring(index + 1);
+        }
+        Entry e = createEntry(slot, name, param, sender);
+        e.enabled = currentEnabled;
+        entries.remove(pos).setRemoved();
+        entries.add(pos, e);
+        if (this.enabled) e.register();
+        return e;
+    }
+
+    private Entry createEntry(EntrySlot slot, String name, String param, CommandSender sender) {
+        return scheduler.build(slot, this, name, param, sender);
+    }
+
+    public void removeEntry(Entry entry) {
+        getEntries(entry.slot).remove(entry);
+        entry.setRemoved();
+    }
+
+    public Entry getEntry(EntrySlot slot, int pos) {
+        List<? extends Entry> entries = getEntries(slot);
+        if (pos >= entries.size()) return null;
+        return entries.get(pos);
+    }
+
+    public int getEntryLength(EntrySlot slot) {
+        List<? extends Entry> entries = getEntries(slot);
+        if (entries != null) return getEntries(slot).size();
+        else return -1;
+    }
+
+    private List<? extends Entry> getEntries(EntrySlot slot) {
+        switch (slot) {
+            case INIT:
+                return init;
+            case EVENT:
+                return events;
+            case CONDITION:
+                return conditions;
+            case ACTION:
+                return actions;
+            case REACTION:
+                return reactions;
+            default:
+                return null;
+        }
+    }
+
+    void register() {
+        if (this.removed) return;
+        for (EntrySlot slot : EntrySlot.values()) {
+            List<? extends Entry> entries = getEntries(slot);
+            for (Entry e : entries) {
+                if (e.isEnabled()) e.checkRegister();
+            }
+        }
+        runInit();
+    }
+
+    void unregister() {
+        if (this.removed) return;
+        for (EntrySlot slot : EntrySlot.values()) {
+            List<? extends Entry> entries = getEntries(slot);
+            for (Entry e : entries) {
+                if (e.isEnabled()) e.unregister();
+            }
+        }
+    }
+
+    public boolean run(Map<String, Object> environment) {
+        boolean checked = checkConditions(environment);
+
+        if (checked) runActions(environment);
+        else runReactions(environment);
+        return checked;
+    }
+
+    public boolean run() {
+        return run(new HashMap<String, Object>());
+    }
+
+    public final String toString() {
+        String prefix;
+
+        boolean hasError = false;
+        hasError:
+        for (EntrySlot slot : EntrySlot.values()) {
+            for (Entry e : getEntries(slot)) {
+                if (e.isEnabled() && e.isError()) {
+                    hasError = true;
+                    break hasError;
+                }
+            }
+        }
+
+        if (hasError) {
+            if (scheduler.isEnabled()) {
+                if (isEnabled()) prefix = prefixActiveEnabledError;
+                else prefix = prefixActiveDisabledError;
+            } else {
+                if (isEnabled()) prefix = prefixUnactiveEnabledError;
+                else prefix = prefixUnactiveDisabledError;
+            }
+        } else {
+            if (scheduler.isEnabled()) {
+                if (isEnabled()) prefix = prefixActiveEnabledValid;
+                else prefix = prefixActiveDisabledValid;
+            } else {
+                if (isEnabled()) prefix = prefixUnactiveEnabledValid;
+                else prefix = prefixUnactiveDisabledValid;
+            }
+        }
+
+        return prefix + name;
+    }
+
+    public boolean checkConditions(@Nonnull Map<String, Object> environment) {
+        environment.put("Environment", environment);
+        environment.put("Task", this);
+        for (Entry e : getEntries(EntrySlot.CONDITION)) {
+            environment.put("TaskCondition", e);
+            if (e.isError()) return false;
+            boolean checked = ((Condition) e).test(environment);
+            if (!checked) return false;
         }
         return true;
     }
 
-    public void enable() {
-        setEnabled(true);
+    public boolean checkConditions() {
+        return checkConditions(new HashMap<String, Object>());
     }
 
-    public void disable() {
-        setEnabled(false);
+    public void runActions(@Nonnull Map<String, Object> environment) {
+        environment.put("Environment", environment);
+        environment.put("Task", this);
+        for (Entry e : getEntries(EntrySlot.ACTION)) {
+            if (e.isEnabled() && !e.isError()) {
+                environment.put("TaskAction", e);
+                ((Action) e).run(environment);
+            }
+        }
     }
 
     public void runActions() {
         runActions(new HashMap<String, Object>());
     }
 
+    public void runReactions(@Nonnull Map<String, Object> environment) {
+        environment.put("Environment", environment);
+        environment.put("Task", this);
+        for (Entry e : getEntries(EntrySlot.REACTION)) {
+            if (e.isEnabled() && !e.isError()) {
+                environment.put("TaskAction", e);
+                ((Action) e).run(environment);
+            }
+        }
+    }
+
     public void runReactions() {
         runReactions(new HashMap<String, Object>());
     }
 
-    public void runActions(Map<String, Object> environment) {
-        environment.put("Task", this);
+    public void runInit(@Nonnull Map<String, Object> environment) {
         environment.put("Environment", environment);
-        for (TaskAction t : actions) {
-            environment.put("TaskAction", t);
-            if (!t.enabled) continue;
-            if (t.error) continue;
-            t.run(environment);
-        }
-        environment.remove("TaskAction");
-    }
-
-    public void runReactions(Map<String, Object> environment) {
         environment.put("Task", this);
-        environment.put("Environment", environment);
-        for (TaskAction t : reactions) {
-            environment.put("TaskAction", t);
-            if (!t.enabled) continue;
-            if (t.error) continue;
-            t.run(environment);
-        }
-        environment.remove("TaskAction");
-    }
-
-    public void run(Map<String, Object> environment) {
-        if (check(environment)) runActions(environment);
-        else runReactions(environment);
-    }
-
-    public boolean check(Map<String, Object> environment) {
-        environment.put("Task", this);
-        environment.put("Environment", environment);
-        for (TaskCondition t : conditions) {
-            environment.put("TaskCondition", t);
-            if (!t.enabled) continue;
-            if (t.error) continue;
-            if (!t.check(environment)) return false;
-        }
-        environment.remove("TaskCondition");
-        return true;
-    }
-
-
-    void register() {
-        for (TaskAction t : init) {
-            if (t.enabled) t.error = !t.register();
-        }
-        for (TaskEvent t : events) {
-            if (t.enabled) t.error = !t.register();
-        }
-        for (TaskCondition t : conditions) {
-            if (t.enabled) t.error = !t.register();
-        }
-        for (TaskAction t : actions) {
-            if (t.enabled) t.error = !t.register();
-        }
-        for (TaskAction t : reactions) {
-            if (t.enabled) t.error = !t.register();
-        }
-        HashMap<String, Object> environment = new HashMap<String, Object>();
-        environment.put("Task", this);
-        for (TaskAction t : init) {
-            environment.put("TaskAction", t);
-            if (!t.enabled) continue;
-            if (t.error) continue;
-            t.run(environment);
+        for (Entry e : getEntries(EntrySlot.INIT)) {
+            if (e.isEnabled() && !e.isError()) {
+                environment.put("TaskAction", e);
+                ((Action) e).run(environment);
+            }
         }
     }
 
-    void unregister() {
-        for (TaskEvent t : events) {
-            t.unregister();
+    public void runInit() {
+        runInit(new HashMap<String, Object>());
+    }
+
+    public void load() {
+        load(file);
+    }
+
+    private void load(File file) {
+
+        if (this.enabled) unregister();
+        this.enabled = false;
+        this.description = null;
+        this.init.clear();
+        this.events.clear();
+        this.conditions.clear();
+        this.actions.clear();
+        this.reactions.clear();
+
+        try {
+            if (!file.isFile()) file.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException("[" + name + "] can not create task file", e);
         }
-        for (TaskCondition t : conditions) {
-            t.unregister();
+
+        Map map;
+        List ymlInit = new ArrayList();
+        List ymlEvents = new ArrayList();
+        List ymlConditions = new ArrayList();
+        List ymlActions = new ArrayList();
+        List ymlReactions = new ArrayList();
+        boolean enabled = false;
+
+        try {
+            InputStream in = new FileInputStream(file);
+            Yaml yaml = new Yaml();
+            map = (Map) yaml.load(in);
+            in.close();
+        } catch (Exception e) {
+            throw new RuntimeException("can't load task from file: " + file, e);
         }
-        for (TaskAction t : actions) {
-            t.unregister();
+        if (map == null) return;
+
+        if (map.containsKey("enabled")) enabled = (Boolean) map.get("enabled");
+        if (map.containsKey("description")) description = (String) map.get("description");
+        if (map.containsKey("init")) ymlInit = (List) map.get("init");
+        if (map.containsKey("events")) ymlEvents = (List) map.get("events");
+        if (map.containsKey("conditions")) ymlConditions = (List) map.get("conditions");
+        if (map.containsKey("actions")) ymlActions = (List) map.get("actions");
+        if (map.containsKey("reactions")) ymlReactions = (List) map.get("reactions");
+
+        if (ymlInit != null) for (Object s : ymlInit) {
+            addEntry(EntrySlot.INIT, s.toString(), null);
         }
-        for (TaskAction t : reactions) {
-            t.unregister();
+        if (ymlEvents != null) for (Object s : ymlEvents) {
+            addEntry(EntrySlot.EVENT, s.toString(), null);
         }
+        if (ymlConditions != null) for (Object s : ymlConditions) {
+            addEntry(EntrySlot.CONDITION, s.toString(), null);
+        }
+        if (ymlActions != null) for (Object s : ymlActions) {
+            addEntry(EntrySlot.ACTION, s.toString(), null);
+        }
+        if (ymlReactions != null) for (Object s : ymlReactions) {
+            addEntry(EntrySlot.REACTION, s.toString(), null);
+        }
+
+        this.enabled = enabled;
     }
 
     public void save() {
+        save(file);
+    }
+
+    private void save(File file) {
+
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(options);
@@ -384,235 +489,207 @@ public class Task {
         List<String> ymlConditions = new ArrayList<String>();
         List<String> ymlActions = new ArrayList<String>();
         List<String> ymlReactions = new ArrayList<String>();
-        for (TaskAction t : init) {
-            if (t.enabled) ymlInit.add(t.toString());
-            else ymlInit.add("<disabled> " + t.toString());
+
+        for (Entry t : getEntries(EntrySlot.INIT)) {
+            String line = t.getType();
+            if (t.getParams() != null) line += " " + t.getParams();
+            if (!t.isEnabled()) line = prefixDisabled + " " + line;
+            ymlInit.add(line);
         }
-        for (TaskEvent t : events) {
-            if (t.enabled) ymlEvents.add(t.toString());
-            else ymlEvents.add("<disabled> " + t.toString());
+
+        for (Entry t : getEntries(EntrySlot.EVENT)) {
+            String line = t.getType();
+            if (t.getParams() != null) line += " " + t.getParams();
+            if (!t.isEnabled()) line = prefixDisabled + " " + line;
+            ymlEvents.add(line);
         }
-        for (TaskCondition t : conditions) {
-            if (t.enabled) ymlConditions.add(t.toString());
-            else ymlConditions.add("<disabled> " + t.toString());
+
+        for (Entry t : getEntries(EntrySlot.CONDITION)) {
+            String line = t.getType();
+            if (t.getParams() != null) line += " " + t.getParams();
+            if (!t.isEnabled()) line = prefixDisabled + " " + line;
+            ymlConditions.add(line);
         }
-        for (TaskAction t : actions) {
-            if (t.enabled) ymlActions.add(t.toString());
-            else ymlActions.add("<disabled> " + t.toString());
+
+        for (Entry t : getEntries(EntrySlot.ACTION)) {
+            String line = t.getType();
+            if (t.getParams() != null) line += " " + t.getParams();
+            if (!t.isEnabled()) line = prefixDisabled + " " + line;
+            ymlActions.add(line);
+        }
+
+        for (Entry t : getEntries(EntrySlot.REACTION)) {
+            String line = t.getType();
+            if (t.getParams() != null) line += " " + t.getParams();
+            if (!t.isEnabled()) line = prefixDisabled + " " + line;
+            ymlReactions.add(line);
         }
 
         if (!ymlInit.isEmpty()) data.put("init", ymlInit);
         if (!ymlEvents.isEmpty()) data.put("events", ymlEvents);
         if (!ymlConditions.isEmpty()) data.put("conditions", ymlConditions);
         if (!ymlActions.isEmpty()) data.put("actions", ymlActions);
-        if (!ymlReactions.isEmpty()) data.put("reactions", ymlActions);
+        if (!ymlReactions.isEmpty()) data.put("reactions", ymlReactions);
+
         FileWriter writer = null;
         try {
             writer = new FileWriter(file);
             yaml.dump(data, writer);
             writer.close();
         } catch (IOException e) {
-            throw new RuntimeException("can't save task to yml", e);
+            throw new RuntimeException("can not save task to yml", e);
         } finally {
             if (writer != null) try {
                 writer.close();
             } catch (IOException ignored) {
             }
         }
-
     }
 
-    public Scheduler getScheduler() {
-        return scheduler;
+
+    public class InsertResult {
+        public Map<String, Object> map = new HashMap<String, Object>();
+        public List<Object> list = new ArrayList<Object>();
     }
 
-    public TaskAction getInit(int index) {
-        return init.get(index);
-    }
-
-    public TaskEvent getEvent(int index) {
-        return events.get(index);
-    }
-
-    public TaskCondition getCondition(int index) {
-        return conditions.get(index);
-    }
-
-    public TaskAction getAction(int index) {
-        return actions.get(index);
-    }
-
-    public TaskAction getReaction(int index) {
-        return reactions.get(index);
-    }
-
-    public TaskEntry get(TaskEntryType type, int index) {
-        switch (type) {
-            case INIT:
-                return getInit(index);
-            case EVENT:
-                return getEvent(index);
-            case CONDITION:
-                return getCondition(index);
-            case ACTION:
-                return getAction(index);
-            case REACTION:
-                return getReaction(index);
+    public InsertResult insertValues(LinkedHashMap<String, String> params, Map<String, Object> environment) {
+        InsertResult result = new InsertResult();
+        for (Map.Entry<String, String> e : params.entrySet()) {
+            if (e.getValue() == null) {
+                result.list.add(parseObject(e.getKey(), environment));
+            } else {
+                result.map.put(parseString(e.getKey()), parseObject(e.getValue(), environment));
+            }
         }
-        return null;
+        return result;
     }
 
-    public int getInitCount() {
-        return init.size();
-    }
-
-    public int getEventCount() {
-        return events.size();
-    }
-
-    public int getConditionCount() {
-        return conditions.size();
-    }
-
-    public int getActionCount() {
-        return actions.size();
-    }
-
-    public int getReactionCount() {
-        return reactions.size();
-    }
-
-    public int getCount(TaskEntryType type) {
-        switch (type) {
-            case INIT:
-                return getInitCount();
-            case EVENT:
-                return getEventCount();
-            case CONDITION:
-                return getConditionCount();
-            case ACTION:
-                return getActionCount();
-            case REACTION:
-                return getReactionCount();
+    public Object parseObject(String val, Map<String, Object> environment) {
+        if (val == null) return null;
+        if (val.equals("true")) return true;
+        if (val.equals("false")) return false;
+        if (val.equals("null")) return null;
+        if (val.matches("[0-9]+")) {
+            try {
+                return Integer.parseInt(val);
+            } catch (Exception e) {
+                return Long.parseLong(val);
+            }
         }
-        return -1;
-    }
-
-    public TaskAction addInit(String constructor) {
-        TaskAction t = TaskAction.fromString(this, constructor);
-        init.add(t);
-        return t;
-    }
-
-    public TaskEvent addEvent(String constructor) {
-        TaskEvent t = TaskEvent.fromString(this, constructor);
-        events.add(t);
-        return t;
-    }
-
-    public TaskCondition addCondition(String constructor) {
-        TaskCondition t = TaskCondition.fromString(this, constructor);
-        conditions.add(t);
-        return t;
-    }
-
-    public TaskAction addAction(String constructor) {
-        TaskAction t = TaskAction.fromString(this, constructor);
-        actions.add(t);
-        return t;
-    }
-
-    public TaskAction addReaction(String constructor) {
-        TaskAction t = TaskAction.fromString(this, constructor);
-        reactions.add(t);
-        return t;
-    }
-
-    public TaskEntry add(TaskEntryType type, String constructor) {
-        switch (type) {
-            case INIT:
-                return addInit(constructor);
-            case EVENT:
-                return addEvent(constructor);
-            case CONDITION:
-                return addCondition(constructor);
-            case ACTION:
-                return addAction(constructor);
-            case REACTION:
-                return addReaction(constructor);
+        if (val.matches("[0-9]+.[0-9]?")) {
+            try {
+                return Float.parseFloat(val);
+            } catch (Exception e) {
+                return Double.parseDouble(val);
+            }
         }
-        return null;
-    }
-
-    public TaskAction editInit(int index, String constructor) {
-        TaskAction t = init.get(index);
-        boolean needEnable = t.enabled;
-        t.remove();
-        t = TaskAction.fromString(this, constructor);
-        init.add(index, t);
-        if (needEnable) t.enable();
-        return t;
-    }
-
-    public TaskEvent editEvent(int index, String constructor) {
-        TaskEvent t = events.get(index);
-        boolean needEnable = t.enabled;
-        t.remove();
-        t = TaskEvent.fromString(this, constructor);
-        events.add(index, t);
-        if (needEnable) t.enable();
-        return t;
-    }
-
-    public TaskCondition editCondition(int index, String constructor) {
-        TaskCondition t = conditions.get(index);
-        boolean needEnable = t.enabled;
-        t.remove();
-        t = TaskCondition.fromString(this, constructor);
-        conditions.add(index, t);
-        if (needEnable) t.enable();
-        return t;
-    }
-
-    public TaskAction editAction(int index, String constructor) {
-        TaskAction t = actions.get(index);
-        boolean needEnable = t.enabled;
-        t.remove();
-        t = TaskAction.fromString(this, constructor);
-        actions.add(index, t);
-        if (needEnable) t.enable();
-        return t;
-    }
-
-    public TaskAction editReaction(int index, String constructor) {
-        TaskAction t = reactions.get(index);
-        boolean needEnable = t.enabled;
-        t.remove();
-        t = TaskAction.fromString(this, constructor);
-        reactions.add(index, t);
-        if (needEnable) t.enable();
-        return t;
-    }
-
-    public TaskEntry edit(TaskEntryType type, int index, String constructor) {
-        switch (type) {
-            case INIT:
-                return editInit(index, constructor);
-            case EVENT:
-                return editEvent(index, constructor);
-            case CONDITION:
-                return editCondition(index, constructor);
-            case ACTION:
-                return editAction(index, constructor);
-            case REACTION:
-                return editReaction(index, constructor);
+        if (val.startsWith("\"") && val.endsWith("\"")) {
+            try {
+                val = val.substring(1, val.length() - 1);
+                return VSStringParser.parse(val);
+            } catch (Exception e) {
+                return val;
+            }
         }
-        return null;
+        if (val.matches("[0-9]+(:?\\.[0-9]*)?:[0-9]+(:?\\.[0-9]*)?:[0-9]+(:?\\.[0-9]*)?")) {
+            String[] ss = val.split(":");
+            org.bukkit.util.Vector vector = new Vector();
+            vector.setX(Double.parseDouble(ss[0]));
+            vector.setY(Double.parseDouble(ss[1]));
+            vector.setZ(Double.parseDouble(ss[2]));
+            return vector;
+        }
+        if (val.matches("[0-9]+:[0-9]+:[0-9]+:.*")) {
+            String[] ss = val.split(":");
+            World w = Bukkit.getWorld(ss[3]);
+            return w.getBlockAt(
+                    Integer.parseInt(ss[0]),
+                    Integer.parseInt(ss[1]),
+                    Integer.parseInt(ss[2])
+            );
+        }
+        if (val.matches("[0-9]+(:?\\.[0-9]*)?:[0-9]+(:?\\.[0-9]*)?:[0-9]+(:?\\.[0-9]*)?:.*")) {
+            String[] ss = val.split(":");
+            World w = Bukkit.getWorld(ss[3]);
+            return new Location(w,
+                    Double.parseDouble(ss[0]),
+                    Double.parseDouble(ss[1]),
+                    Double.parseDouble(ss[2])
+            );
+        }
+        if (val.startsWith("@")) {
+            return Bukkit.getPlayer(val.substring(1));
+        }
+        if (val.startsWith("$")) {
+            String var = val.substring(1);
+            if (environment.containsKey(var)) {
+                return environment.get(var);
+            } else if (bindings.containsKey(var)) {
+                return bindings.get(var);
+            } else {
+                return null;
+            }
+        }
+        return val;
     }
 
-    @Override
-    public String toString() {
-        return name;
+    public String parseString(String val) {
+        if (val == null) return null;
+        if (val.equals("null")) return null;
+        if (val.startsWith("\"") && val.endsWith("\"")) {
+            try {
+                val = val.substring(1, val.length() - 1);
+                return VSStringParser.parse(val);
+            } catch (Exception e) {
+                return val;
+            }
+        }
+        return val;
     }
+
+    public void reload() {
+        load(file);
+        if (enabled) register();
+    }
+
+    @SuppressWarnings("unused")
+    public String display() {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(this.toString());
+        buffer.append(ChatColor.RESET).append('\n');
+        if (description != null && !description.isEmpty()) {
+            buffer.append(ChatColor.YELLOW).append(description);
+            buffer.append(ChatColor.RESET).append('\n');
+        }
+
+        for (EntrySlot slot : EntrySlot.values()) {
+            List<? extends Entry> entries = getEntries(slot);
+            if (entries.size() <= 0) continue;
+            buffer.append(slot.setName).append('\n');
+            for (Entry e : entries) {
+                buffer.append("- ");
+                buffer.append(e);
+                buffer.append(ChatColor.RESET).append('\n');
+            }
+        }
+        return buffer.substring(0, buffer.length() - 1);
+    }
+
+    @SuppressWarnings("unused")
+    public String display(EntrySlot slot) {
+        List<? extends Entry> entries = getEntries(slot);
+        StringBuilder buffer = new StringBuilder();
+        buffer.append(this.toString());
+        buffer.append(ChatColor.RESET).append(' ');
+        buffer.append(slot.setName).append('\n');
+        for (Entry e : entries) {
+            buffer.append("- ");
+            buffer.append(e);
+            buffer.append(ChatColor.RESET).append('\n');
+        }
+        return buffer.substring(0, buffer.length() - 1);
+
+    }
+
 
 }

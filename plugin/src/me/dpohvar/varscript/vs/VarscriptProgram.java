@@ -66,7 +66,7 @@ public class VarscriptProgram implements Program, Iterable<Thread>, Fieldable {
         return "Program{" + caller.getInstance().toString() + "}";
     }
 
-    public VarscriptProgram(Runtime runtime, final Caller caller, Map<String, Object> bindings) {
+    public VarscriptProgram(Runtime runtime, final Caller caller, Map<String, Object> bindings, Map<String, Object> visible) {
         this.caller = caller;
         this.runtime = runtime;
         if (bindings == null) bindings = caller.getFields();
@@ -75,6 +75,7 @@ public class VarscriptProgram implements Program, Iterable<Thread>, Fieldable {
                 .listen(runtime.getGlobalBindings())
                 .listen(programEnvironment)
                 .listen(runtime.getModuleBindings(null))
+                .listen(visible) // ignore if null
                 .listen(bindings)
                 .listen(runtime.getEngineBindings(null))
                 .listen(runtime.getRuntimeBindings());
@@ -94,6 +95,14 @@ public class VarscriptProgram implements Program, Iterable<Thread>, Fieldable {
         programEnvironment.put("[[FieldableObject]]", object);
         programEnvironment.put("[[Thread]]", thread);
         programEnvironment.put("[[Reflect]]", reflect);
+    }
+
+    public VarscriptProgram(Runtime runtime, final Caller caller, Map<String, Object> bindings) {
+        this(runtime, caller, bindings, null);
+    }
+
+    public VarscriptProgram(Runtime runtime, final Caller caller) {
+        this(runtime, caller, null, null);
     }
 
     @Override

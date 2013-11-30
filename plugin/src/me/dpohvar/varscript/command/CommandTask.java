@@ -11,6 +11,7 @@ import org.bukkit.command.CommandSender;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 /**
@@ -42,21 +43,20 @@ public class CommandTask implements CommandExecutor {
             String op = words.poll();
             if (taskname.endsWith("*")) {
                 String query = taskname.substring(0, taskname.length() - 1);
-                TaskList tasks = scheduler.getTasks(query);
-                if (op == null || checkNoCase(op, "view", "v")) {
+                List<Task> tasks = scheduler.getTasks(query);
+                if (op == null) {
                     StringBuilder buffer = new StringBuilder("Tasks for ").append(taskname).append(" :");
                     for (Task task : tasks) {
-                        buffer.append('\n').append(task.getStatus()).append(task).append(RESET);
+                        buffer.append('\n').append(task).append(RESET);
                         String desc = task.getDescription();
-                        if (desc != null) buffer.append(' ').append(INFO).append(desc);
+                        if (desc != null && !desc.isEmpty()) buffer.append(' ').append(INFO).append(desc);
                     }
                     caller.send(buffer);
                     return true;
                 } else if (checkNoCase(op, "disable", "off", "dis")) {
                     StringBuilder buffer = new StringBuilder("Disable tasks ").append(taskname).append(" :");
                     for (Task task : tasks) {
-                        //if(!task.isEnabled()) continue;
-                        buffer.append('\n').append(task.getStatus()).append(task).append(RESET);
+                        buffer.append('\n').append(task).append(RESET);
                         if (!task.isEnabled()) continue;
                         buffer.append(SUCCESS).append(" OK");
                         task.setEnabled(false);
@@ -67,7 +67,7 @@ public class CommandTask implements CommandExecutor {
                 } else if (checkNoCase(op, "enable", "on", "en")) {
                     StringBuilder buffer = new StringBuilder("Enable tasks ").append(taskname).append(" :");
                     for (Task task : tasks) {
-                        buffer.append('\n').append(task.getStatus()).append(task).append(RESET);
+                        buffer.append('\n').append(task).append(RESET);
                         if (task.isEnabled()) continue;
                         buffer.append(SUCCESS).append(" OK");
                         task.setEnabled(true);
@@ -78,7 +78,7 @@ public class CommandTask implements CommandExecutor {
                 } else if (checkNoCase(op, "remove")) {
                     StringBuilder buffer = new StringBuilder("Remove tasks ").append(taskname).append(" :");
                     for (Task task : tasks) {
-                        buffer.append('\n').append(task.getStatus()).append(task).append(RESET).append(' ');
+                        buffer.append('\n').append(task).append(RESET).append(' ');
                         if (task.remove()) {
                             buffer.append(SUCCESS).append("OK");
                         } else {
@@ -90,28 +90,7 @@ public class CommandTask implements CommandExecutor {
                 } else if (checkNoCase(op, "save", "s")) {
                     StringBuilder buffer = new StringBuilder("Save tasks ").append(taskname).append(" :");
                     for (Task task : tasks) {
-                        buffer.append('\n').append(task.getStatus()).append(task).append(RESET)
-                                .append(' ').append(task.getDescription());
-                    }
-                    caller.send(buffer);
-                    return true;
-                } else if (checkNoCase(op, "rename", "ren", "rn")) {
-                    String name = words.poll();
-                    if (name == null) {
-                        caller.send("enter a new prefix for tasks");
-                        return true;
-                    }
-                    StringBuilder buffer = new StringBuilder("Rename tasks ").append(taskname).append(" :");
-                    for (Task task : tasks) {
-                        String suffix = task.getName().substring(query.length());
-                        buffer.append('\n').append(task.getStatus()).append(task).append(RESET).append(' ');
-                        if (task.rename(name + suffix)) {
-                            buffer.append(SUCCESS).append("RENAMED TO ").append(RESET)
-                                    .append(name).append(suffix);
-                        } else {
-                            buffer.append(ERROR).append("ERROR");
-                        }
-                        task.save();
+                        buffer.append('\n').append(task).append(INFO).append(' ').append(task.getDescription());
                     }
                     caller.send(buffer);
                     return true;
@@ -123,134 +102,49 @@ public class CommandTask implements CommandExecutor {
                 Task task = scheduler.getTask(taskname);
                 if (op != null && checkNoCase(op, "create", "cr", "new", "n")) {
                     if (task != null) {
-                        caller.send("task " + task.getStatus() + task + RESET + " already exists");
+                        caller.send("task " + task + RESET + " already exists");
                         return true;
                     }
-                    task = scheduler.loadTask(taskname);
+                    task = scheduler.createTask(taskname);
                     if (task == null) {
                         caller.send("can't create task " + taskname);
                         return true;
                     }
                     if (!words.isEmpty()) task.setDescription(StringUtils.join(words, ' '));
-                    caller.send("task " + task.getStatus() + task + RESET + " is created");
+                    caller.send("task " + task + RESET + " is created");
                     return true;
                 }
                 if (task == null) {
                     caller.send("task " + taskname + " not found");
                     return true;
                 }
-                if (op == null || checkNoCase(op, "view", "v")) {
+                if (op == null) {
                     if (task == null) {
                         caller.send("no task with name " + taskname);
                         return true;
                     } else {
-                        StringBuilder buffer = new StringBuilder();
-                        buffer.append(task.getStatus()).append(task);
-                        String description = task.getDescription();
-                        if (description != null && !description.isEmpty()) {
-                            buffer.append('\n').append(INFO).append(description);
-                        }
-                        int initCount = task.getInitCount();
-                        if (initCount > 0) {
-                            buffer.append('\n').append(RESET).append("Init:");
-                            for (int i = 0; i < initCount; i++) {
-                                TaskAction t = task.getInit(i);
-                                buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                            }
-                        }
-                        int eventCount = task.getEventCount();
-                        if (eventCount > 0) {
-                            buffer.append('\n').append(RESET).append("Events:");
-                            for (int i = 0; i < eventCount; i++) {
-                                TaskEvent t = task.getEvent(i);
-                                buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                            }
-                        }
-                        int conditionCount = task.getConditionCount();
-                        if (conditionCount > 0) {
-                            buffer.append('\n').append(RESET).append("Conditions:");
-                            for (int i = 0; i < conditionCount; i++) {
-                                TaskCondition t = task.getCondition(i);
-                                buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                            }
-                        }
-                        int actionsCount = task.getActionCount();
-                        if (actionsCount > 0) {
-                            buffer.append('\n').append(RESET).append("Actions:");
-                            for (int i = 0; i < actionsCount; i++) {
-                                TaskAction t = task.getAction(i);
-                                buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                            }
-                        }
-                        int reactionsCount = task.getReactionCount();
-                        if (reactionsCount > 0) {
-                            buffer.append('\n').append(RESET).append("Reactions:");
-                            for (int i = 0; i < reactionsCount; i++) {
-                                TaskAction t = task.getReaction(i);
-                                buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                            }
-                        }
-                        caller.send(buffer);
+                        caller.send(task.display());
                         return true;
                     }
                 } else if (checkNoCase(op, "reload", "reset", "!")) {
-                    task = scheduler.loadTask(taskname);
-                    if (task == null) {
-                        caller.send("can't reload task " + taskname);
-                        return true;
-                    }
+                    task.reload();
                     StringBuilder buffer = new StringBuilder();
-                    buffer.append(task.getStatus()).append(task).append(RESET).append(" reloaded");
-                    String description = task.getDescription();
-                    if (description != null && !description.isEmpty())
-                        buffer.append('\n').append(INFO).append(description);
-                    int initCount = task.getInitCount();
-                    if (initCount > 0) {
-                        buffer.append('\n').append(RESET).append("Init:");
-                        for (int i = 0; i < initCount; i++) {
-                            TaskAction t = task.getInit(i);
-                            buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                        }
-                    }
-                    int eventCount = task.getEventCount();
-                    if (eventCount > 0) {
-                        buffer.append('\n').append(RESET).append("Events:");
-                        for (int i = 0; i < eventCount; i++) {
-                            TaskEvent t = task.getEvent(i);
-                            buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                        }
-                    }
-                    int conditionCount = task.getConditionCount();
-                    if (conditionCount > 0) {
-                        buffer.append('\n').append(RESET).append("Conditions:");
-                        for (int i = 0; i < conditionCount; i++) {
-                            TaskCondition t = task.getCondition(i);
-                            buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                        }
-                    }
-                    int actionsCount = task.getActionCount();
-                    if (actionsCount > 0) {
-                        buffer.append('\n').append(RESET).append("Actions:");
-                        for (int i = 0; i < actionsCount; i++) {
-                            TaskAction t = task.getAction(i);
-                            buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                        }
-                    }
-                    int reactionsCount = task.getReactionCount();
-                    if (reactionsCount > 0) {
-                        buffer.append('\n').append(RESET).append("Reactions:");
-                        for (int i = 0; i < actionsCount; i++) {
-                            TaskAction t = task.getReaction(i);
-                            buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                        }
-                    }
+                    buffer.append(task).append(RESET).append(" reloaded");
+                    buffer.append('\n').append(task.display());
                     caller.send(buffer);
+                    return true;
+                } else if (checkNoCase(op, "check")) {
+                    caller.send(task.toString() + RESET + " checked: " + task.checkConditions(caller.getFields()));
+                    return true;
+                } else if (checkNoCase(op, "run")) {
+                    caller.send(task.toString() + RESET + " run");
+                    task.run(caller.getFields());
                     return true;
                 } else if (checkNoCase(op, "disable", "off", "dis")) {
                     StringBuilder buffer = new StringBuilder("disable task ");
-                    buffer.append(task.getStatus()).append(task).append(RESET).append(" :");
+                    buffer.append(task).append(RESET).append(" :");
                     if (task.isEnabled()) {
-                        task.disable();
+                        task.setEnabled(false);
                         task.save();
                         buffer.append(SUCCESS).append(" OK");
                     } else {
@@ -260,9 +154,9 @@ public class CommandTask implements CommandExecutor {
                     return true;
                 } else if (checkNoCase(op, "enable", "on", "en")) {
                     StringBuilder buffer = new StringBuilder("enable task ");
-                    buffer.append(task.getStatus()).append(task).append(RESET).append(" :");
+                    buffer.append(task).append(RESET).append(" :");
                     if (!task.isEnabled()) {
-                        task.enable();
+                        task.setEnabled(true);
                         task.save();
                         buffer.append(SUCCESS).append(" OK");
                     } else {
@@ -271,8 +165,7 @@ public class CommandTask implements CommandExecutor {
                     caller.send(buffer);
                     return true;
                 } else if (checkNoCase(op, "remove")) {
-                    StringBuilder buffer = new StringBuilder("Remove task ")
-                            .append(task.getStatus()).append(task).append(RESET).append(" : ");
+                    StringBuilder buffer = new StringBuilder("Remove task ").append(task).append(RESET).append(" : ");
                     if (task.remove()) {
                         buffer.append(SUCCESS).append("OK");
                     } else {
@@ -282,50 +175,32 @@ public class CommandTask implements CommandExecutor {
                     return true;
                 } else if (checkNoCase(op, "save", "s")) {
                     task.save();
-                    StringBuilder buffer = new StringBuilder("Task ")
-                            .append(task.getStatus()).append(task).append(RESET).append(" saved");
-                    caller.send(buffer.toString());
+                    caller.send("Task " + task + RESET + " saved");
                     return true;
                 } else if (checkNoCase(op, "description", "desc", "d")) {
                     StringBuilder buffer = new StringBuilder();
                     if (words.isEmpty()) {
                         String desc = task.getDescription();
                         if (desc != null) {
-                            buffer.append(task.getStatus()).append(task).append(RESET).append(" description:\n");
+                            buffer.append(task).append(RESET).append(" description:\n");
                             buffer.append(INFO).append(task.getDescription());
                         } else {
-                            buffer.append(task.getStatus()).append(task).append(RESET).append(" has no description");
+                            buffer.append(task).append(RESET).append(" has no description");
                         }
                     } else {
                         String desc = StringUtils.join(words, ' ');
                         if (desc.isEmpty()) {
                             task.setDescription(null);
-                            buffer.append("description for ").append(task.getStatus()).append(task).append(RESET);
+                            buffer.append("description for ").append(task).append(RESET);
                             buffer.append(" is removed");
                         } else {
                             task.setDescription(desc);
-                            buffer.append("New description for task ").append(task.getStatus()).append(task);
+                            buffer.append("New description for task ").append(task);
                             buffer.append(RESET).append(" is set:\n").append(INFO).append(task.getDescription());
                         }
                         task.save();
                     }
                     caller.send(buffer.toString());
-                    return true;
-                } else if (checkNoCase(op, "rename", "ren", "rn")) {
-                    String name = words.poll();
-                    if (name == null) {
-                        caller.send("enter a new name for task");
-                        return true;
-                    }
-                    StringBuilder buffer = new StringBuilder("Rename task ").append(task.getStatus()).append(task)
-                            .append(RESET).append(" to ").append(name).append(" : ");
-                    if (task.rename(name)) {
-                        buffer.append(SUCCESS).append("OK");
-                    } else {
-                        buffer.append(ERROR).append("ERROR");
-                    }
-                    caller.send(buffer);
-                    task.save();
                     return true;
                 } else if (checkNoCase(op, "copy")) {
                     String name = words.poll();
@@ -333,9 +208,10 @@ public class CommandTask implements CommandExecutor {
                         caller.send("enter a name of new task");
                         return true;
                     }
-                    StringBuilder buffer = new StringBuilder("Copy task ").append(task.getStatus()).append(task)
-                            .append(RESET).append(" to ").append(name).append(" : ");
-                    if (task.copy(name) != null) {
+                    StringBuilder buffer = new StringBuilder("Copy task ").append(task).append(RESET);
+                    buffer.append(" to ").append(name).append(" : ");
+                    Task des = scheduler.copyTask(task.getName(), name);
+                    if (des != null) {
                         buffer.append(SUCCESS).append("OK");
                     } else {
                         buffer.append(ERROR).append("ERROR");
@@ -344,14 +220,9 @@ public class CommandTask implements CommandExecutor {
                     task.save();
                     return true;
                 }
-                TaskEntryType entryType = null;
-                if (checkNoCase(op, "init", "i")) entryType = TaskEntryType.INIT;
-                if (checkNoCase(op, "events", "event", "e")) entryType = TaskEntryType.EVENT;
-                if (checkNoCase(op, "conditions", "condition", "c")) entryType = TaskEntryType.CONDITION;
-                if (checkNoCase(op, "actions", "action", "a")) entryType = TaskEntryType.ACTION;
-                if (checkNoCase(op, "reactions", "reaction", "re", "r")) entryType = TaskEntryType.REACTION;
+                EntrySlot slot = EntrySlot.getByName(op);
 
-                if (entryType != null) {
+                if (slot != null) {
                     String entryIdString = words.poll();
                     String entryOperation = words.poll();
                     int entryId = -1;
@@ -359,114 +230,39 @@ public class CommandTask implements CommandExecutor {
                         entryId = Integer.parseInt(entryIdString);
                     } catch (NumberFormatException ignored) {
                     }
-                    int count = task.getCount(entryType);
                     if (entryIdString == null || checkNoCase(entryIdString, "*", "all")) {
                         if (entryOperation == null || checkNoCase(entryOperation, "view", "v")) {
-                            StringBuilder buffer = new StringBuilder();
-                            buffer.append(task.getStatus()).append(task).append(' ').append(RESET);
-                            switch (entryType) {
-                                case INIT:
-                                    buffer.append("init");
-                                    break;
-                                case EVENT:
-                                    buffer.append("events");
-                                    break;
-                                case CONDITION:
-                                    buffer.append("conditions");
-                                    break;
-                                case ACTION:
-                                    buffer.append("actions");
-                                    break;
-                                case REACTION:
-                                    buffer.append("reactions");
-                                    break;
-                            }
-                            for (int i = 0; i < count; i++) {
-                                TaskEntry t = task.get(entryType, i);
-                                buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                            }
-                            caller.send(buffer.toString());
+                            caller.send(task.display(slot));
                             return true;
                         } else if (checkNoCase(entryOperation, "remove")) {
-                            StringBuilder buffer = new StringBuilder("all ");
-                            switch (entryType) {
-                                case INIT:
-                                    buffer.append("inits");
-                                    break;
-                                case EVENT:
-                                    buffer.append("events");
-                                    break;
-                                case CONDITION:
-                                    buffer.append("conditions");
-                                    break;
-                                case ACTION:
-                                    buffer.append("actions");
-                                    break;
-                                case REACTION:
-                                    buffer.append("reactions");
-                                    break;
-                            }
-                            buffer.append(" removed in ").append(task.getStatus()).append(task).append(RESET).append(" :");
-                            while (task.getCount(entryType) > 0) {
-                                TaskEntry t = task.get(entryType, 0);
-                                buffer.append('\n').append(t.getStatus()).append("- ").append(t);
-                                t.remove();
+                            StringBuilder buffer = new StringBuilder("all ").append(slot.setName);
+                            buffer.append(" removed in ").append(task).append(RESET).append(" :");
+                            for (; ; ) {
+                                Entry e = task.getEntry(slot, 0);
+                                if (e == null) break;
+                                e.remove();
                             }
                             caller.send(buffer.toString());
                             task.save();
                             return true;
                         } else if (checkNoCase(entryOperation, "enable", "en", "on")) {
-                            StringBuilder buffer = new StringBuilder("all ");
-                            switch (entryType) {
-                                case INIT:
-                                    buffer.append("inits");
-                                    break;
-                                case EVENT:
-                                    buffer.append("events");
-                                    break;
-                                case CONDITION:
-                                    buffer.append("conditions");
-                                    break;
-                                case ACTION:
-                                    buffer.append("actions");
-                                    break;
-                                case REACTION:
-                                    buffer.append("reactions");
-                                    break;
-                            }
-                            buffer.append(" enabled in ").append(task.getStatus()).append(task).append(RESET).append(" :");
-                            for (int i = 0; i < count; i++) {
-                                TaskEntry t = task.get(entryType, i);
-                                t.enable();
-                                buffer.append('\n').append(t.getStatus()).append("- ").append(t);
+                            StringBuilder buffer = new StringBuilder("all ").append(slot.setName);
+                            buffer.append(" enabled in ").append(task).append(RESET).append(" :");
+                            for (int i = 0; ; i++) {
+                                Entry t = task.getEntry(slot, i);
+                                if (t == null) break;
+                                t.setEnabled(true);
                             }
                             caller.send(buffer.toString());
                             task.save();
                             return true;
                         } else if (checkNoCase(entryOperation, "disable", "dis", "off")) {
-                            StringBuilder buffer = new StringBuilder("all ");
-                            switch (entryType) {
-                                case INIT:
-                                    buffer.append("init");
-                                    break;
-                                case EVENT:
-                                    buffer.append("events");
-                                    break;
-                                case CONDITION:
-                                    buffer.append("conditions");
-                                    break;
-                                case ACTION:
-                                    buffer.append("actions");
-                                    break;
-                                case REACTION:
-                                    buffer.append("reactions");
-                                    break;
-                            }
-                            buffer.append(" disabled in ").append(task.getStatus()).append(task).append(RESET).append(" :");
-                            for (int i = 0; i < count; i++) {
-                                TaskEntry t = task.get(entryType, i);
-                                t.disable();
-                                buffer.append('\n').append(t.getStatus()).append("- ").append(t);
+                            StringBuilder buffer = new StringBuilder("all ").append(slot.setName);
+                            buffer.append(" disabled in ").append(task).append(RESET).append(" :");
+                            for (int i = 0; ; i++) {
+                                Entry t = task.getEntry(slot, i);
+                                if (t == null) break;
+                                t.setEnabled(false);
                             }
                             caller.send(buffer.toString());
                             task.save();
@@ -477,82 +273,111 @@ public class CommandTask implements CommandExecutor {
                         }
                     } else if (checkNoCase(entryIdString, "create", "c")) {
                         if (entryOperation == null) {
-                            caller.send(entryType + " constructor is empty");
+                            caller.send(slot + " constructor is empty");
                             return true;
                         }
                         StringBuilder buffer = new StringBuilder();
                         String constructor = entryOperation.concat(" ").concat(StringUtils.join(words, ' '));
-                        TaskEntry entry = task.add(entryType, constructor);
-                        buffer.append(entryType).append(" created in ").append(task.getStatus()).append(task)
-                                .append(": \n").append(entry.getStatus()).append("- ").append(entry);
+                        Entry entry = task.addEntry(slot, constructor, commandSender);
+                        buffer.append(slot.name).append(" created in ").append(task).append(": \n");
+                        buffer.append("- ").append(entry);
                         caller.send(buffer.toString());
                         task.save();
                         return true;
+                    } else if (checkNoCase(entryIdString, "run")) {
+                        switch (slot) {
+                            case INIT:
+                                caller.send(task.toString() + RESET + " run init");
+                                task.runInit(caller.getFields());
+                                return true;
+                            case ACTION:
+                                caller.send(task.toString() + RESET + " run actions");
+                                task.runActions(caller.getFields());
+                                return true;
+                            case REACTION:
+                                caller.send(task.toString() + RESET + " run reactions");
+                                task.runReactions(caller.getFields());
+                                return true;
+                            case CONDITION:
+                                caller.send(task.toString() + RESET + " checked: " + task.checkConditions(caller.getFields()));
+                                return true;
+                            default:
+                                caller.send(task.toString() + RESET + " can't run " + slot.setName);
+                                return false;
+                        }
                     } else if (checkNoCase(entryIdString, "add", "a", "+")) {
                         if (entryOperation == null) {
-                            caller.send(entryType + " constructor is empty");
+                            caller.send(slot + " constructor is empty");
                             return true;
                         }
                         StringBuilder buffer = new StringBuilder();
                         String constructor = entryOperation.concat(" ").concat(StringUtils.join(words, ' '));
-                        TaskEntry entry = task.add(entryType, constructor);
+                        Entry entry = task.addEntry(slot, constructor, commandSender);
                         entry.setEnabled(true);
-                        buffer.append(entryType).append(" added to ").append(task.getStatus()).append(task)
-                                .append(": \n").append(entry.getStatus()).append("- ").append(entry);
+                        buffer.append(slot.name).append(" added to ").append(task).append(RESET).append(": \n");
+                        buffer.append("- ").append(entry);
                         caller.send(buffer.toString());
                         task.save();
                         return true;
-                    } else if (entryId >= 0 && entryId < count) {
-                        TaskEntry entry = task.get(entryType, entryId);
-                        if (entryOperation == null || checkNoCase(entryOperation, "view", "v")) {
+                    } else if (entryId >= 0 && entryId < task.getEntryLength(slot)) {
+                        Entry entry = task.getEntry(slot, entryId);
+                        if (entryOperation == null) {
                             StringBuilder buffer = new StringBuilder();
-                            buffer.append(entryType).append(" [").append(entryId).append("] in ")
-                                    .append(task.getStatus()).append(task).append(" :\n")
-                                    .append(entry.getStatus()).append("- ").append(entry);
+                            buffer.append(slot.name).append(" [").append(entryId).append("] in ");
+                            buffer.append(task).append(RESET).append(" :\n").append("- ").append(entry);
                             caller.send(buffer.toString());
                             return true;
                         } else if (checkNoCase(entryOperation, "enable", "en", "on")) {
-                            entry.enable();
+                            entry.setEnabled(true);
                             StringBuilder buffer = new StringBuilder();
-                            buffer.append(entryType).append(" [").append(entryId).append("] enabled in ")
-                                    .append(task.getStatus()).append(task).append(" :\n")
-                                    .append(entry.getStatus()).append("- ").append(entry);
+                            buffer.append(slot).append(" [").append(entryId).append("] enabled in ");
+                            buffer.append(task).append(" :\n").append("- ").append(entry);
                             caller.send(buffer.toString());
                             task.save();
                             return true;
+                        } else if (checkNoCase(entryOperation, "run", "check")) {
+                            switch (slot.type) {
+                                case ACTION:
+                                    caller.send(task.toString() + RESET + " run " + slot.name + " [" + entryId + "]");
+                                    ((Action) entry).run(caller.getFields());
+                                    return true;
+                                case CONDITION:
+                                    caller.send(task.toString() + RESET + " check " + slot.name + " [" + entryId + "]:" + ((Condition) entry).test(caller.getFields()));
+                                    return true;
+                                default:
+                                    caller.send(task.toString() + RESET + " can't run " + slot.name + " [" + entryId + "]");
+                                    return false;
+                            }
                         } else if (checkNoCase(entryOperation, "disable", "dis", "off")) {
-                            entry.disable();
+                            entry.setEnabled(false);
                             StringBuilder buffer = new StringBuilder();
-                            buffer.append(entryType).append(" [").append(entryId).append("] disabled in ")
-                                    .append(task.getStatus()).append(task).append(" :\n")
-                                    .append(entry.getStatus()).append("- ").append(entry);
+                            buffer.append(slot).append(" [").append(entryId).append("] disabled in ");
+                            buffer.append(task).append(" :\n").append("- ").append(entry);
                             caller.send(buffer.toString());
                             task.save();
                             return true;
                         } else if (checkNoCase(entryOperation, "remove")) {
                             entry.remove();
                             StringBuilder buffer = new StringBuilder();
-                            buffer.append(entryType).append(" [").append(entryId).append("] removed from ")
-                                    .append(task.getStatus()).append(task).append(RESET).append(" :\n")
-                                    .append(entry.getStatus()).append("- ").append(entry);
+                            buffer.append(slot).append(" [").append(entryId).append("] removed from ");
+                            buffer.append(task).append(RESET).append(" :\n").append("- ").append(entry);
                             caller.send(buffer.toString());
                             task.save();
                             return true;
-                        } else if (checkNoCase(entryOperation, "edit")) {
+                        } else if (checkNoCase(entryOperation, "edit", "=")) {
                             if (words.isEmpty()) {
-                                caller.send(entryType + " constructor is empty");
+                                caller.send(slot + " constructor is empty");
                                 return true;
                             }
-                            entry = task.edit(entryType, entryId, StringUtils.join(words, " "));
+                            entry = task.editEntry(slot, entryId, StringUtils.join(words, " "), commandSender);
                             StringBuilder buffer = new StringBuilder();
-                            buffer.append(entryType).append(" [").append(entryId).append("] in ")
-                                    .append(task.getStatus()).append(task).append(RESET).append(" now is :\n")
-                                    .append(entry.getStatus()).append("- ").append(entry);
+                            buffer.append(slot).append(" [").append(entryId).append("] in ").append(task);
+                            buffer.append(RESET).append(" now is :\n").append("- ").append(entry);
                             caller.send(buffer.toString());
                             task.save();
                             return true;
                         } else {
-                            caller.send("wrong operation with " + entryType + " [" + entryId + "]");
+                            caller.send("wrong operation with " + slot + " [" + entryId + "]");
                             return true;
                         }
                     } else {

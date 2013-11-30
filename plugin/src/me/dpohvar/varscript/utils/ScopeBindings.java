@@ -22,7 +22,7 @@ public class ScopeBindings implements Bindings {
     }
 
     public ScopeBindings listen(Map<String, Object> map) {
-        bRead.add(map);
+        if (map != null) bRead.add(map);
         return this;
     }
 

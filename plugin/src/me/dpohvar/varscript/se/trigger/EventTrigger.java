@@ -27,7 +27,7 @@ public class EventTrigger extends Trigger {
         EventExecutor executor = new EventExecutor() {
             public void execute(Listener listener, Event event) throws EventException {
                 try {
-                    runner.run(event);
+                    if (clazz.isInstance(event)) runner.run(event);
                 } catch (Exception e) {
                     program.getCaller().handleException(e);
                 }

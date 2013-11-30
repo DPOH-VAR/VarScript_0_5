@@ -160,6 +160,10 @@ public class Converter {
             if (o instanceof Enum) o = ((Enum) o).ordinal();
             if (o instanceof Double) o = ((Double) o).intValue();
             if (o instanceof Integer) return examples[(Integer) o];
+            try {
+                return examples[Integer.parseInt((String) o)];
+            } catch (Exception ignored) {
+            }
             V tra = null;
             V example = null;
             if (o instanceof String) {

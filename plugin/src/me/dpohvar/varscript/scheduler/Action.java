@@ -1,4 +1,4 @@
-package me.dpohvar.varscript.task;
+package me.dpohvar.varscript.scheduler;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -27,7 +27,7 @@ public abstract class Action extends Entry {
         }
 
         @Override
-        protected void run(Map<String, Object> environment) {
+        public void run(Map<String, Object> environment) {
         }
     }
 
@@ -39,5 +39,5 @@ public abstract class Action extends Entry {
         super(task, type);
     }
 
-    abstract protected void run(Map<String, Object> environment);
+    abstract public void run(Map<String, Object> environment);
 }

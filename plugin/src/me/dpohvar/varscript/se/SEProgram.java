@@ -12,6 +12,7 @@ import me.dpohvar.varscript.utils.ScopeBindings;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 
+import javax.script.CompiledScript;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.SimpleScriptContext;
@@ -42,7 +43,7 @@ public abstract class SEProgram implements Program {
         return registerFinishTrigger(new FinishTrigger(this, runnable));
     }
 
-    public SEProgram(Runtime runtime, Caller caller, ScriptEngine engine, Map<String, Object> scope) {
+    public SEProgram(Runtime runtime, Caller caller, ScriptEngine engine, Map<String, Object> scope, Map<String, Object> visible) {
         this.runtime = runtime;
         this.caller = caller;
         this.engine = engine;
@@ -54,6 +55,7 @@ public abstract class SEProgram implements Program {
                 .listen(runtime.getGlobalBindings())
                 .listen(programEnvironment)
                 .listen(runtime.getModuleBindings(engine))
+                .listen(visible) // ignore if null
                 .listen(scope)
                 .listen(engineBindings)
                 .listen(runtime.getRuntimeBindings());
@@ -63,6 +65,14 @@ public abstract class SEProgram implements Program {
         this.programEnvironment.put("me", caller.getInstance());
         this.programEnvironment.put("caller", caller);
         runtime.registerProgram(this);
+    }
+
+    public SEProgram(Runtime runtime, Caller caller, ScriptEngine engine, Map<String, Object> scope) {
+        this(runtime, caller, engine, scope, null);
+    }
+
+    public SEProgram(Runtime runtime, Caller caller, ScriptEngine engine) {
+        this(runtime, caller, engine, null, null);
     }
 
     public Object require(String moduleName) {
@@ -83,6 +93,18 @@ public abstract class SEProgram implements Program {
         Object result;
         try {
             result = engine.eval(script, context);
+        } catch (Throwable e) {
+            getCaller().handleException(e);
+            result = null;
+        }
+        checkFinished();
+        return result;
+    }
+
+    public Object runScript(CompiledScript script) {
+        Object result;
+        try {
+            result = script.eval(context);
         } catch (Throwable e) {
             getCaller().handleException(e);
             result = null;
@@ -249,4 +271,6 @@ public abstract class SEProgram implements Program {
     public int getPID() {
         return pid;
     }
+
+
 }

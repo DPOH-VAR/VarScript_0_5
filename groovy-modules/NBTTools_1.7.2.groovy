@@ -1,22 +1,22 @@
 /**
- * NBTTools v1.2.0
+ * NBTTools v2.0.0
  * module for VarScript (Bukkit plugin)
  * Author: DPOH-VAR
  * (c) 2013
  * */
 
-package NBTTools_1_6
+package NBTTools_1_7
 
+import org.bukkit.Bukkit
 import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.inventory.ItemStack
 
-import static NBTTools_1_6.Utils.*
-
-public class Utils {
+public class NBTUtils {
     @SuppressWarnings("all")
     public static String nms = org.bukkit.Bukkit.getServer().getHandle().class.name.split("\\.")[3]
     public static Class classNBTBase = Class.forName "net.minecraft.server." + nms + ".NBTBase"
+    public static Class classNBTNumber = Class.forName "net.minecraft.server." + nms + ".NBTNumber"
     public static Class classNBTTagByte = Class.forName "net.minecraft.server." + nms + ".NBTTagByte"
     public static Class classNBTTagShort = Class.forName "net.minecraft.server." + nms + ".NBTTagShort"
     public static Class classNBTTagInt = Class.forName "net.minecraft.server." + nms + ".NBTTagInt"
@@ -40,47 +40,47 @@ public class Utils {
 
     public static def wrapNBT(boolean object) {
         byte val = object ? 1 as byte : 0 as byte
-        classNBTTagByte.newInstance "", val
+        classNBTTagByte.newInstance val
     }
 
     public static def wrapNBT(byte object) {
-        classNBTTagByte.newInstance "", object as byte
+        classNBTTagByte.newInstance object as byte
     }
 
     public static def wrapNBT(short object) {
-        classNBTTagShort.newInstance "", object as short
+        classNBTTagShort.newInstance object as short
     }
 
     public static def wrapNBT(int object) {
-        classNBTTagInt.newInstance "", object as int
+        classNBTTagInt.newInstance object as int
     }
 
     public static def wrapNBT(long object) {
-        classNBTTagLong.newInstance "", object as long
+        classNBTTagLong.newInstance object as long
     }
 
     public static def wrapNBT(float object) {
-        classNBTTagFloat.newInstance "", object as float
+        classNBTTagFloat.newInstance object as float
     }
 
     public static def wrapNBT(double object) {
-        classNBTTagDouble.newInstance "", object as double
+        classNBTTagDouble.newInstance object as double
     }
 
     public static def wrapNBT(String object) {
-        classNBTTagString.newInstance "", object as String
+        classNBTTagString.newInstance object as String
     }
 
     public static def wrapNBT(byte[] object) {
-        classNBTTagByteArray.newInstance "", object as byte[]
+        classNBTTagByteArray.newInstance object as byte[]
     }
 
     public static def wrapNBT(int[] object) {
-        classNBTTagIntArray.newInstance "", object as int[]
+        classNBTTagIntArray.newInstance object as int[]
     }
 
     public static def wrapNBT(Collection<?> list) {
-        def nbtList = classNBTTagList.newInstance("")
+        def nbtList = classNBTTagList.newInstance()
         list.each {
             if (classNBTBase.isInstance(it)) nbtList.add(it.clone())
             else nbtList.add wrapNBT(it)
@@ -89,7 +89,7 @@ public class Utils {
     }
 
     public static def wrapNBT(Map<?, ?> map) {
-        def nbtCompound = classNBTTagCompound.newInstance("")
+        def nbtCompound = classNBTTagCompound.newInstance()
         map.each { it ->
             if (classNBTBase.isInstance(it.value)) {
                 nbtCompound.set it.key as String, it.value.clone()
@@ -99,7 +99,140 @@ public class Utils {
         }
         return nbtCompound;
     }
+
+    public static NBTList nbt(Collection t) {
+        return new NBTList(wrapNBT(t));
+    }
+
+    public static NBTCompound nbt(Map t) {
+        return new NBTCompound(wrapNBT(t));
+    }
+
+    public static def nbt(def object, Closure handler) {
+        def main = this.nbt(object)
+        def temp = main.clone()
+        def result = handler(temp)
+        if (main != temp) this.nbt(object, temp)
+        return result
+    }
+
+    public static def nbt(def object, Map val) {
+        return this.nbt(object, new NBTCompound(this.wrapNBT(val)))
+    }
+
+    public static def nbt(def object, Collection val) {
+        return this.nbt(object, new NBTList(this.wrapNBT(val)))
+    }
+
+    public static NBTCompound nbt(Entity e) {
+        def basic = classNBTTagCompound.newInstance()
+        e.handle.e(basic)
+        return new NBTCompound(basic)
+    }
+
+    public static boolean nbt(Entity e, NBTCompound val) {
+        e.handle.f(val.@handle)
+        return true
+    }
+
+    public static NBTCompound nbt(Block b) {
+        Object tile = b.world.getTileEntityAt(b.x, b.y, b.z)
+        if (!tile) return null
+        def basic = classNBTTagCompound.newInstance()
+        tile.b basic
+        NBTCompound result = new NBTCompound(basic)
+        result.remove "x"
+        result.remove "y"
+        result.remove "z"
+        return result
+    }
+
+    private static int maxDist = Bukkit.server.viewDistance * 32
+
+    public static boolean nbt(Block b, NBTCompound val) {
+        Object tile = b.world.getTileEntityAt(b.x, b.y, b.z)
+        if (!tile) return false
+        val = val.clone()
+        if (!val.x) val.x = b.x
+        if (!val.y) val.y = b.y
+        if (!val.z) val.z = b.z
+        tile.a(val.handle())
+        def packet = tile.getUpdatePacket();
+        b.world.players.findAll {
+            it.location.distance(b.location) < NBTUtils.maxDist
+        }.each {
+            it.handle.playerConnection.sendPacket packet
+        }
+        return true
+    }
+
+    public static NBTCompound nbt(ItemStack item) {
+        def tag = item.handle.tag
+        if (tag == null) return null
+        else new NBTCompound(tag.clone())
+    }
+
+    public static boolean nbt(ItemStack item, NBTCompound val) {
+        try {
+            item.handle.tag = val.clone().handle()
+            return true
+        } catch (ignored) {
+            return false
+        }
+    }
+
+    public static NBTCompound nbt(File file) {
+        FileInputStream input = null
+        try {
+            input = new FileInputStream(file)
+            def tag = classNBTCompressedStreamTools.a(input)
+            if (tag == null) return null
+            else return new NBTCompound(tag)
+        } catch (e) {
+            e.printStackTrace()
+            try {
+                input.close()
+            } catch (ignored) {
+            }
+            return null
+        }
+    }
+
+    public static boolean nbt(File file, NBTCompound val) {
+        if (file == null || val == null) return false
+        if (!file.isFile()) {
+            File parent = file.parentFile
+            if (parent == null) parent = new File('.')
+            parent.mkdirs()
+            if (!file.createNewFile()) return false
+        }
+        FileOutputStream output = null
+        try {
+            output = new FileOutputStream(file)
+            classNBTCompressedStreamTools.a(val.@handle, output)
+            return true
+        } catch (e) {
+            e.printStackTrace()
+            try {
+                output.close()
+            } catch (ignored) {
+            }
+            return false
+        }
+    }
+
+    private static File playersFolder = new File(org.bukkit.Bukkit.worlds[0].worldFolder, 'players')
+
+    public static NBTCompound nbt(String name) {
+        this.nbt(new File(playersFolder, name + '.dat'))
+    }
+
+    public static boolean nbt(String name, NBTCompound val) {
+        this.nbt(new File(playersFolder, name + '.dat'), val)
+    }
+
 }
+
 
 public class NBTCompound implements Map<String, Object> {
     def handle
@@ -111,7 +244,7 @@ public class NBTCompound implements Map<String, Object> {
     }
 
     public NBTCompound() {
-        this.handle = classNBTTagCompound.newInstance('')
+        this.handle = NBTUtils.classNBTTagCompound.newInstance('')
         this.handleMap = this.handle.@map
     }
 
@@ -141,18 +274,18 @@ public class NBTCompound implements Map<String, Object> {
     }
 
     public boolean containsValue(Object value) {
-        if (classNBTBase.isInstance(value)) return handleMap.containsValue(value);
-        else return handleMap.containsValue(wrapNBT(value))
+        if (NBTUtils.classNBTBase.isInstance(value)) return handleMap.containsValue(value);
+        else return handleMap.containsValue(NBTUtils.wrapNBT(value))
     }
 
     public Object get(Object key) {
-        return getNBT(handleMap.get(key as String))
+        return NBTUtils.getNBT(handleMap.get(key as String))
     }
 
     public Object put(String key, Object value) {
         def temp = get(key);
-        if (classNBTBase.isInstance(value)) handle.set(key as String, value.clone())
-        else handle.set(key as String, wrapNBT(value))
+        if (NBTUtils.classNBTBase.isInstance(value)) handle.set(key as String, value.clone())
+        else handle.set(key as String, NBTUtils.wrapNBT(value))
         return temp;
     }
 
@@ -168,10 +301,10 @@ public class NBTCompound implements Map<String, Object> {
 
     public void putAll(Map<? extends String, ? extends Object> m) {
         m.each {
-            if (classNBTBase.isInstance(it.value)) {
+            if (NBTUtils.classNBTBase.isInstance(it.value)) {
                 handle.set(it.key as String, it.value.clone())
             } else {
-                handle.set(it.key as String, wrapNBT(it.value))
+                handle.set(it.key as String, NBTUtils.wrapNBT(it.value))
             }
         }
     }
@@ -201,7 +334,7 @@ public class NBTCompound implements Map<String, Object> {
         if (!i.hasNext()) return '{}';
         StringBuilder sb = new StringBuilder().append('{')
         for (; ;) {
-            Map.Entry e = i.next();
+            NBTEntry e = i.next();
             sb.append(e.key).append('=')
             if (e.value instanceof byte[]) {
                 sb.append 'int[' + (e.value as byte[]).length + ']'
@@ -210,8 +343,8 @@ public class NBTCompound implements Map<String, Object> {
             } else {
                 sb.append e.value
             }
-            if (!i.hasNext()) return sb.append('}').toString();
-            sb.append(', ');
+            if (!i.hasNext()) return sb.append('}').toString()
+            sb.append(', ')
         }
     }
 
@@ -227,13 +360,13 @@ public class NBTCompound implements Map<String, Object> {
         }
 
         public boolean contains(Object value) {
-            if (classNBTBase.isInstance(value)) return handleEntrySet.contains(value)
-            else return handleEntrySet.contains(wrapNBT(value))
+            if (NBTUtils.classNBTBase.isInstance(value)) return handleEntrySet.contains(value)
+            else return handleEntrySet.contains(NBTUtils.wrapNBT(value))
         }
 
         public boolean remove(Object value) {
-            if (classNBTBase.isInstance(value)) return handleEntrySet.remove(value)
-            else return handleEntrySet.remove(wrapNBT(value))
+            if (NBTUtils.classNBTBase.isInstance(value)) return handleEntrySet.remove(value)
+            else return handleEntrySet.remove(NBTUtils.wrapNBT(value))
         }
 
         public int size() {
@@ -277,11 +410,15 @@ public class NBTCompound implements Map<String, Object> {
         }
 
         public Object getValue() {
-            return getNBT(handleEntry.getValue())
+            return NBTUtils.getNBT(handleEntry.getValue())
         }
 
         public Object setValue(Object value) {
             return put_NBTCompound(handleEntry.key, value)
+        }
+
+        public String toString() {
+            return getKey().toString() + "=" + getValue().toString();
         }
     }
 }
@@ -296,7 +433,7 @@ public class NBTList implements List<Object> {
     }
 
     public NBTList() {
-        this.handle = classNBTTagCompound.newInstance ""
+        this.handle = NBTUtils.classNBTTagCompound.newInstance()
         this.handleList = this.handle.list
     }
 
@@ -321,8 +458,8 @@ public class NBTList implements List<Object> {
     }
 
     public boolean contains(Object value) {
-        if (classNBTBase.isInstance(value)) return handleList.contains(value)
-        else return handleList.contains(wrapNBT(value))
+        if (NBTUtils.classNBTBase.isInstance(value)) return handleList.contains(value)
+        else return handleList.contains(NBTUtils.wrapNBT(value))
     }
 
     public Iterator iterator() {
@@ -330,25 +467,25 @@ public class NBTList implements List<Object> {
     }
 
     public Object[] toArray() {
-        handleList.collect { getNBT(it) } as Object[]
+        handleList.collect { NBTUtils.getNBT(it) } as Object[]
     }
 
     public boolean add(Object value) {
-        if (classNBTBase.isInstance(value)) return handle.add(value.clone())
-        else return handleList.contains(wrapNBT(value))
+        if (NBTUtils.classNBTBase.isInstance(value)) return handle.add(value.clone())
+        else return handle.add(NBTUtils.wrapNBT(value))
     }
 
     public boolean remove(Object value) {
-        if (classNBTBase.isInstance(value)) return handleList.remove(value)
-        else return handleList.remove(wrapNBT(value))
+        if (NBTUtils.classNBTBase.isInstance(value)) return handleList.remove(value)
+        else return handleList.remove(NBTUtils.wrapNBT(value))
     }
 
     public boolean containsAll(Collection<?> c) {
         for (def value in c) {
-            if (classNBTBase.isInstance(value)) {
+            if (NBTUtils.classNBTBase.isInstance(value)) {
                 if (!handleList.contains(value)) return false;
             } else {
-                if (!handleList.contains(wrapNBT(value))) return false;
+                if (!handleList.contains(NBTUtils.wrapNBT(value))) return false;
             }
         }
         return true;
@@ -356,30 +493,30 @@ public class NBTList implements List<Object> {
 
     public boolean addAll(Collection c) {
         for (def t in c) {
-            if (classNBTBase.isInstance(t)) return handle.add(t.clone())
-            else return handleList.contains(wrapNBT(t))
+            if (NBTUtils.classNBTBase.isInstance(t)) return handle.add(t.clone())
+            else return handleList.contains(NBTUtils.wrapNBT(t))
         }
     }
 
     public boolean addAll(int index, Collection c) {
         c.each {
-            if (classNBTBase.isInstance(it)) handle.add(index++, it.clone())
-            else handle.add(index++, wrapNBT(it))
+            if (NBTUtils.classNBTBase.isInstance(it)) handle.add(index++, it.clone())
+            else handle.add(index++, NBTUtils.wrapNBT(it))
         }
         return true
     }
 
     public boolean removeAll(Collection<?> c) {
         c.each {
-            if (classNBTBase.isInstance(it)) handleList.remove(it)
-            else handleList.remove wrapNBT(it)
+            if (NBTUtils.classNBTBase.isInstance(it)) handleList.remove(it)
+            else handleList.remove NBTUtils.wrapNBT(it)
         }
         return true;
     }
 
     public boolean retainAll(Collection<?> c) {
         ((List) handleList.clone()).each {
-            if (!c.contains(it) && !c.contains(wrapNBT(it))) handleList.remove(it)
+            if (!c.contains(it) && !c.contains(NBTUtils.wrapNBT(it))) handleList.remove(it)
         }
         return true;
     }
@@ -389,35 +526,35 @@ public class NBTList implements List<Object> {
     }
 
     public Object get(int index) {
-        return getNBT(handle.get(index))
+        return NBTUtils.getNBT(handleList.get(index))
     }
 
     public Object set(int index, Object element) {
         def result
-        if (classNBTBase.isInstance(element)) result = handleList.set(index, element.clone())
-        else result = handleList.set(index, wrapNBT(element))
+        if (NBTUtils.classNBTBase.isInstance(element)) result = handleList.set(index, element.clone())
+        else result = handleList.set(index, NBTUtils.wrapNBT(element))
         if (result == null) return result
         return result
     }
 
     public void add(int index, Object element) {
-        if (classNBTBase.isInstance(element)) handleList.add(index, element.clone())
-        else handleList.add(wrapNBT(element))
+        if (NBTUtils.classNBTBase.isInstance(element)) handleList.add(index, element.clone())
+        else handleList.add(NBTUtils.wrapNBT(element))
     }
 
     public Object remove(int index) {
         def result = handleList.remove(index);
-        return getNBT(result)
+        return NBTUtils.getNBT(result)
     }
 
     public int indexOf(Object element) {
-        if (classNBTBase.isInstance(element)) return handleList.indexOf(element)
-        else return handleList.indexOf(wrapNBT(element))
+        if (NBTUtils.classNBTBase.isInstance(element)) return handleList.indexOf(element)
+        else return handleList.indexOf(NBTUtils.wrapNBT(element))
     }
 
     public int lastIndexOf(Object element) {
-        if (classNBTBase.isInstance(element)) return handleList.indexOf(element)
-        else return handleList.indexOf(wrapNBT(element))
+        if (NBTUtils.classNBTBase.isInstance(element)) return handleList.indexOf(element)
+        else return handleList.indexOf(NBTUtils.wrapNBT(element))
     }
 
     public ListIterator listIterator() {
@@ -467,7 +604,7 @@ public class NBTList implements List<Object> {
         }
 
         public Object next() {
-            return getNBT(handleIterator.next())
+            return NBTUtils.getNBT(handleIterator.next())
         }
 
         public boolean hasPrevious() {
@@ -475,7 +612,7 @@ public class NBTList implements List<Object> {
         }
 
         public Object previous() {
-            return getNBT(handleIterator.previous())
+            return NBTUtils.getNBT(handleIterator.previous())
         }
 
         public int nextIndex() {
@@ -491,193 +628,24 @@ public class NBTList implements List<Object> {
         }
 
         public void set(Object value) {
-            if (classNBTBase.isInstance(value)) handleIterator.set(value.clone())
-            else handleIterator.set(wrapNBT(value))
+            if (NBTUtils.classNBTBase.isInstance(value)) handleIterator.set(value.clone())
+            else handleIterator.set(NBTUtils.wrapNBT(value))
         }
 
         public void add(Object value) {
-            if (classNBTBase.isInstance(value)) handleIterator.add(value.clone())
-            else handleIterator.add(wrapNBT(value))
+            if (NBTUtils.classNBTBase.isInstance(value)) handleIterator.add(value.clone())
+            else handleIterator.add(NBTUtils.wrapNBT(value))
         }
     }
 }
 
-class CompressedFileLink {
-    File file
+Script.metaClass.nbt = NBTUtils.&nbt;
 
-    CompressedFileLink(file) {
-        this.file = file
-    }
-}
-
-File.metaClass.getGz = File.metaClass.getGzip = { ->
-    new CompressedFileLink(delegate)
-}
-
-Script.metaClass.nbt = { Collection t ->
-    return new NBTList(wrapNBT(t));
-}
-Script.metaClass.nbt = { Map t ->
-    return new NBTCompound(wrapNBT(t));
-}
-Script.metaClass.nbt = { def object, Closure handler ->
-    def main = delegate.nbt object
-    def temp = main.clone()
-    def result = handler temp
-    if (main != temp) delegate.nbt object, temp
-    return result
-}
-Script.metaClass.nbt = { def object, Map val ->
-    delegate.nbt object, new NBTCompound(val)
-}
-
-Script.metaClass.nbt = { Entity e ->
-    def basic = classNBTTagCompound.newInstance("")
-    e.handle.e basic
-    new NBTCompound(basic)
-}
-Script.metaClass.nbt = { Entity e, NBTCompound val ->
-    e.handle.f val.@handle
-    return true
-}
-
-int maxDist = Server.getViewDistance() * 32
-Script.metaClass.nbt = { Block b ->
-    Object tile = b.world.getTileEntityAt b.x, b.y, b.z
-    if (!tile) return null
-    def basic = classNBTTagCompound.newInstance ""
-    tile.b basic
-    result = new NBTCompound(basic)
-    result.remove "x"
-    result.remove "y"
-    result.remove "z"
-    result
-}
-Script.metaClass.nbt = { Block b, NBTCompound val ->
-    Object tile = b.world.getTileEntityAt b.x, b.y, b.z
-    if (!tile) return false
-    val = val.clone()
-    if (!val.x) val.x = b.x
-    if (!val.y) val.y = b.y
-    if (!val.z) val.z = b.z
-    tile.a val.handle()
-    def packet = tile.getUpdatePacket();
-    b.world.players.findAll {
-        it.location.distance(b.location) < maxDist
-    }.each {
-        it.handle.playerConnection.sendPacket packet
-    }
-    return true
-}
-
-Script.metaClass.nbt = { ItemStack item ->
-    def tag = item.handle.tag
-    if (tag == null) return null
-    else new NBTCompound(tag.clone())
-}
-Script.metaClass.nbt = { ItemStack item, NBTCompound val ->
-    try {
-        item.handle.tag = val.clone().handle()
-        return true
-    } catch (e) {
-        return false
-    }
-}
-
-Script.metaClass.nbt = { File file ->
-    DataInputStream input = null
-    try {
-        input = new DataInputStream(new FileInputStream(file))
-        def tag = classNBTBase.a(input)
-        if (tag == null) return null
-        else return getNBT(tag)
-    } catch (e) {
-        e.printStackTrace()
-        try {
-            input.close()
-        } catch (ignored) {
-        }
-        return null
-    }
-
-}
-
-Script.metaClass.nbt = { File file, def val ->
-    def data
-    if (file == null || val == null) return false
-    if (val instanceof NBTCompound) data = val.@handle
-    else if (val instanceof NBTList) data = val.@handle
-    else data = wrapNBT(val)
-    if (!file.isFile()) {
-        File parent = file.parentFile
-        if (parent == null) parent = new File('.')
-        parent.mkdirs()
-        if (!file.createNewFile()) return false
-    }
-    DataOutputStream output = null
-    try {
-        output = new DataOutputStream(new FileOutputStream(file))
-        classNBTBase.a(data, output)
-        return true
-    } catch (e) {
-        e.printStackTrace()
-        try {
-            output.close()
-        } catch (ignored) {
-        }
-        return false
-    }
-}
-
-Closure nbtGetZip = Script.metaClass.nbt = { CompressedFileLink zip ->
-    FileInputStream input = null
-    try {
-        input = new FileInputStream(zip.file)
-        def tag = classNBTCompressedStreamTools.a(input)
-        if (tag == null) return null
-        else return new NBTCompound(tag)
-    } catch (e) {
-        e.printStackTrace()
-        try {
-            input.close()
-        } catch (ignored) {
-        }
-        return null
-    }
-}
-
-Closure nbtSetZip = Script.metaClass.nbt = { CompressedFileLink zip, NBTCompound val ->
-    File file = zip.file
-    if (file == null || val == null) return false
-    if (!file.isFile()) {
-        File parent = file.parentFile
-        if (parent == null) parent = new File('.')
-        parent.mkdirs()
-        if (!file.createNewFile()) return false
-    }
-    FileOutputStream output = null
-    try {
-        output = new FileOutputStream(file)
-        classNBTCompressedStreamTools.a(val.@handle, output)
-        return true
-    } catch (e) {
-        e.printStackTrace()
-        try {
-            output.close()
-        } catch (ignored) {
-        }
-        return false
-    }
-}
-
-File playersFolder = new File(Server.worlds[0].worldFolder, 'players')
-Script.metaClass.nbt = { String name ->
-    nbtGetZip new File(playersFolder, name + ".dat").gzip
-}
-Script.metaClass.nbt = { String name, NBTCompound val ->
-    nbtSetZip new File(playersFolder, name + ".dat").gzip, val
-}
-
-
-
-return [name: "NBTTools", version: [1, 2, 0]]
+return [
+        name: 'NBTTools',
+        version: [2, 1, 1],
+        nbt: NBTUtils.&nbt,
+        NBTCompound: NBTCompound,
+        NBTList: NBTList,
+        NBTUtils: NBTUtils,
+]

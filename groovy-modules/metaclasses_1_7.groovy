@@ -1,4 +1,4 @@
-package metaclasses_1_6
+package metaclasses_1_7
 
 import me.dpohvar.varscript.se.trigger.SERunnable
 import me.dpohvar.varscript.utils.region.*
@@ -21,6 +21,7 @@ class Initializer {
     static String nms = org.bukkit.Bukkit.getServer().getHandle().getClass().name.split("\\.")[3];
     static Class classCraftItemStack = Class.forName "org.bukkit.craftbukkit." + cb + ".inventory.CraftItemStack";
     static Class classNMSItemStack = Class.forName "net.minecraft.server." + cb + ".ItemStack";
+    static Class classNMSItem = Class.forName "net.minecraft.server." + cb + ".Item";
     static Random random = new Random()
 
     public static void init() {
@@ -107,13 +108,13 @@ class Initializer {
         }
 
         Script.metaClass.item = { int id ->
-            classCraftItemStack.newInstance(classNMSItemStack.newInstance(id, 1, 0))
+            classCraftItemStack.newInstance(classNMSItemStack.newInstance(classNMSItem.d(id), 1, 0))
         }
         Script.metaClass.item = { int id, int type ->
-            classCraftItemStack.newInstance(classNMSItemStack.newInstance(id, 1, type))
+            classCraftItemStack.newInstance(classNMSItemStack.newInstance(classNMSItem.d(id), 1, type))
         }
         Script.metaClass.item = { int id, int type, int amount ->
-            classCraftItemStack.newInstance(classNMSItemStack.newInstance(id, amount, type))
+            classCraftItemStack.newInstance(classNMSItemStack.newInstance(classNMSItem.d(id), amount, type))
         }
         /**
          * regions
@@ -850,4 +851,4 @@ Initializer.init();
 
 /////////////////////////////////////////////////////////////////////////////////
 
-return [name: "metaclasses", version: [1, 1, 0]]
+return [name: "metaclasses", version: [1, 0, 3]]
